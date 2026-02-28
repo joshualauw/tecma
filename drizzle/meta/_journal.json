@@ -5,8 +5,29 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1771933483700,
-      "tag": "0000_grey_radioactive_man",
+      "when": 1772286386921,
+      "tag": "0000_white_white_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772287650472,
+      "tag": "0001_cute_hellfire_club",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772288769421,
+      "tag": "0002_loud_impossible_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772289327944,
+      "tag": "0003_motionless_nehzno",
       "breakpoints": true
     }
   ]

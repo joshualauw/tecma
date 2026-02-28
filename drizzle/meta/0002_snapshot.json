@@ -1,6 +1,6 @@
 {
-  "id": "f92a817d-1461-4be5-a8ce-81f4fb795b5a",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "e74bc33d-433b-4073-8cef-cbcd00e68a3d",
+  "prevId": "8ae25eac-6078-4ea5-b465-86c65a9a2e79",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -13,6 +13,12 @@
           "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "name": {
           "name": "name",
@@ -56,7 +62,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "bots_property_id_properties_id_fk": {
+          "name": "bots_property_id_properties_id_fk",
+          "tableFrom": "bots",
+          "tableTo": "properties",
+          "columnsFrom": [
+            "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -72,6 +92,12 @@
           "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_id": {
           "name": "user_id",
@@ -89,7 +115,7 @@
           "name": "phone_number",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -101,6 +127,19 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "employees_property_id_properties_id_fk": {
+          "name": "employees_property_id_properties_id_fk",
+          "tableFrom": "employees",
+          "tableTo": "properties",
+          "columnsFrom": [
+            "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "employees_user_id_users_id_fk": {
           "name": "employees_user_id_users_id_fk",
           "tableFrom": "employees",
@@ -139,6 +178,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "property_id": {
+          "name": "property_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "room_id": {
           "name": "room_id",
           "type": "integer",
@@ -168,6 +213,19 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "messages_property_id_properties_id_fk": {
+          "name": "messages_property_id_properties_id_fk",
+          "tableFrom": "messages",
+          "tableTo": "properties",
+          "columnsFrom": [
+            "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "messages_room_id_rooms_id_fk": {
           "name": "messages_room_id_rooms_id_fk",
           "tableFrom": "messages",
@@ -188,6 +246,44 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.properties": {
+      "name": "properties",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.rooms": {
       "name": "rooms",
       "schema": "",
@@ -198,18 +294,23 @@
           "primaryKey": true,
           "notNull": true
         },
+        "property_id": {
+          "name": "property_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "whatsapp_id": {
+          "name": "whatsapp_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "tenant_id": {
           "name": "tenant_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
-        },
-        "platform_type": {
-          "name": "platform_type",
-          "type": "platformType",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
         },
         "last_message": {
           "name": "last_message",
@@ -233,6 +334,32 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "rooms_property_id_properties_id_fk": {
+          "name": "rooms_property_id_properties_id_fk",
+          "tableFrom": "rooms",
+          "tableTo": "properties",
+          "columnsFrom": [
+            "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "rooms_whatsapp_id_whatsapp_id_fk": {
+          "name": "rooms_whatsapp_id_whatsapp_id_fk",
+          "tableFrom": "rooms",
+          "tableTo": "whatsapp",
+          "columnsFrom": [
+            "whatsapp_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "rooms_tenant_id_tenants_id_fk": {
           "name": "rooms_tenant_id_tenants_id_fk",
           "tableFrom": "rooms",
@@ -308,7 +435,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -328,6 +455,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "property_id": {
+          "name": "property_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -344,7 +477,7 @@
           "name": "phone_number",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -355,7 +488,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "tenants_property_id_properties_id_fk": {
+          "name": "tenants_property_id_properties_id_fk",
+          "tableFrom": "tenants",
+          "tableTo": "properties",
+          "columnsFrom": [
+            "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "tenants_phone_number_unique": {
@@ -421,16 +568,101 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.whatsapp": {
+      "name": "whatsapp",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waba_id": {
+          "name": "waba_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_id": {
+          "name": "phone_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "whatsapp_property_id_properties_id_fk": {
+          "name": "whatsapp_property_id_properties_id_fk",
+          "tableFrom": "whatsapp",
+          "tableTo": "properties",
+          "columnsFrom": [
+            "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "whatsapp_waba_id_unique": {
+          "name": "whatsapp_waba_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "waba_id"
+          ]
+        },
+        "whatsapp_phone_id_unique": {
+          "name": "whatsapp_phone_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone_id"
+          ]
+        },
+        "whatsapp_phone_number_unique": {
+          "name": "whatsapp_phone_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
-    "public.platformType": {
-      "name": "platformType",
-      "schema": "public",
-      "values": [
-        "whatsapp"
-      ]
-    },
     "public.senderType": {
       "name": "senderType",
       "schema": "public",

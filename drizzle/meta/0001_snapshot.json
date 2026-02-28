@@ -1,6 +1,6 @@
 {
-  "id": "f92a817d-1461-4be5-a8ce-81f4fb795b5a",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "8ae25eac-6078-4ea5-b465-86c65a9a2e79",
+  "prevId": "f92a817d-1461-4be5-a8ce-81f4fb795b5a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -89,7 +89,7 @@
           "name": "phone_number",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -198,18 +198,17 @@
           "primaryKey": true,
           "notNull": true
         },
+        "whatsapp_id": {
+          "name": "whatsapp_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "tenant_id": {
           "name": "tenant_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
-        },
-        "platform_type": {
-          "name": "platform_type",
-          "type": "platformType",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
         },
         "last_message": {
           "name": "last_message",
@@ -233,6 +232,19 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "rooms_whatsapp_id_whatsapp_id_fk": {
+          "name": "rooms_whatsapp_id_whatsapp_id_fk",
+          "tableFrom": "rooms",
+          "tableTo": "whatsapp",
+          "columnsFrom": [
+            "whatsapp_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "rooms_tenant_id_tenants_id_fk": {
           "name": "rooms_tenant_id_tenants_id_fk",
           "tableFrom": "rooms",
@@ -344,7 +356,7 @@
           "name": "phone_number",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -421,16 +433,81 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.whatsapp": {
+      "name": "whatsapp",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waba_id": {
+          "name": "waba_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_id": {
+          "name": "phone_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "whatsapp_waba_id_unique": {
+          "name": "whatsapp_waba_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "waba_id"
+          ]
+        },
+        "whatsapp_phone_id_unique": {
+          "name": "whatsapp_phone_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone_id"
+          ]
+        },
+        "whatsapp_phone_number_unique": {
+          "name": "whatsapp_phone_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
-    "public.platformType": {
-      "name": "platformType",
-      "schema": "public",
-      "values": [
-        "whatsapp"
-      ]
-    },
     "public.senderType": {
       "name": "senderType",
       "schema": "public",
