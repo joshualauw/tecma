@@ -10,6 +10,20 @@ class InvalidLoginError extends CredentialsSignin {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  pages: {
+    signIn: "/",
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnAdmin = nextUrl.pathname.startsWith("/admin");
+      if (isOnAdmin) {
+        if (isLoggedIn) return true;
+        return false;
+      }
+      return true;
+    },
+  },
   providers: [
     Credentials({
       credentials: {

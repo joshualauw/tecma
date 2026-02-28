@@ -36,9 +36,9 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
     });
 
     if (result.error) {
-      form.setError("email", { message: result.code });
+      form.setError("email", { message: result.code || result.error });
     } else {
-      router.push("/dashboard");
+      router.push("/admin/dashboard");
       router.refresh();
     }
   }
@@ -47,8 +47,8 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <Logo />
-          <CardTitle>Login to Bookle Account</CardTitle>
+          <Logo className="justify-center mb-1" />
+          <CardTitle>Login to your Account</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)}>
