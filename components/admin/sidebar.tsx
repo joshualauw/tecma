@@ -2,19 +2,8 @@
 
 import Logo from "@/components/logo";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -23,23 +12,20 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Properties } from "@/generated/prisma/client";
 import {
   BotIcon,
-  ChevronsUpDownIcon,
   Contact2Icon,
-  ExternalLinkIcon,
   HouseHeartIcon,
   MailOpenIcon,
   MapPinIcon,
   PhoneIcon,
   PieChartIcon,
-  SettingsIcon,
   TicketIcon,
   Users2Icon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
 
 export function AdminSidebar() {
   const pathName = usePathname();
@@ -75,6 +61,12 @@ export function AdminSidebar() {
       href: "/admin/chatbot",
     },
     {
+      name: "Properties",
+      group: "Management",
+      icon: <MapPinIcon className="mr-1.5" />,
+      href: "/admin/properties",
+    },
+    {
       name: "Units",
       group: "Management",
       icon: <HouseHeartIcon className="mr-1.5" />,
@@ -103,27 +95,6 @@ export function AdminSidebar() {
     },
     {} as Record<string, typeof navs>,
   );
-
-  const properties = useMemo(
-    () => [
-      {
-        id: "oakridge",
-        name: "Oakridge Residency",
-      },
-      {
-        id: "sunset",
-        name: "Sunset Towers",
-      },
-      {
-        id: "maple",
-        name: "Maple Court",
-      },
-    ],
-    [],
-  );
-
-  const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id ?? "");
-  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) ?? properties[0];
 
   return (
     <Sidebar>
@@ -159,34 +130,6 @@ export function AdminSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="md">
-                  <MapPinIcon className="mr-1.5" />
-                  <span>{selectedProperty?.name ?? "Select property"}</span>
-                  <ChevronsUpDownIcon className="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="start" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuRadioGroup value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
-                  {properties.map((property) => (
-                    <DropdownMenuRadioItem key={property.id} value={property.id}>
-                      {property.name}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <SettingsIcon className="mr-1" /> Manage Properties
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }

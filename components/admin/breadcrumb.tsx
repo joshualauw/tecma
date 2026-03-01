@@ -19,15 +19,17 @@ export function DynamicBreadcrumb() {
     <Breadcrumb className="hidden md:block">
       <BreadcrumbList>
         {pathSegments.map((segment, index) => {
-          const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
+          const href = `/admin/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
 
           const title = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
+          const NON_CLICKABLE_SEGMENTS = ["update", "edit", "view"];
+          const isClickable = !NON_CLICKABLE_SEGMENTS.includes(segment) && !isLast;
 
           return (
             <React.Fragment key={href}>
               <BreadcrumbItem>
-                {isLast ? (
+                {!isClickable ? (
                   <BreadcrumbPage className="font-semibold text-foreground">{title}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink href={href} className="capitalize">

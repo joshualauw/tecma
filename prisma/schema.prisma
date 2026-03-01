@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Bots {
+  id           Int       @id @default(autoincrement())
+  name         String
+  model        String?   @default("gpt-4o")
+  instructions String?
+  temperature  Float?    @default(0.5)
+  top_p        Float?    @default(1)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  property_id  Int?
+
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "bots_property_id_properties_id_fk")
+  sources    Sources[]
+
+  @@map("bots")
+}
+
+model Employees {
+  id           Int       @id @default(autoincrement())
+  user_id      Int?
+  address      String?
+  phone_number String    @unique(map: "employees_phone_number_unique") @db.VarChar
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  property_id  Int?
+
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
+  users      Users?      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
+
+  @@map("employees")
+}
+
+model Messages {
+  id          Int        @id @default(autoincrement())
+  room_id     Int?
+  sender_type SenderType
+  content     String
+  created_at  DateTime?  @default(now()) @db.Timestamp(6)
+  property_id Int?
+
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_property_id_properties_id_fk")
+  rooms      Rooms?      @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_room_id_rooms_id_fk")
+
+  @@map("messages")
+}
+
+model Occupancies {
+  id          Int       @id @default(autoincrement())
+  property_id Int?
+  unit_id     Int?
+  tenant_id   Int?
+  start_date  DateTime  @db.Timestamp(6)
+  end_date    DateTime? @db.Timestamp(6)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_property_id_properties_id_fk")
+  tenants    Tenants?    @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_tenant_id_tenants_id_fk")
+  units      Units?      @relation(fields: [unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_unit_id_units_id_fk")
+
+  @@map("occupancies")
+}
+
+model Properties {
+  id         Int       @id @default(autoincrement())
+  name       String
+  address    String?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  bots        Bots[]
+  employees   Employees[]
+  messages    Messages[]
+  occupancies Occupancies[]
+  rooms       Rooms[]
+  tenants     Tenants[]
+  units       Units[]
+  whatsapp    Whatsapp[]
+
+  @@map("properties")
+}
+
+model Rooms {
+  id              Int       @id @default(autoincrement())
+  tenant_id       Int?
+  last_message    String?
+  last_message_at DateTime? @db.Timestamp(6)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  whatsapp_id     Int?
+  property_id     Int?
+
+  messages   Messages[]
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_property_id_properties_id_fk")
+  tenants    Tenants?    @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_tenant_id_tenants_id_fk")
+  whatsapp   Whatsapp?   @relation(fields: [whatsapp_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_whatsapp_id_whatsapp_id_fk")
+
+  @@map("rooms")
+}
+
+model Sources {
+  id         Int         @id @default(autoincrement())
+  bot_id     Int?
+  type       SourceType?
+  title      String?
+  content    String?
+  created_at DateTime?   @default(now()) @db.Timestamp(6)
+
+  bots Bots? @relation(fields: [bot_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_bot_id_bots_id_fk")
+
+  @@map("sources")
+}
+
+model Tenants {
+  id           Int       @id @default(autoincrement())
+  name         String
+  address      String?
+  phone_number String    @unique(map: "tenants_phone_number_unique") @db.VarChar
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  property_id  Int?
+
+  occupancies Occupancies[]
+  rooms       Rooms[]
+  properties  Properties?   @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
+
+  @@map("tenants")
+}
+
+model Units {
+  id          Int       @id @default(autoincrement())
+  property_id Int?
+  code        String
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  occupancies Occupancies[]
+  properties  Properties?   @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
+
+  @@map("units")
+}
+
+model Users {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique(map: "users_email_unique") @db.VarChar
+  password String @db.VarChar
+
+  role      UserRole
+  employees Employees[]
+
+  @@map("users")
+}
+
+model Whatsapp {
+  id           Int       @id @default(autoincrement())
+  display_name String
+  waba_id      String    @unique(map: "whatsapp_waba_id_unique") @db.VarChar
+  phone_id     String    @unique(map: "whatsapp_phone_id_unique") @db.VarChar
+  phone_number String    @unique(map: "whatsapp_phone_number_unique") @db.VarChar
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  property_id  Int?
+
+  rooms      Rooms[]
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "whatsapp_property_id_properties_id_fk")
+
+  @@map("whatsapp")
+}
+
+enum SenderType {
+  tenant
+  bot
+  user
+
+  @@map("sender_type")
+}
+
+enum SourceType {
+  text
+  file
+
+  @@map("source_type")
+}
+
+enum UserRole {
+  super_admin @map("super-admin")
+  dispatcher
+  worker
+
+  @@map("user_role")
+}

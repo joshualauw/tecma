@@ -1,9 +1,7 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 class InvalidLoginError extends CredentialsSignin {
   code = "Invalid credentials";
@@ -16,8 +14,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnAdmin = nextUrl.pathname.startsWith("/admin");
-      if (isOnAdmin) {
+
+      const isProtected = nextUrl.pathname.startsWith("/admin");
+      if (isProtected) {
         if (isLoggedIn) return true;
         return false;
       }
@@ -38,7 +37,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new InvalidLoginError();
         }
 
-        const [user] = await db.select().from(users).where(eq(users.email, email));
+        const user = await prisma.users.findUnique({
+          where: { email },
+        });
         if (!user) throw new InvalidLoginError();
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
