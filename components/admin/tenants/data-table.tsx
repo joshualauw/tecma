@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteUnitAction } from "@/lib/actions/unit/delete-unit";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,15 +20,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { deleteTenantAction } from "@/lib/actions/tenant/delete-tenant";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-type UnitApiItem = {
+type TenantApiItem = {
   id: number;
-  code: string;
+  name: string;
+  phone_number: string;
+  address: string | null;
   properties: {
     id: number;
     name: string;
@@ -37,9 +39,9 @@ type UnitApiItem = {
   created_at: string | null;
 };
 
-type UnitsApiResponse = {
+type TenantsApiResponse = {
   data: {
-    units: UnitApiItem[];
+    tenants: TenantApiItem[];
     count: number;
   };
   success: boolean;
@@ -48,9 +50,9 @@ type UnitsApiResponse = {
 
 const PAGE_SIZE = 6;
 
-export default function UnitsDataTable() {
+export default function TenantsDataTable() {
   const router = useRouter();
-  const [data, setData] = useState<UnitApiItem[]>([]);
+  const [data, setData] = useState<TenantApiItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -58,7 +60,7 @@ export default function UnitsDataTable() {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
-  const [unitToDelete, setUnitToDelete] = useState<UnitApiItem | null>(null);
+  const [tenantToDelete, setTenantToDelete] = useState<TenantApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -67,7 +69,7 @@ export default function UnitsDataTable() {
     [totalCount, pagination.pageSize],
   );
 
-  const fetchUnits = useCallback(async () => {
+  const fetchTenants = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         page: String(pagination.pageIndex),
@@ -79,41 +81,43 @@ export default function UnitsDataTable() {
         params.set("search", searchValue);
       }
 
-      const response = await fetch(`/api/units?${params.toString()}`, {
+      const response = await fetch(`/api/tenants?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch units");
+        throw new Error("Failed to fetch tenants");
       }
 
-      const payload = (await response.json()) as UnitsApiResponse;
+      const payload = (await response.json()) as TenantsApiResponse;
 
       if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch units");
+        throw new Error(payload.message || "Failed to fetch tenants");
       }
 
       setData(
-        payload.data.units.map((unit) => ({
-          id: unit.id,
-          code: unit.code,
-          properties: unit.properties,
-          created_at: unit.created_at,
+        payload.data.tenants.map((tenant) => ({
+          id: tenant.id,
+          name: tenant.name,
+          phone_number: tenant.phone_number,
+          address: tenant.address,
+          properties: tenant.properties,
+          created_at: tenant.created_at,
         })),
       );
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to fetch units");
+      toast.error("Failed to fetch tenants");
       setData([]);
       setTotalCount(0);
     }
   }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
 
   useEffect(() => {
-    void fetchUnits();
-  }, [fetchUnits]);
+    void fetchTenants();
+  }, [fetchTenants]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,15 +129,24 @@ export default function UnitsDataTable() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<UnitApiItem>[] = [
+  const columns: ColumnDef<TenantApiItem>[] = [
     {
       id: "row",
       header: "Row",
       cell: ({ row }) => row.index + 1,
     },
     {
-      accessorKey: "code",
-      header: "Code",
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "phone_number",
+      header: "Phone Number",
+    },
+    {
+      accessorKey: "address",
+      header: "Address",
+      cell: ({ row }) => row.original.address ?? "-",
     },
     {
       id: "property",
@@ -163,13 +176,13 @@ export default function UnitsDataTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/units/update/${row.original.id}`)}>
+            <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/update/${row.original.id}`)}>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
               onSelect={() => {
-                setUnitToDelete(row.original);
+                setTenantToDelete(row.original);
                 setIsDeleteDialogOpen(true);
               }}
             >
@@ -182,18 +195,18 @@ export default function UnitsDataTable() {
   ];
 
   async function onConfirmDelete() {
-    if (!unitToDelete || isDeleting) {
+    if (!tenantToDelete || isDeleting) {
       return;
     }
 
     setIsDeleting(true);
-    const result = await deleteUnitAction(unitToDelete.id);
+    const result = await deleteTenantAction(tenantToDelete.id);
 
     if (result.success) {
-      toast.success("Unit deleted successfully");
+      toast.success("Tenant deleted successfully");
       setIsDeleteDialogOpen(false);
-      setUnitToDelete(null);
-      await fetchUnits();
+      setTenantToDelete(null);
+      await fetchTenants();
     } else {
       toast.error(result.error);
     }
@@ -222,7 +235,7 @@ export default function UnitsDataTable() {
         <Input
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="Search by code..."
+          placeholder="Search by name, phone..."
           className="max-w-sm"
         />
 
@@ -251,7 +264,7 @@ export default function UnitsDataTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No units found.
+                    No tenants found.
                   </TableCell>
                 </TableRow>
               )}
@@ -282,7 +295,7 @@ export default function UnitsDataTable() {
         onOpenChange={(open) => {
           setIsDeleteDialogOpen(open);
           if (!open) {
-            setUnitToDelete(null);
+            setTenantToDelete(null);
           }
         }}
       >
@@ -290,7 +303,7 @@ export default function UnitsDataTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Deleting <strong>{unitToDelete?.code ?? "this unit"}</strong> will
+              This action cannot be undone. Deleting <strong>{tenantToDelete?.name ?? "this tenant"}</strong> will
               permanently remove it and everything related to it.
             </AlertDialogDescription>
           </AlertDialogHeader>

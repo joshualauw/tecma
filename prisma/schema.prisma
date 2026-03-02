@@ -25,14 +25,12 @@ model Bots {
 
 model Employees {
   id           Int       @id @default(autoincrement())
-  user_id      Int?
   address      String?
   phone_number String    @unique(map: "employees_phone_number_unique") @db.VarChar
   created_at   DateTime? @default(now()) @db.Timestamp(6)
   property_id  Int?
 
   properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
-  users      Users?      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
 
   @@map("employees")
 }
@@ -56,8 +54,6 @@ model Occupancies {
   property_id Int?
   unit_id     Int?
   tenant_id   Int?
-  start_date  DateTime  @db.Timestamp(6)
-  end_date    DateTime? @db.Timestamp(6)
   created_at  DateTime? @default(now()) @db.Timestamp(6)
 
   properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_property_id_properties_id_fk")
@@ -148,8 +144,7 @@ model Users {
   email    String @unique(map: "users_email_unique") @db.VarChar
   password String @db.VarChar
 
-  role      UserRole
-  employees Employees[]
+  role UserRole
 
   @@map("users")
 }
@@ -186,8 +181,6 @@ enum SourceType {
 
 enum UserRole {
   super_admin @map("super-admin")
-  dispatcher
-  worker
 
   @@map("user_role")
 }

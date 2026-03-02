@@ -27,7 +27,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-export type PropertyTableItem = {
+export type PropertyApiItem = {
   id: number;
   name: string;
   address: string | null;
@@ -36,7 +36,7 @@ export type PropertyTableItem = {
 
 type PropertiesApiResponse = {
   data: {
-    properties: PropertyTableItem[];
+    properties: PropertyApiItem[];
     count: number;
   };
   success: boolean;
@@ -47,7 +47,7 @@ const PAGE_SIZE = 6;
 
 export default function PropertiesDataTable() {
   const router = useRouter();
-  const [data, setData] = useState<PropertyTableItem[]>([]);
+  const [data, setData] = useState<PropertyApiItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -55,7 +55,7 @@ export default function PropertiesDataTable() {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
-  const [propertyToDelete, setPropertyToDelete] = useState<PropertyTableItem | null>(null);
+  const [propertyToDelete, setPropertyToDelete] = useState<PropertyApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -122,7 +122,7 @@ export default function PropertiesDataTable() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<PropertyTableItem>[] = [
+  const columns: ColumnDef<PropertyApiItem>[] = [
     {
       id: "row",
       header: "Row",
