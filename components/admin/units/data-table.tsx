@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
@@ -48,12 +49,20 @@ type UnitsApiResponse = {
 
 const PAGE_SIZE = 6;
 
-export default function UnitsDataTable() {
+interface UnitsDataTableProps {
+  properties: {
+    id: number;
+    name: string;
+  }[];
+}
+
+export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
   const router = useRouter();
   const [data, setData] = useState<UnitApiItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
@@ -77,6 +86,10 @@ export default function UnitsDataTable() {
       const searchValue = globalFilter.trim();
       if (searchValue) {
         params.set("search", searchValue);
+      }
+
+      if (selectedPropertyId !== "all") {
+        params.set("propertyId", selectedPropertyId);
       }
 
       const response = await fetch(`/api/units?${params.toString()}`, {
@@ -109,7 +122,7 @@ export default function UnitsDataTable() {
       setData([]);
       setTotalCount(0);
     }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
+  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
 
   useEffect(() => {
     void fetchUnits();
@@ -219,12 +232,33 @@ export default function UnitsDataTable() {
   return (
     <>
       <div className="space-y-4">
-        <Input
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="Search by code..."
-          className="max-w-sm"
-        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search by code..."
+            className="max-w-sm"
+          />
+          <Select
+            value={selectedPropertyId}
+            onValueChange={(value) => {
+              setSelectedPropertyId(value);
+              setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Filter by property" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All properties</SelectItem>
+              {properties.map((property) => (
+                <SelectItem key={property.id} value={String(property.id)}>
+                  {property.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="rounded-md border">
           <Table>

@@ -2,8 +2,19 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import TenantsDataTable from "@/components/admin/tenants/data-table";
+import { prisma } from "@/lib/prisma";
 
-export default function TenantsPage() {
+export default async function TenantsPage() {
+  const properties = await prisma.properties.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      created_at: "asc",
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -17,7 +28,7 @@ export default function TenantsPage() {
         </Link>
       </div>
 
-      <TenantsDataTable />
+      <TenantsDataTable properties={properties} />
     </div>
   );
 }

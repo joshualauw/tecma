@@ -8,18 +8,24 @@ export async function GET(request: NextRequest) {
     const pageParam = Number(searchParams.get("page") ?? 0);
     const sizeParam = Number(searchParams.get("size") ?? 10);
     const search = (searchParams.get("search") ?? "").trim();
+    const propertyIdParam = Number(searchParams.get("propertyId"));
 
     const page = Number.isFinite(pageParam) && pageParam >= 0 ? Math.floor(pageParam) : 0;
     const size = Number.isFinite(sizeParam) && sizeParam > 0 ? Math.floor(sizeParam) : 10;
+    const propertyId =
+      Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
+        ? propertyIdParam
+        : null;
 
-    const where: UnitsWhereInput = search
-      ? {
-          OR: [
-            { code: { contains: search, mode: "insensitive" } },
-            { properties: { is: { name: { contains: search, mode: "insensitive" } } } },
-          ],
-        }
-      : {};
+    const where: UnitsWhereInput = {};
+
+    if (search) {
+      where.code = { contains: search, mode: "insensitive" };
+    }
+
+    if (propertyId !== null) {
+      where.property_id = propertyId;
+    }
 
     const units = await prisma.units.findMany({
       select: {
