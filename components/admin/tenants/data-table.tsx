@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { deleteTenantAction } from "@/lib/actions/tenant/delete-tenant";
+import { deleteTenantAction } from "@/lib/actions/tenants/delete-tenant";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -249,7 +249,7 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
           <Input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search by name, phone..."
+            placeholder="Search by name, phone number, address..."
             className="max-w-sm"
           />
           <Select

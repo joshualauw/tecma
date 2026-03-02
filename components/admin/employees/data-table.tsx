@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deletePropertyAction } from "@/lib/actions/properties/delete-property";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,23 +19,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { deleteEmployeeAction } from "@/lib/actions/employees/delete-employee";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-export type PropertyApiItem = {
+type EmployeeApiItem = {
   id: number;
   name: string;
+  phone_number: string;
   address: string | null;
+  properties: {
+    id: number;
+    name: string;
+  } | null;
   created_at: string | null;
 };
 
-type PropertiesApiResponse = {
+type EmployeesApiResponse = {
   data: {
-    properties: PropertyApiItem[];
+    employees: EmployeeApiItem[];
     count: number;
   };
   success: boolean;
@@ -45,17 +51,25 @@ type PropertiesApiResponse = {
 
 const PAGE_SIZE = 6;
 
-export default function PropertiesDataTable() {
+interface EmployeesDataTableProps {
+  properties: {
+    id: number;
+    name: string;
+  }[];
+}
+
+export default function EmployeesDataTable({ properties }: EmployeesDataTableProps) {
   const router = useRouter();
-  const [data, setData] = useState<PropertyApiItem[]>([]);
+  const [data, setData] = useState<EmployeeApiItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
-  const [propertyToDelete, setPropertyToDelete] = useState<PropertyApiItem | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -64,7 +78,7 @@ export default function PropertiesDataTable() {
     [totalCount, pagination.pageSize],
   );
 
-  const fetchProperties = useCallback(async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         page: String(pagination.pageIndex),
@@ -76,41 +90,47 @@ export default function PropertiesDataTable() {
         params.set("search", searchValue);
       }
 
-      const response = await fetch(`/api/properties?${params.toString()}`, {
+      if (selectedPropertyId !== "all") {
+        params.set("propertyId", selectedPropertyId);
+      }
+
+      const response = await fetch(`/api/employees?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch properties");
+        throw new Error("Failed to fetch employees");
       }
 
-      const payload = (await response.json()) as PropertiesApiResponse;
+      const payload = (await response.json()) as EmployeesApiResponse;
 
       if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch properties");
+        throw new Error(payload.message || "Failed to fetch employees");
       }
 
       setData(
-        payload.data.properties.map((property) => ({
-          id: property.id,
-          name: property.name,
-          address: property.address,
-          created_at: property.created_at,
+        payload.data.employees.map((employee) => ({
+          id: employee.id,
+          name: employee.name,
+          phone_number: employee.phone_number,
+          address: employee.address,
+          properties: employee.properties,
+          created_at: employee.created_at,
         })),
       );
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to fetch properties");
+      toast.error("Failed to fetch employees");
       setData([]);
       setTotalCount(0);
     }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
+  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
 
   useEffect(() => {
-    void fetchProperties();
-  }, [fetchProperties]);
+    void fetchEmployees();
+  }, [fetchEmployees]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -122,7 +142,7 @@ export default function PropertiesDataTable() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<PropertyApiItem>[] = [
+  const columns: ColumnDef<EmployeeApiItem>[] = [
     {
       id: "row",
       header: "Row",
@@ -133,9 +153,18 @@ export default function PropertiesDataTable() {
       header: "Name",
     },
     {
+      accessorKey: "phone_number",
+      header: "Phone Number",
+    },
+    {
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => row.original.address ?? "-",
+    },
+    {
+      id: "property",
+      header: "Property",
+      cell: ({ row }) => row.original.properties?.name ?? "-",
     },
     {
       accessorKey: "created_at",
@@ -160,13 +189,13 @@ export default function PropertiesDataTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/properties/update/${row.original.id}`)}>
+            <DropdownMenuItem onSelect={() => router.push(`/admin/employees/update/${row.original.id}`)}>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
               onSelect={() => {
-                setPropertyToDelete(row.original);
+                setEmployeeToDelete(row.original);
                 setIsDeleteDialogOpen(true);
               }}
             >
@@ -179,18 +208,18 @@ export default function PropertiesDataTable() {
   ];
 
   async function onConfirmDelete() {
-    if (!propertyToDelete || isDeleting) {
+    if (!employeeToDelete || isDeleting) {
       return;
     }
 
     setIsDeleting(true);
-    const result = await deletePropertyAction(propertyToDelete.id);
+    const result = await deleteEmployeeAction(employeeToDelete.id);
 
     if (result.success) {
-      toast.success("Property deleted successfully");
+      toast.success("Employee deleted successfully");
       setIsDeleteDialogOpen(false);
-      setPropertyToDelete(null);
-      await fetchProperties();
+      setEmployeeToDelete(null);
+      await fetchEmployees();
     } else {
       toast.error(result.error);
     }
@@ -216,12 +245,33 @@ export default function PropertiesDataTable() {
   return (
     <>
       <div className="space-y-4">
-        <Input
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="Search by name or address..."
-          className="max-w-sm"
-        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search by name, phone number, address..."
+            className="max-w-sm"
+          />
+          <Select
+            value={selectedPropertyId}
+            onValueChange={(value) => {
+              setSelectedPropertyId(value);
+              setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Filter by property" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All properties</SelectItem>
+              {properties.map((property) => (
+                <SelectItem key={property.id} value={String(property.id)}>
+                  {property.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="rounded-md border">
           <Table>
@@ -248,7 +298,7 @@ export default function PropertiesDataTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No properties found.
+                    No employees found.
                   </TableCell>
                 </TableRow>
               )}
@@ -279,7 +329,7 @@ export default function PropertiesDataTable() {
         onOpenChange={(open) => {
           setIsDeleteDialogOpen(open);
           if (!open) {
-            setPropertyToDelete(null);
+            setEmployeeToDelete(null);
           }
         }}
       >
@@ -287,8 +337,9 @@ export default function PropertiesDataTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Deleting <strong>{propertyToDelete?.name ?? "this property"}</strong> will
-              permanently remove it and everything related to it.
+              This action cannot be undone. Deleting{" "}
+              <strong>{employeeToDelete?.phone_number ?? "this employee"}</strong> will permanently remove it and
+              everything related to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

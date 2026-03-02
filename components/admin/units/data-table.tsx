@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteUnitAction } from "@/lib/actions/unit/delete-unit";
+import { deleteUnitAction } from "@/lib/actions/units/delete-unit";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

@@ -6,7 +6,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createTenantAction } from "@/lib/actions/tenants/create-tenant";
+import { updateEmployeeAction } from "@/lib/actions/employees/update-employee";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -14,43 +14,52 @@ import { toast } from "sonner";
 import z from "zod";
 
 const formSchema = z.object({
-  name: z.string().trim().min(1, "Tenant name is required"),
+  name: z.string().trim().min(1, "Employee name is required"),
   phoneNumber: z.string().trim().min(1, "Phone number is required"),
   address: z.string().trim().optional(),
   propertyId: z.string().trim().min(1, "Property is required"),
 });
 
-interface TenantCreateFormProps {
+interface EmployeeUpdateFormProps {
+  data: {
+    id: number;
+    name: string;
+    phoneNumber: string;
+    address: string | null;
+    propertyId: number | null;
+  };
   properties: {
     id: number;
     name: string;
   }[];
 }
 
-export default function TenantCreateForm({ properties }: TenantCreateFormProps) {
+export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateFormProps) {
+  const { id, name, phoneNumber, address, propertyId } = data;
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      phoneNumber: "",
-      address: "",
-      propertyId: "",
+      name,
+      phoneNumber,
+      address: address ?? "",
+      propertyId: propertyId ? String(propertyId) : "",
     },
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();
+    formData.append("id", String(id));
     formData.append("name", data.name);
     formData.append("phoneNumber", data.phoneNumber);
     formData.append("address", data.address ?? "");
     formData.append("propertyId", data.propertyId);
 
-    const result = await createTenantAction(formData);
+    const result = await updateEmployeeAction(formData);
     if (result.success) {
-      router.push("/admin/tenants");
-      toast.success("Tenant created successfully");
+      router.push("/admin/employees");
+      toast.success("Employee updated successfully");
     } else {
       form.setError("name", { message: result.error });
     }

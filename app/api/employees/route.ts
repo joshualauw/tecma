@@ -1,4 +1,4 @@
-import { TenantsWhereInput } from "@/generated/prisma/models";
+import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         ? propertyIdParam
         : null;
 
-    const where: TenantsWhereInput = {};
+    const where: EmployeesWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       where.property_id = propertyId;
     }
 
-    const tenants = await prisma.tenants.findMany({
+    const employees = await prisma.employees.findMany({
       select: {
         id: true,
         name: true,
@@ -53,22 +53,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const tenantsCount = await prisma.tenants.count({ where });
+    const employeesCount = await prisma.employees.count({ where });
 
     return NextResponse.json({
       data: {
-        tenants,
-        count: tenantsCount,
+        employees,
+        count: employeesCount,
       },
-      message: "Tenants fetched successfully",
+      message: "Employees fetched successfully",
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching tenants:", error);
+    console.error("Error fetching employees:", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching tenants",
+        message: "An error occurred while fetching employees",
         success: false,
       },
       { status: 500 },

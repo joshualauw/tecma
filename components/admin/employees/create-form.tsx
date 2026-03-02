@@ -6,7 +6,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createTenantAction } from "@/lib/actions/tenants/create-tenant";
+import { createEmployeeAction } from "@/lib/actions/employees/create-employee";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -14,20 +14,20 @@ import { toast } from "sonner";
 import z from "zod";
 
 const formSchema = z.object({
-  name: z.string().trim().min(1, "Tenant name is required"),
+  name: z.string().trim().min(1, "Employee name is required"),
   phoneNumber: z.string().trim().min(1, "Phone number is required"),
   address: z.string().trim().optional(),
   propertyId: z.string().trim().min(1, "Property is required"),
 });
 
-interface TenantCreateFormProps {
+interface EmployeeCreateFormProps {
   properties: {
     id: number;
     name: string;
   }[];
 }
 
-export default function TenantCreateForm({ properties }: TenantCreateFormProps) {
+export default function EmployeeCreateForm({ properties }: EmployeeCreateFormProps) {
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -47,10 +47,10 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
     formData.append("address", data.address ?? "");
     formData.append("propertyId", data.propertyId);
 
-    const result = await createTenantAction(formData);
+    const result = await createEmployeeAction(formData);
     if (result.success) {
-      router.push("/admin/tenants");
-      toast.success("Tenant created successfully");
+      router.push("/admin/employees");
+      toast.success("Employee created successfully");
     } else {
       form.setError("name", { message: result.error });
     }
