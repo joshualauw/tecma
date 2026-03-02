@@ -45,7 +45,7 @@ export default function PropertyCreateForm() {
   }
 
   return (
-    <Card>
+    <Card className="rounded-sm">
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

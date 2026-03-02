@@ -10,6 +10,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import React from "react";
+import Link from "next/link";
 
 export function DynamicBreadcrumb() {
   const pathname = usePathname();
@@ -32,8 +33,8 @@ export function DynamicBreadcrumb() {
                 {!isClickable ? (
                   <BreadcrumbPage className="font-semibold text-foreground">{title}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink href={href} className="capitalize">
-                    {title}
+                  <BreadcrumbLink asChild className="capitalize">
+                    <Link href={href}>{title}</Link>
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>

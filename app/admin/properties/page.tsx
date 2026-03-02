@@ -1,23 +1,9 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import PropertiesDataTable from "@/components/admin/properties/data-table";
 
-export default async function PropertyPage() {
-  const properties = await prisma.properties.findMany({
-    orderBy: {
-      created_at: "desc",
-    },
-  });
-
-  const tableData = properties.map((property) => ({
-    id: property.id,
-    name: property.name,
-    address: property.address,
-    createdAt: property.created_at ? property.created_at.toISOString() : null,
-  }));
-
+export default function PropertyPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -31,7 +17,7 @@ export default async function PropertyPage() {
         </Link>
       </div>
 
-      <PropertiesDataTable data={tableData} />
+      <PropertiesDataTable />
     </div>
   );
 }

@@ -102,7 +102,7 @@ export function AdminSidebar() {
         <div className="px-2 pt-4">
           <Logo />
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-            Tenant Complain Management
+            Tenant Complaint Management
           </span>
         </div>
       </SidebarHeader>

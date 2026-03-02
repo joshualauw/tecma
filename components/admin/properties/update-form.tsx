@@ -18,12 +18,15 @@ const formSchema = z.object({
 });
 
 interface PropertyUpdateFormProps {
-  id: number;
-  name: string;
-  address: string | null;
+  data: {
+    id: number;
+    name: string;
+    address: string | null;
+  };
 }
 
-export default function PropertyUpdateForm({ id, name, address }: PropertyUpdateFormProps) {
+export default function PropertyUpdateForm({ data }: PropertyUpdateFormProps) {
+  const { id, name, address } = data;
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -52,7 +55,7 @@ export default function PropertyUpdateForm({ id, name, address }: PropertyUpdate
   }
 
   return (
-    <Card>
+    <Card className="rounded-sm">
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

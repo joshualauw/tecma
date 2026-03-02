@@ -21,50 +21,106 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  ColumnDef,
-  FilterFn,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export type PropertyTableItem = {
   id: number;
   name: string;
   address: string | null;
-  createdAt: string | null;
+  created_at: string | null;
 };
 
-interface PropertiesDataTableProps {
-  data: PropertyTableItem[];
-}
-
-const propertySearchFilter: FilterFn<PropertyTableItem> = (row, _columnId, filterValue) => {
-  const query = String(filterValue ?? "")
-    .trim()
-    .toLowerCase();
-
-  if (!query) {
-    return true;
-  }
-
-  const searchable = `${row.original.name} ${row.original.address ?? ""}`.toLowerCase();
-  return searchable.includes(query);
+type PropertiesApiResponse = {
+  data: {
+    properties: PropertyTableItem[];
+    count: number;
+  };
+  success: boolean;
+  message: string;
 };
 
-export default function PropertiesDataTable({ data }: PropertiesDataTableProps) {
+const PAGE_SIZE = 6;
+
+export default function PropertiesDataTable() {
   const router = useRouter();
+  const [data, setData] = useState<PropertyTableItem[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  });
   const [propertyToDelete, setPropertyToDelete] = useState<PropertyTableItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const pageCount = useMemo(
+    () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
+    [totalCount, pagination.pageSize],
+  );
+
+  const fetchProperties = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        page: String(pagination.pageIndex),
+        size: String(pagination.pageSize),
+      });
+
+      const searchValue = globalFilter.trim();
+      if (searchValue) {
+        params.set("search", searchValue);
+      }
+
+      const response = await fetch(`/api/properties?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch properties");
+      }
+
+      const payload = (await response.json()) as PropertiesApiResponse;
+
+      if (!payload.success) {
+        throw new Error(payload.message || "Failed to fetch properties");
+      }
+
+      setData(
+        payload.data.properties.map((property) => ({
+          id: property.id,
+          name: property.name,
+          address: property.address,
+          created_at: property.created_at,
+        })),
+      );
+      setTotalCount(payload.data.count);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch properties");
+      setData([]);
+      setTotalCount(0);
+    }
+  }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
+
+  useEffect(() => {
+    void fetchProperties();
+  }, [fetchProperties]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const nextFilter = searchInput.trim();
+      setGlobalFilter(nextFilter);
+      setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const columns: ColumnDef<PropertyTableItem>[] = [
     {
@@ -82,10 +138,10 @@ export default function PropertiesDataTable({ data }: PropertiesDataTableProps) 
       cell: ({ row }) => row.original.address ?? "-",
     },
     {
-      accessorKey: "createdAt",
+      accessorKey: "created_at",
       header: "Created At",
       cell: ({ row }) => {
-        const value = row.original.createdAt;
+        const value = row.original.created_at;
         if (!value) {
           return "-";
         }
@@ -134,7 +190,7 @@ export default function PropertiesDataTable({ data }: PropertiesDataTableProps) 
       toast.success("Property deleted successfully");
       setIsDeleteDialogOpen(false);
       setPropertyToDelete(null);
-      router.refresh();
+      await fetchProperties();
     } else {
       toast.error(result.error);
     }
@@ -145,27 +201,24 @@ export default function PropertiesDataTable({ data }: PropertiesDataTableProps) 
   const table = useReactTable({
     data,
     columns,
+    pageCount,
+    manualPagination: true,
+    manualFiltering: true,
     state: {
+      pagination,
       globalFilter,
     },
+    onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: propertySearchFilter,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   return (
     <>
       <div className="space-y-4">
         <Input
-          value={globalFilter}
-          onChange={(event) => setGlobalFilter(event.target.value)}
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
           placeholder="Search by name or address..."
           className="max-w-sm"
         />
