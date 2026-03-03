@@ -24,6 +24,7 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
       phone_number: true,
       address: true,
       property_id: true,
+      unit_id: true,
     },
   });
 
@@ -53,6 +54,7 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
           phoneNumber: tenant.phone_number,
           address: tenant.address,
           propertyId: tenant.property_id,
+          unitId: tenant.unit_id,
         }}
         properties={properties}
       />

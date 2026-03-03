@@ -44,6 +44,12 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        unit: {
+          select: {
+            id: true,
+            code: true,
+          },
+        },
       },
       where,
       skip: page * size,

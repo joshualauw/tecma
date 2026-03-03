@@ -153,6 +153,11 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       header: "Name",
     },
     {
+      id: "property",
+      header: "Property",
+      cell: ({ row }) => row.original.properties?.name ?? "-",
+    },
+    {
       accessorKey: "phone_number",
       header: "Phone Number",
     },
@@ -160,11 +165,6 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => row.original.address ?? "-",
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.properties?.name ?? "-",
     },
     {
       accessorKey: "created_at",

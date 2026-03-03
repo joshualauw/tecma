@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createTenantAction } from "@/lib/actions/tenants/create-tenant";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -18,6 +19,7 @@ const formSchema = z.object({
   phoneNumber: z.string().trim().min(1, "Phone number is required"),
   address: z.string().trim().optional(),
   propertyId: z.string().trim().min(1, "Property is required"),
+  unitId: z.string().trim().min(1, "Unit is required"),
 });
 
 interface TenantCreateFormProps {
@@ -29,6 +31,8 @@ interface TenantCreateFormProps {
 
 export default function TenantCreateForm({ properties }: TenantCreateFormProps) {
   const router = useRouter();
+  const [availableUnits, setAvailableUnits] = useState<{ id: number; code: string }[]>([]);
+  const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,8 +41,60 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
       phoneNumber: "",
       address: "",
       propertyId: "",
+      unitId: "",
     },
   });
+
+  const selectedPropertyId = form.watch("propertyId");
+
+  useEffect(() => {
+    const propertyId = Number(selectedPropertyId);
+
+    form.setValue("unitId", "");
+
+    if (!Number.isInteger(propertyId) || propertyId <= 0) {
+      setAvailableUnits([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchAvailableUnits() {
+      setIsLoadingUnits(true);
+
+      try {
+        const response = await fetch(`/api/units/available?propertyId=${propertyId}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as {
+          success: boolean;
+          data: { units: { id: number; code: string }[] } | null;
+          message?: string;
+        };
+
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message || "Failed to fetch available units");
+        }
+
+        setAvailableUnits(payload.data?.units ?? []);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          return;
+        }
+
+        setAvailableUnits([]);
+        toast.error("Failed to load available units");
+      } finally {
+        setIsLoadingUnits(false);
+      }
+    }
+
+    fetchAvailableUnits();
+
+    return () => {
+      controller.abort();
+    };
+  }, [form, selectedPropertyId]);
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();
@@ -46,6 +102,7 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
     formData.append("phoneNumber", data.phoneNumber);
     formData.append("address", data.address ?? "");
     formData.append("propertyId", data.propertyId);
+    formData.append("unitId", data.unitId);
 
     const result = await createTenantAction(formData);
     if (result.success) {
@@ -61,6 +118,17 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
+            <Controller
+              name="name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Name</FieldLabel>
+                  <Input {...field} placeholder="Juan Dela Cruz" />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <Controller
               name="propertyId"
               control={form.control}
@@ -84,12 +152,37 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
               )}
             />
             <Controller
-              name="name"
+              name="unitId"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input {...field} placeholder="Juan Dela Cruz" />
+                  <FieldLabel>Unit</FieldLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={!selectedPropertyId || isLoadingUnits || availableUnits.length === 0}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          !selectedPropertyId
+                            ? "Select a property first"
+                            : isLoadingUnits
+                              ? "Loading units..."
+                              : availableUnits.length === 0
+                                ? "No available units"
+                                : "Select a unit"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {availableUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={String(unit.id)}>
+                          {unit.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

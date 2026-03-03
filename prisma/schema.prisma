@@ -50,34 +50,19 @@ model Messages {
   @@map("messages")
 }
 
-model Occupancies {
-  id          Int       @id @default(autoincrement())
-  property_id Int?
-  unit_id     Int?
-  tenant_id   Int?
-  created_at  DateTime? @default(now()) @db.Timestamp(6)
-
-  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_property_id_properties_id_fk")
-  tenants    Tenants?    @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_tenant_id_tenants_id_fk")
-  units      Units?      @relation(fields: [unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "occupancies_unit_id_units_id_fk")
-
-  @@map("occupancies")
-}
-
 model Properties {
   id         Int       @id @default(autoincrement())
   name       String
   address    String?
   created_at DateTime? @default(now()) @db.Timestamp(6)
 
-  bots        Bots[]
-  employees   Employees[]
-  messages    Messages[]
-  occupancies Occupancies[]
-  rooms       Rooms[]
-  tenants     Tenants[]
-  units       Units[]
-  whatsapp    Whatsapp[]
+  bots      Bots[]
+  employees Employees[]
+  messages  Messages[]
+  rooms     Rooms[]
+  tenants   Tenants[]
+  units     Units[]
+  whatsapp  Whatsapp[]
 
   @@map("properties")
 }
@@ -118,11 +103,12 @@ model Tenants {
   address      String?
   phone_number String    @unique(map: "tenants_phone_number_unique") @db.VarChar
   created_at   DateTime? @default(now()) @db.Timestamp(6)
+  unit_id      Int?
   property_id  Int?
 
-  occupancies Occupancies[]
-  rooms       Rooms[]
-  properties  Properties?   @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
+  rooms      Rooms[]
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
+  unit       Units?      @relation(fields: [unit_id], references: [id])
 
   @@map("tenants")
 }
@@ -133,8 +119,8 @@ model Units {
   code        String
   created_at  DateTime? @default(now()) @db.Timestamp(6)
 
-  occupancies Occupancies[]
-  properties  Properties?   @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
+  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
+  tenants    Tenants[]
 
   @@map("units")
 }

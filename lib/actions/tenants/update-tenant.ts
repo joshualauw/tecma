@@ -8,6 +8,7 @@ export async function updateTenantAction(formData: FormData) {
   const phoneNumber = formData.get("phoneNumber");
   const address = formData.get("address");
   const propertyId = formData.get("propertyId");
+  const unitId = formData.get("unitId");
 
   const tenantId = Number(id);
   if (!Number.isInteger(tenantId) || tenantId <= 0) {
@@ -19,6 +20,11 @@ export async function updateTenantAction(formData: FormData) {
     return { success: false, error: "Invalid property id" };
   }
 
+  const parsedUnitId = Number(unitId);
+  if (!Number.isInteger(parsedUnitId) || parsedUnitId <= 0) {
+    return { success: false, error: "Invalid unit id" };
+  }
+
   try {
     const existingTenant = await prisma.tenants.findUnique({
       where: {
@@ -26,11 +32,36 @@ export async function updateTenantAction(formData: FormData) {
       },
       select: {
         id: true,
+        unit_id: true,
       },
     });
 
     if (!existingTenant) {
       return { success: false, error: "Tenant not found" };
+    }
+
+    const availableUnit = await prisma.units.findFirst({
+      where: {
+        id: parsedUnitId,
+        property_id: parsedPropertyId,
+        OR: [
+          {
+            tenants: {
+              none: {},
+            },
+          },
+          {
+            id: existingTenant.unit_id ?? -1,
+          },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!availableUnit) {
+      return { success: false, error: "Selected unit is not available" };
     }
 
     await prisma.tenants.update({
@@ -42,6 +73,7 @@ export async function updateTenantAction(formData: FormData) {
         phone_number: phoneNumber as string,
         address: (address as string) || null,
         property_id: parsedPropertyId,
+        unit_id: parsedUnitId,
       },
     });
 

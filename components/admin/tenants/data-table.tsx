@@ -37,6 +37,10 @@ type TenantApiItem = {
     id: number;
     name: string;
   } | null;
+  unit: {
+    id: number;
+    code: string;
+  } | null;
   created_at: string | null;
 };
 
@@ -116,6 +120,7 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
           phone_number: tenant.phone_number,
           address: tenant.address,
           properties: tenant.properties,
+          unit: tenant.unit,
           created_at: tenant.created_at,
         })),
       );
@@ -153,6 +158,16 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       header: "Name",
     },
     {
+      id: "property",
+      header: "Property",
+      cell: ({ row }) => row.original.properties?.name ?? "-",
+    },
+    {
+      id: "unit",
+      header: "Unit",
+      cell: ({ row }) => row.original.unit?.code ?? "-",
+    },
+    {
       accessorKey: "phone_number",
       header: "Phone Number",
     },
@@ -160,11 +175,6 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => row.original.address ?? "-",
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.properties?.name ?? "-",
     },
     {
       accessorKey: "created_at",
