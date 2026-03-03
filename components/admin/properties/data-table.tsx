@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deletePropertyAction } from "@/lib/actions/properties/delete-property";
 import { Button } from "@/components/ui/button";
+import type { PropertiesApiResponse, PropertyApiItem } from "@/app/api/properties/route";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,22 +27,6 @@ import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-export type PropertyApiItem = {
-  id: number;
-  name: string;
-  address: string | null;
-  created_at: string | null;
-};
-
-type PropertiesApiResponse = {
-  data: {
-    properties: PropertyApiItem[];
-    count: number;
-  };
-  success: boolean;
-  message: string;
-};
 
 const PAGE_SIZE = 6;
 
@@ -89,6 +74,10 @@ export default function PropertiesDataTable() {
 
       if (!payload.success) {
         throw new Error(payload.message || "Failed to fetch properties");
+      }
+
+      if (!payload.data) {
+        throw new Error(payload.message || "No property data returned");
       }
 
       setData(
@@ -187,12 +176,12 @@ export default function PropertiesDataTable() {
     const result = await deletePropertyAction(propertyToDelete.id);
 
     if (result.success) {
-      toast.success("Property deleted successfully");
+      toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setPropertyToDelete(null);
       await fetchProperties();
     } else {
-      toast.error(result.error);
+      toast.error(result.message);
     }
 
     setIsDeleting(false);

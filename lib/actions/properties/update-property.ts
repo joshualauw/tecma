@@ -1,15 +1,18 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function updatePropertyAction(formData: FormData) {
+type UpdatePropertyActionResponse = ApiResponse<null>;
+
+export async function updatePropertyAction(formData: FormData): Promise<UpdatePropertyActionResponse> {
   const id = formData.get("id");
   const name = formData.get("name");
   const address = formData.get("address");
 
   const propertyId = Number(id);
   if (!Number.isInteger(propertyId) || propertyId <= 0) {
-    return { success: false, error: "Invalid property id" };
+    return { success: false, message: "Invalid property id" };
   }
 
   try {
@@ -23,7 +26,7 @@ export async function updatePropertyAction(formData: FormData) {
     });
 
     if (!existingProperty) {
-      return { success: false, error: "Property not found" };
+      return { success: false, message: "Property not found" };
     }
 
     await prisma.properties.update({
@@ -36,9 +39,9 @@ export async function updatePropertyAction(formData: FormData) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Property updated successfully" };
   } catch (error) {
     console.error("Error updating property:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

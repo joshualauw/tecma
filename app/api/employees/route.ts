@@ -1,8 +1,28 @@
 import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export type EmployeeApiItem = {
+  id: number;
+  name: string;
+  phone_number: string;
+  address: string | null;
+  properties: {
+    id: number;
+    name: string;
+  } | null;
+  created_at: Date | null;
+};
+
+export type EmployeesApiData = {
+  employees: EmployeeApiItem[];
+  count: number;
+};
+
+export type EmployeesApiResponse = ApiResponse<EmployeesApiData>;
+
+export async function GET(request: NextRequest): Promise<NextResponse<EmployeesApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const pageParam = Number(searchParams.get("page") ?? 0);

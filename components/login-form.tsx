@@ -37,7 +37,7 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
     const result = await loginAction(formData);
 
     if (!result.success) {
-      form.setError("email", { message: result.error });
+      form.setError("email", { message: result.message });
     } else {
       router.push("/admin/dashboard");
     }

@@ -52,7 +52,7 @@ export default function UnitUpdateForm({ data, properties }: UnitUpdateFormProps
       router.push("/admin/units");
       toast.success("Unit updated successfully");
     } else {
-      form.setError("code", { message: result.error });
+      form.setError("code", { message: result.message });
     }
   }
 

@@ -1,8 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function updateEmployeeAction(formData: FormData) {
+type UpdateEmployeeActionResponse = ApiResponse<null>;
+
+export async function updateEmployeeAction(formData: FormData): Promise<UpdateEmployeeActionResponse> {
   const id = formData.get("id");
   const name = formData.get("name");
   const phoneNumber = formData.get("phoneNumber");
@@ -11,12 +14,12 @@ export async function updateEmployeeAction(formData: FormData) {
 
   const employeeId = Number(id);
   if (!Number.isInteger(employeeId) || employeeId <= 0) {
-    return { success: false, error: "Invalid employee id" };
+    return { success: false, message: "Invalid employee id" };
   }
 
   const parsedPropertyId = Number(propertyId);
   if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, error: "Invalid property id" };
+    return { success: false, message: "Invalid property id" };
   }
 
   try {
@@ -30,7 +33,7 @@ export async function updateEmployeeAction(formData: FormData) {
     });
 
     if (!existingEmployee) {
-      return { success: false, error: "Employee not found" };
+      return { data: null, success: false, message: "Employee not found" };
     }
 
     await prisma.employees.update({
@@ -45,9 +48,9 @@ export async function updateEmployeeAction(formData: FormData) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Employee updated successfully" };
   } catch (error) {
     console.error("Error updating employee:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

@@ -1,10 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function deleteTenantAction(tenantId: number) {
+type DeleteTenantActionResponse = ApiResponse<null>;
+
+export async function deleteTenantAction(tenantId: number): Promise<DeleteTenantActionResponse> {
   if (!Number.isInteger(tenantId) || tenantId <= 0) {
-    return { success: false, error: "Invalid tenant id" };
+    return { success: false, message: "Invalid tenant id" };
   }
 
   try {
@@ -18,7 +21,7 @@ export async function deleteTenantAction(tenantId: number) {
     });
 
     if (!existingTenant) {
-      return { success: false, error: "Tenant not found" };
+      return { success: false, message: "Tenant not found" };
     }
 
     await prisma.tenants.delete({
@@ -27,9 +30,9 @@ export async function deleteTenantAction(tenantId: number) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Tenant deleted successfully" };
   } catch (error) {
     console.error("Error deleting tenant:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

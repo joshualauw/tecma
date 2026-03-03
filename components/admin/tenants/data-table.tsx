@@ -21,37 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { TenantApiItem, TenantsApiResponse } from "@/app/api/tenants/route";
 import { deleteTenantAction } from "@/lib/actions/tenants/delete-tenant";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-type TenantApiItem = {
-  id: number;
-  name: string;
-  phone_number: string;
-  address: string | null;
-  properties: {
-    id: number;
-    name: string;
-  } | null;
-  unit: {
-    id: number;
-    code: string;
-  } | null;
-  created_at: string | null;
-};
-
-type TenantsApiResponse = {
-  data: {
-    tenants: TenantApiItem[];
-    count: number;
-  };
-  success: boolean;
-  message: string;
-};
 
 const PAGE_SIZE = 6;
 
@@ -111,6 +87,10 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
 
       if (!payload.success) {
         throw new Error(payload.message || "Failed to fetch tenants");
+      }
+
+      if (!payload.data) {
+        throw new Error(payload.message || "No tenant data returned");
       }
 
       setData(
@@ -226,12 +206,12 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
     const result = await deleteTenantAction(tenantToDelete.id);
 
     if (result.success) {
-      toast.success("Tenant deleted successfully");
+      toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setTenantToDelete(null);
       await fetchTenants();
     } else {
-      toast.error(result.error);
+      toast.error(result.message);
     }
 
     setIsDeleting(false);

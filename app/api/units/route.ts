@@ -1,8 +1,26 @@
 import { UnitsWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export type UnitApiItem = {
+  id: number;
+  code: string;
+  properties: {
+    id: number;
+    name: string;
+  } | null;
+  created_at: Date | null;
+};
+
+export type UnitsApiData = {
+  units: UnitApiItem[];
+  count: number;
+};
+
+export type UnitsApiResponse = ApiResponse<UnitsApiData>;
+
+export async function GET(request: NextRequest): Promise<NextResponse<UnitsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const pageParam = Number(searchParams.get("page") ?? 0);

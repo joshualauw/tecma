@@ -1,8 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function createTenantAction(formData: FormData) {
+type CreateTenantActionResponse = ApiResponse<null>;
+
+export async function createTenantAction(formData: FormData): Promise<CreateTenantActionResponse> {
   const name = formData.get("name");
   const phoneNumber = formData.get("phoneNumber");
   const address = formData.get("address");
@@ -11,12 +14,12 @@ export async function createTenantAction(formData: FormData) {
 
   const parsedPropertyId = Number(propertyId);
   if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, error: "Invalid property id" };
+    return { success: false, message: "Invalid property id" };
   }
 
   const parsedUnitId = Number(unitId);
   if (!Number.isInteger(parsedUnitId) || parsedUnitId <= 0) {
-    return { success: false, error: "Invalid unit id" };
+    return { success: false, message: "Invalid unit id" };
   }
 
   try {
@@ -34,7 +37,7 @@ export async function createTenantAction(formData: FormData) {
     });
 
     if (!availableUnit) {
-      return { success: false, error: "Selected unit is not available" };
+      return { success: false, message: "Selected unit is not available" };
     }
 
     await prisma.tenants.create({
@@ -47,9 +50,9 @@ export async function createTenantAction(formData: FormData) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Tenant created successfully" };
   } catch (error) {
     console.error("Error creating tenant:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

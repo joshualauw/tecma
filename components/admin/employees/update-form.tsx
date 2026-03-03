@@ -61,7 +61,7 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
       router.push("/admin/employees");
       toast.success("Employee updated successfully");
     } else {
-      form.setError("name", { message: result.error });
+      form.setError("name", { message: result.message });
     }
   }
 

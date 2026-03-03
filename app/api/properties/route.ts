@@ -1,8 +1,23 @@
 import { PropertiesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export type PropertyApiItem = {
+  id: number;
+  name: string;
+  address: string | null;
+  created_at: Date | null;
+};
+
+export type PropertiesApiData = {
+  properties: PropertyApiItem[];
+  count: number;
+};
+
+export type PropertiesApiResponse = ApiResponse<PropertiesApiData>;
+
+export async function GET(request: NextRequest): Promise<NextResponse<PropertiesApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const pageParam = Number(searchParams.get("page") ?? 0);

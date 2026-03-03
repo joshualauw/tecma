@@ -1,8 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function createPropertyAction(formData: FormData) {
+type CreatePropertyActionResponse = ApiResponse<null>;
+
+export async function createPropertyAction(formData: FormData): Promise<CreatePropertyActionResponse> {
   const name = formData.get("name");
   const address = formData.get("address");
 
@@ -14,9 +17,9 @@ export async function createPropertyAction(formData: FormData) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Property created successfully" };
   } catch (error) {
     console.error("Error creating property:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

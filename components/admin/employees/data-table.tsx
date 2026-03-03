@@ -21,33 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { EmployeeApiItem, EmployeesApiResponse } from "@/app/api/employees/route";
 import { deleteEmployeeAction } from "@/lib/actions/employees/delete-employee";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-type EmployeeApiItem = {
-  id: number;
-  name: string;
-  phone_number: string;
-  address: string | null;
-  properties: {
-    id: number;
-    name: string;
-  } | null;
-  created_at: string | null;
-};
-
-type EmployeesApiResponse = {
-  data: {
-    employees: EmployeeApiItem[];
-    count: number;
-  };
-  success: boolean;
-  message: string;
-};
 
 const PAGE_SIZE = 6;
 
@@ -107,6 +87,10 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
 
       if (!payload.success) {
         throw new Error(payload.message || "Failed to fetch employees");
+      }
+
+      if (!payload.data) {
+        throw new Error(payload.message || "No employee data returned");
       }
 
       setData(
@@ -216,12 +200,12 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
     const result = await deleteEmployeeAction(employeeToDelete.id);
 
     if (result.success) {
-      toast.success("Employee deleted successfully");
+      toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setEmployeeToDelete(null);
       await fetchEmployees();
     } else {
-      toast.error(result.error);
+      toast.error(result.message);
     }
 
     setIsDeleting(false);

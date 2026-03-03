@@ -40,7 +40,7 @@ export default function PropertyCreateForm() {
       router.push("/admin/properties");
       toast.success("Property created successfully");
     } else {
-      form.setError("name", { message: result.error });
+      form.setError("name", { message: result.message });
     }
   }
 

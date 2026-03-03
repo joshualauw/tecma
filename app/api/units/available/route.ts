@@ -1,7 +1,19 @@
 import { prisma } from "@/lib/prisma";
+import { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export type AvailableUnitsApiItem = {
+  id: number;
+  code: string;
+};
+
+export type AvailableUnitsApiData = {
+  units: AvailableUnitsApiItem[];
+};
+
+export type AvailableUnitsApiResponse = ApiResponse<AvailableUnitsApiData>;
+
+export async function GET(request: NextRequest): Promise<NextResponse<AvailableUnitsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const propertyIdParam = Number(searchParams.get("propertyId"));

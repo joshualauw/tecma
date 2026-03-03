@@ -1,8 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function createEmployeeAction(formData: FormData) {
+type CreateEmployeeActionResponse = ApiResponse<null>;
+
+export async function createEmployeeAction(formData: FormData): Promise<CreateEmployeeActionResponse> {
   const name = formData.get("name");
   const phoneNumber = formData.get("phoneNumber");
   const address = formData.get("address");
@@ -18,9 +21,9 @@ export async function createEmployeeAction(formData: FormData) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Employee created successfully" };
   } catch (error) {
     console.error("Error creating employee:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

@@ -1,10 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function deleteUnitAction(unitId: number) {
+type DeleteUnitActionResponse = ApiResponse<null>;
+
+export async function deleteUnitAction(unitId: number): Promise<DeleteUnitActionResponse> {
   if (!Number.isInteger(unitId) || unitId <= 0) {
-    return { success: false, error: "Invalid unit id" };
+    return { success: false, message: "Invalid unit id" };
   }
 
   try {
@@ -18,7 +21,7 @@ export async function deleteUnitAction(unitId: number) {
     });
 
     if (!existingUnit) {
-      return { success: false, error: "Unit not found" };
+      return { success: false, message: "Unit not found" };
     }
 
     await prisma.units.delete({
@@ -27,9 +30,9 @@ export async function deleteUnitAction(unitId: number) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Unit deleted successfully" };
   } catch (error) {
     console.error("Error deleting unit:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }

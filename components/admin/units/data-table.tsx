@@ -22,30 +22,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { UnitApiItem, UnitsApiResponse } from "@/app/api/units/route";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-type UnitApiItem = {
-  id: number;
-  code: string;
-  properties: {
-    id: number;
-    name: string;
-  } | null;
-  created_at: string | null;
-};
-
-type UnitsApiResponse = {
-  data: {
-    units: UnitApiItem[];
-    count: number;
-  };
-  success: boolean;
-  message: string;
-};
 
 const PAGE_SIZE = 6;
 
@@ -105,6 +87,10 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
 
       if (!payload.success) {
         throw new Error(payload.message || "Failed to fetch units");
+      }
+
+      if (!payload.data) {
+        throw new Error(payload.message || "No unit data returned");
       }
 
       setData(
@@ -203,12 +189,12 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
     const result = await deleteUnitAction(unitToDelete.id);
 
     if (result.success) {
-      toast.success("Unit deleted successfully");
+      toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setUnitToDelete(null);
       await fetchUnits();
     } else {
-      toast.error(result.error);
+      toast.error(result.message);
     }
 
     setIsDeleting(false);

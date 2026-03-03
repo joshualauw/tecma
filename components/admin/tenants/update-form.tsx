@@ -1,5 +1,6 @@
 "use client";
 
+import { AvailableUnitsApiItem } from "@/app/api/units/available/route";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -40,7 +41,7 @@ interface TenantUpdateFormProps {
 export default function TenantUpdateForm({ data, properties }: TenantUpdateFormProps) {
   const { id, name, phoneNumber, address, propertyId, unitId } = data;
   const router = useRouter();
-  const [availableUnits, setAvailableUnits] = useState<{ id: number; code: string }[]>([]);
+  const [availableUnits, setAvailableUnits] = useState<AvailableUnitsApiItem[]>([]);
   const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -122,7 +123,7 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
       router.push("/admin/tenants");
       toast.success("Tenant updated successfully");
     } else {
-      form.setError("name", { message: result.error });
+      form.setError("name", { message: result.message });
     }
   }
 

@@ -1,8 +1,32 @@
 import { TenantsWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export type TenantApiItem = {
+  id: number;
+  name: string;
+  phone_number: string;
+  address: string | null;
+  properties: {
+    id: number;
+    name: string;
+  } | null;
+  unit: {
+    id: number;
+    code: string;
+  } | null;
+  created_at: Date | null;
+};
+
+export type TenantsApiData = {
+  tenants: TenantApiItem[];
+  count: number;
+};
+
+export type TenantsApiResponse = ApiResponse<TenantsApiData>;
+
+export async function GET(request: NextRequest): Promise<NextResponse<TenantsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const pageParam = Number(searchParams.get("page") ?? 0);

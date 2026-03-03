@@ -1,5 +1,6 @@
 "use client";
 
+import { AvailableUnitsApiItem } from "@/app/api/units/available/route";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -31,7 +32,7 @@ interface TenantCreateFormProps {
 
 export default function TenantCreateForm({ properties }: TenantCreateFormProps) {
   const router = useRouter();
-  const [availableUnits, setAvailableUnits] = useState<{ id: number; code: string }[]>([]);
+  const [availableUnits, setAvailableUnits] = useState<AvailableUnitsApiItem[]>([]);
   const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -109,7 +110,7 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
       router.push("/admin/tenants");
       toast.success("Tenant created successfully");
     } else {
-      form.setError("name", { message: result.error });
+      form.setError("name", { message: result.message });
     }
   }
 
@@ -118,17 +119,6 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="name"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input {...field} placeholder="Juan Dela Cruz" />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
             <Controller
               name="propertyId"
               control={form.control}
@@ -183,6 +173,17 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
                       ))}
                     </SelectContent>
                   </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Name</FieldLabel>
+                  <Input {...field} placeholder="Juan Dela Cruz" />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

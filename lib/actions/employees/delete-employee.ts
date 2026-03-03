@@ -1,10 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
 
-export async function deleteEmployeeAction(employeeId: number) {
+type DeleteEmployeeActionResponse = ApiResponse<null>;
+
+export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEmployeeActionResponse> {
   if (!Number.isInteger(employeeId) || employeeId <= 0) {
-    return { success: false, error: "Invalid employee id" };
+    return { success: false, message: "Invalid employee id" };
   }
 
   try {
@@ -18,7 +21,7 @@ export async function deleteEmployeeAction(employeeId: number) {
     });
 
     if (!existingEmployee) {
-      return { success: false, error: "Employee not found" };
+      return { success: false, message: "Employee not found" };
     }
 
     await prisma.employees.delete({
@@ -27,9 +30,9 @@ export async function deleteEmployeeAction(employeeId: number) {
       },
     });
 
-    return { success: true };
+    return { success: true, message: "Employee deleted successfully" };
   } catch (error) {
     console.error("Error deleting employee:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, message: "An unexpected error occurred" };
   }
 }
