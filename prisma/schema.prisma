@@ -32,6 +32,7 @@ model Employees {
   property_id  Int?
 
   properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
+  tickets    Tickets[]
 
   @@map("employees")
 }
@@ -63,6 +64,7 @@ model Properties {
   tenants   Tenants[]
   units     Units[]
   whatsapp  Whatsapp[]
+  tickets   Tickets[]
 
   @@map("properties")
 }
@@ -108,9 +110,44 @@ model Tenants {
 
   rooms      Rooms[]
   properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
-  unit       Units?      @relation(fields: [unit_id], references: [id])
+  unit       Units?      @relation(fields: [unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_unit_id_units_id_fk")
+  tickets    Tickets[]
 
   @@map("tenants")
+}
+
+model Tickets {
+  id          Int            @id @default(autoincrement())
+  property_id Int?
+  category_id Int?
+  tenant_id   Int?
+  unit_id     Int?
+  employee_id Int?
+  title       String
+  description String?
+  status      TicketStatus   @default(open)
+  priority    TicketPriority @default(low)
+  created_at  DateTime?      @default(now()) @db.Timestamp(6)
+  resolved_at DateTime?      @db.Timestamp(6)
+
+  tenant     Tenants?          @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_tenant_id_tenants_id_fk")
+  properties Properties?       @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
+  category   TicketCategories? @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
+  employee   Employees?        @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
+  unit       Units?            @relation(fields: [unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_unit_id_units_id_fk")
+
+  @@map("tickets")
+}
+
+model TicketCategories {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  tickets Tickets[]
+
+  @@map("ticket_categories")
 }
 
 model Units {
@@ -121,6 +158,7 @@ model Units {
 
   properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
   tenants    Tenants[]
+  tickets    Tickets[]
 
   @@map("units")
 }
@@ -164,6 +202,22 @@ enum SourceType {
   file
 
   @@map("source_type")
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+
+  @@map("ticket_priority")
+}
+
+enum TicketStatus {
+  open
+  in_progress @map("in-progress")
+  closed
+
+  @@map("ticket_status")
 }
 
 enum UserRole {

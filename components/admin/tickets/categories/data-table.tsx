@@ -11,9 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deletePropertyAction } from "@/lib/actions/properties/delete-property";
 import { Button } from "@/components/ui/button";
-import type { PropertiesApiResponse, PropertyApiItem } from "@/app/api/properties/route";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { TicketCategoriesApiResponse, TicketCategoryApiItem } from "@/app/api/ticket-categories/route";
+import { deleteTicketCategoryAction } from "@/lib/actions/ticket-categories/delete-ticket-category";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -30,9 +30,9 @@ import { toast } from "sonner";
 
 const PAGE_SIZE = 6;
 
-export default function PropertiesDataTable() {
+export default function TicketCategoriesDataTable() {
   const router = useRouter();
-  const [data, setData] = useState<PropertyApiItem[]>([]);
+  const [data, setData] = useState<TicketCategoryApiItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -40,7 +40,7 @@ export default function PropertiesDataTable() {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
-  const [propertyToDelete, setPropertyToDelete] = useState<PropertyApiItem | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<TicketCategoryApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -49,7 +49,7 @@ export default function PropertiesDataTable() {
     [totalCount, pagination.pageSize],
   );
 
-  const fetchProperties = useCallback(async () => {
+  const fetchTicketCategories = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         page: String(pagination.pageIndex),
@@ -61,45 +61,45 @@ export default function PropertiesDataTable() {
         params.set("search", searchValue);
       }
 
-      const response = await fetch(`/api/properties?${params.toString()}`, {
+      const response = await fetch(`/api/ticket-categories?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch properties");
+        throw new Error("Failed to fetch ticket categories");
       }
 
-      const payload = (await response.json()) as PropertiesApiResponse;
+      const payload = (await response.json()) as TicketCategoriesApiResponse;
 
       if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch properties");
+        throw new Error(payload.message || "Failed to fetch ticket categories");
       }
 
       if (!payload.data) {
-        throw new Error(payload.message || "No property data returned");
+        throw new Error(payload.message || "No ticket category data returned");
       }
 
       setData(
-        payload.data.properties.map((property) => ({
-          id: property.id,
-          name: property.name,
-          address: property.address,
-          created_at: property.created_at,
+        payload.data.ticketCategories.map((category) => ({
+          id: category.id,
+          name: category.name,
+          description: category.description,
+          created_at: category.created_at,
         })),
       );
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to fetch properties");
+      toast.error("Failed to fetch ticket categories");
       setData([]);
       setTotalCount(0);
     }
   }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
 
   useEffect(() => {
-    void fetchProperties();
-  }, [fetchProperties]);
+    void fetchTicketCategories();
+  }, [fetchTicketCategories]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -111,7 +111,7 @@ export default function PropertiesDataTable() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<PropertyApiItem>[] = [
+  const columns: ColumnDef<TicketCategoryApiItem>[] = [
     {
       id: "row",
       header: "Row",
@@ -122,9 +122,9 @@ export default function PropertiesDataTable() {
       header: "Name",
     },
     {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => row.original.address ?? "-",
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => row.original.description ?? "-",
     },
     {
       accessorKey: "created_at",
@@ -149,13 +149,13 @@ export default function PropertiesDataTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/properties/update/${row.original.id}`)}>
+            <DropdownMenuItem onSelect={() => router.push(`/admin/tickets/categories/update/${row.original.id}`)}>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
               onSelect={() => {
-                setPropertyToDelete(row.original);
+                setCategoryToDelete(row.original);
                 setIsDeleteDialogOpen(true);
               }}
             >
@@ -168,18 +168,18 @@ export default function PropertiesDataTable() {
   ];
 
   async function onConfirmDelete() {
-    if (!propertyToDelete || isDeleting) {
+    if (!categoryToDelete || isDeleting) {
       return;
     }
 
     setIsDeleting(true);
-    const result = await deletePropertyAction(propertyToDelete.id);
+    const result = await deleteTicketCategoryAction(categoryToDelete.id);
 
     if (result.success) {
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
-      setPropertyToDelete(null);
-      await fetchProperties();
+      setCategoryToDelete(null);
+      await fetchTicketCategories();
     } else {
       toast.error(result.message);
     }
@@ -208,7 +208,7 @@ export default function PropertiesDataTable() {
         <Input
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          placeholder="Search by name, address..."
+          placeholder="Search by name, description..."
           className="max-w-sm"
         />
 
@@ -237,7 +237,7 @@ export default function PropertiesDataTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No properties found.
+                    No ticket categories found.
                   </TableCell>
                 </TableRow>
               )}
@@ -268,7 +268,7 @@ export default function PropertiesDataTable() {
         onOpenChange={(open) => {
           setIsDeleteDialogOpen(open);
           if (!open) {
-            setPropertyToDelete(null);
+            setCategoryToDelete(null);
           }
         }}
       >
@@ -276,8 +276,8 @@ export default function PropertiesDataTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Deleting <strong>{propertyToDelete?.name ?? "this property"}</strong> will
-              permanently remove it and everything related to it.
+              This action cannot be undone. Deleting <strong>{categoryToDelete?.name ?? "this category"}</strong> will
+              permanently remove it from your ticket categories.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

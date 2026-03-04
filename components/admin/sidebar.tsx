@@ -1,6 +1,7 @@
 "use client";
 
 import Logo from "@/components/logo";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -11,10 +12,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Properties } from "@/generated/prisma/client";
 import {
-  BotIcon,
+  ChevronRightIcon,
   Contact2Icon,
   HouseHeartIcon,
   MailOpenIcon,
@@ -33,56 +36,68 @@ export function AdminSidebar() {
   const navs = [
     {
       name: "Dashboard",
-      icon: <PieChartIcon className="mr-1.5" />,
+      icon: <PieChartIcon className="mr-1" />,
       href: "/admin/dashboard",
+      isActive: false,
     },
     {
       name: "Inbox",
-      group: "Customer Service",
-      icon: <MailOpenIcon className="mr-1.5" />,
+      group: "Communication",
+      icon: <MailOpenIcon className="mr-1" />,
       href: "/admin/inbox",
-    },
-    {
-      name: "Tickets",
-      group: "Customer Service",
-      icon: <TicketIcon className="mr-1.5" />,
-      href: "/admin/tickets",
+      isActive: false,
     },
     {
       name: "Whatsapp",
-      group: "Customer Service",
-      icon: <PhoneIcon className="mr-1.5" />,
+      group: "Communication",
+      icon: <PhoneIcon className="mr-1" />,
       href: "/admin/whatsapp",
+      isActive: false,
     },
     {
-      name: "Chatbot",
-      group: "Customer Service",
-      icon: <BotIcon className="mr-1.5" />,
-      href: "/admin/chatbot",
+      name: "Tickets",
+      group: "Communication",
+      icon: <TicketIcon className="mr-1" />,
+      href: "#",
+      isActive: false,
+      children: [
+        {
+          name: "List",
+          href: "/admin/tickets",
+        },
+        {
+          name: "Categories",
+          href: "/admin/tickets/categories",
+        },
+      ],
     },
     {
       name: "Properties",
       group: "Management",
-      icon: <MapPinIcon className="mr-1.5" />,
+      icon: <MapPinIcon className="mr-1" />,
       href: "/admin/properties",
+      isActive: false,
     },
     {
       name: "Units",
       group: "Management",
-      icon: <HouseHeartIcon className="mr-1.5" />,
+      icon: <HouseHeartIcon className="mr-1" />,
       href: "/admin/units",
+      isActive: false,
     },
     {
       name: "Tenants",
       group: "Management",
-      icon: <Contact2Icon className="mr-1.5" />,
+      icon: <Contact2Icon className="mr-1" />,
       href: "/admin/tenants",
+      isActive: false,
     },
     {
       name: "Employees",
       group: "Management",
-      icon: <Users2Icon className="mr-1.5" />,
+      icon: <Users2Icon className="mr-1" />,
       href: "/admin/employees",
+      isActive: false,
     },
   ];
 
@@ -115,14 +130,40 @@ export function AdminSidebar() {
                 {items.map((nav) => {
                   const isActive = pathName === nav.href || pathName.startsWith(`${nav.href}/`);
                   return (
-                    <Link key={nav.name} href={nav.href} passHref>
+                    <Collapsible key={nav.name} asChild defaultOpen={nav.isActive} className="group/collapsible">
                       <SidebarMenuItem>
-                        <SidebarMenuButton size="md" isActive={isActive}>
-                          {nav.icon}
-                          {nav.name}
-                        </SidebarMenuButton>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton asChild size="md" isActive={isActive}>
+                            <Link href={nav.href} className="cursor-default">
+                              {nav.icon}
+                              {nav.name}
+                              {nav.children && (
+                                <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                              )}
+                            </Link>
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+
+                        {nav.children && (
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {nav.children.map((child) => {
+                                const isChildActive = pathName === child.href;
+                                return (
+                                  <SidebarMenuSubItem key={child.name}>
+                                    <SidebarMenuSubButton asChild size="sm" isActive={isChildActive}>
+                                      <Link href={child.href} className="cursor-default">
+                                        {child.name}
+                                      </Link>
+                                    </SidebarMenuSubButton>
+                                  </SidebarMenuSubItem>
+                                );
+                              })}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        )}
                       </SidebarMenuItem>
-                    </Link>
+                    </Collapsible>
                   );
                 })}
               </SidebarMenu>
