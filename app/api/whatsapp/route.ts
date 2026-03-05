@@ -9,10 +9,6 @@ export type WhatsappApiItem = {
   waba_id: string;
   phone_id: string;
   phone_number: string;
-  properties: {
-    id: number;
-    name: string;
-  } | null;
   created_at: Date | null;
 };
 
@@ -29,14 +25,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
     const pageParam = Number(searchParams.get("page") ?? 0);
     const sizeParam = Number(searchParams.get("size") ?? 10);
     const search = (searchParams.get("search") ?? "").trim();
-    const propertyIdParam = Number(searchParams.get("propertyId"));
 
     const page = Number.isFinite(pageParam) && pageParam >= 0 ? Math.floor(pageParam) : 0;
     const size = Number.isFinite(sizeParam) && sizeParam > 0 ? Math.floor(sizeParam) : 10;
-    const propertyId =
-      Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
-        ? propertyIdParam
-        : null;
 
     const where: WhatsappWhereInput = {};
 
@@ -47,10 +38,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
       ];
     }
 
-    if (propertyId !== null) {
-      where.property_id = propertyId;
-    }
-
     const whatsapps = await prisma.whatsapp.findMany({
       select: {
         id: true,
@@ -59,12 +46,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
         phone_id: true,
         phone_number: true,
         created_at: true,
-        properties: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
       where,
       skip: page * size,

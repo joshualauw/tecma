@@ -10,12 +10,6 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
   const wabaId = formData.get("wabaId");
   const phoneId = formData.get("phoneId");
   const phoneNumber = formData.get("phoneNumber");
-  const propertyId = formData.get("propertyId");
-
-  const parsedPropertyId = Number(propertyId);
-  if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, message: "Invalid property id" };
-  }
 
   try {
     await prisma.whatsapp.create({
@@ -24,7 +18,6 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
         waba_id: wabaId as string,
         phone_id: phoneId as string,
         phone_number: phoneNumber as string,
-        property_id: parsedPropertyId,
       },
     });
 

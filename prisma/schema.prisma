@@ -175,16 +175,17 @@ model Users {
 }
 
 model Whatsapp {
-  id           Int       @id @default(autoincrement())
-  display_name String
-  waba_id      String    @unique(map: "whatsapp_waba_id_unique") @db.VarChar
-  phone_id     String    @unique(map: "whatsapp_phone_id_unique") @db.VarChar
-  phone_number String    @unique(map: "whatsapp_phone_number_unique") @db.VarChar
-  created_at   DateTime? @default(now()) @db.Timestamp(6)
-  property_id  Int?
+  id             Int       @id @default(autoincrement())
+  display_name   String
+  waba_id        String    @unique(map: "whatsapp_waba_id_unique") @db.VarChar
+  phone_id       String    @unique(map: "whatsapp_phone_id_unique") @db.VarChar
+  phone_number   String    @unique(map: "whatsapp_phone_number_unique") @db.VarChar
+  quality_rating String    @default("high") @db.VarChar
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
 
-  rooms      Rooms[]
-  properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "whatsapp_property_id_properties_id_fk")
+  rooms        Rooms[]
+  properties   Properties? @relation(fields: [propertiesId], references: [id])
+  propertiesId Int?
 
   @@map("whatsapp")
 }

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createWhatsappAction } from "@/lib/actions/whatsapp/create-whatsapp";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -17,17 +16,9 @@ const formSchema = z.object({
   wabaId: z.string().trim().min(1, "WABA ID is required"),
   phoneId: z.string().trim().min(1, "Phone ID is required"),
   phoneNumber: z.string().trim().min(1, "Phone number is required"),
-  propertyId: z.string().trim().min(1, "Property is required"),
 });
 
-interface WhatsappCreateFormProps {
-  properties: {
-    id: number;
-    name: string;
-  }[];
-}
-
-export default function WhatsappCreateForm({ properties }: WhatsappCreateFormProps) {
+export default function WhatsappCreateForm() {
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -37,7 +28,6 @@ export default function WhatsappCreateForm({ properties }: WhatsappCreateFormPro
       wabaId: "",
       phoneId: "",
       phoneNumber: "",
-      propertyId: "",
     },
   });
 
@@ -47,7 +37,6 @@ export default function WhatsappCreateForm({ properties }: WhatsappCreateFormPro
     formData.append("wabaId", data.wabaId);
     formData.append("phoneId", data.phoneId);
     formData.append("phoneNumber", data.phoneNumber);
-    formData.append("propertyId", data.propertyId);
 
     const result = await createWhatsappAction(formData);
     if (result.success) {
@@ -63,28 +52,6 @@ export default function WhatsappCreateForm({ properties }: WhatsappCreateFormPro
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="propertyId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a property" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={String(property.id)}>
-                          {property.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Controller
                 name="displayName"

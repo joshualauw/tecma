@@ -20,7 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { WhatsappApiItem, WhatsappApiResponse } from "@/app/api/whatsapp/route";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
@@ -31,20 +30,12 @@ import { toast } from "sonner";
 
 const PAGE_SIZE = 6;
 
-interface WhatsappDataTableProps {
-  properties: {
-    id: number;
-    name: string;
-  }[];
-}
-
-export default function WhatsappDataTable({ properties }: WhatsappDataTableProps) {
+export default function WhatsappDataTable() {
   const router = useRouter();
   const [data, setData] = useState<WhatsappApiItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
-  const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
@@ -68,10 +59,6 @@ export default function WhatsappDataTable({ properties }: WhatsappDataTableProps
       const searchValue = globalFilter.trim();
       if (searchValue) {
         params.set("search", searchValue);
-      }
-
-      if (selectedPropertyId !== "all") {
-        params.set("propertyId", selectedPropertyId);
       }
 
       const response = await fetch(`/api/whatsapp?${params.toString()}`, {
@@ -100,7 +87,6 @@ export default function WhatsappDataTable({ properties }: WhatsappDataTableProps
           waba_id: whatsapp.waba_id,
           phone_id: whatsapp.phone_id,
           phone_number: whatsapp.phone_number,
-          properties: whatsapp.properties,
           created_at: whatsapp.created_at,
         })),
       );
@@ -111,7 +97,7 @@ export default function WhatsappDataTable({ properties }: WhatsappDataTableProps
       setData([]);
       setTotalCount(0);
     }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
+  }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
 
   useEffect(() => {
     void fetchWhatsapp();
@@ -136,11 +122,6 @@ export default function WhatsappDataTable({ properties }: WhatsappDataTableProps
     {
       accessorKey: "display_name",
       header: "Display Name",
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.properties?.name ?? "-",
     },
     {
       accessorKey: "phone_number",
@@ -240,25 +221,6 @@ export default function WhatsappDataTable({ properties }: WhatsappDataTableProps
             placeholder="Search by display name, phone number..."
             className="max-w-sm"
           />
-          <Select
-            value={selectedPropertyId}
-            onValueChange={(value) => {
-              setSelectedPropertyId(value);
-              setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="Filter by property" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectItem value="all">All properties</SelectItem>
-              {properties.map((property) => (
-                <SelectItem key={property.id} value={String(property.id)}>
-                  {property.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="rounded-md border">

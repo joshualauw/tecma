@@ -11,16 +11,10 @@ export async function updateWhatsappAction(formData: FormData): Promise<UpdateWh
   const wabaId = formData.get("wabaId");
   const phoneId = formData.get("phoneId");
   const phoneNumber = formData.get("phoneNumber");
-  const propertyId = formData.get("propertyId");
 
   const whatsappId = Number(id);
   if (!Number.isInteger(whatsappId) || whatsappId <= 0) {
     return { success: false, message: "Invalid whatsapp id" };
-  }
-
-  const parsedPropertyId = Number(propertyId);
-  if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, message: "Invalid property id" };
   }
 
   try {
@@ -46,7 +40,6 @@ export async function updateWhatsappAction(formData: FormData): Promise<UpdateWh
         waba_id: wabaId as string,
         phone_id: phoneId as string,
         phone_number: phoneNumber as string,
-        property_id: parsedPropertyId,
       },
     });
 
