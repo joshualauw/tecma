@@ -219,7 +219,7 @@ export default function WhatsappDataTable() {
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search by display name, phone number..."
-            className="max-w-sm"
+            className="sm:max-w-sm"
           />
         </div>
 

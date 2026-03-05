@@ -1,11 +1,13 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createWhatsappAction } from "@/lib/actions/whatsapp/create-whatsapp";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -100,6 +102,19 @@ export default function WhatsappCreateForm() {
                 )}
               />
             </div>
+            <Alert variant="info">
+              <InfoIcon />
+              <AlertTitle>Information</AlertTitle>
+              <AlertDescription>
+                <ul>
+                  <li>• Make sure to provide valid WABA ID and Phone ID from Facebook Business Manager.</li>
+                  <li>• Phone number should be in international format (e.g., +639171234567).</li>
+                  <li>
+                    • After creating, you may need to verify the WhatsApp account through the Facebook Business Manager.
+                  </li>
+                </ul>
+              </AlertDescription>
+            </Alert>
             <Field>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Submitting..." : "Save"}

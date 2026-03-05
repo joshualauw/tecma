@@ -209,7 +209,7 @@ export default function PropertiesDataTable() {
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           placeholder="Search by name, address..."
-          className="max-w-sm"
+          className="sm:max-w-sm"
         />
 
         <div className="rounded-md border">

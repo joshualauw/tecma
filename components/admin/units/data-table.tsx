@@ -223,7 +223,7 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search by code..."
-            className="max-w-sm"
+            className="sm:max-w-sm"
           />
           <Select
             value={selectedPropertyId}

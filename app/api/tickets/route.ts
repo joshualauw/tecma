@@ -1,4 +1,5 @@
 import { TicketsWhereInput } from "@/generated/prisma/models";
+import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -46,6 +47,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
     const sizeParam = Number(searchParams.get("size") ?? 10);
     const search = (searchParams.get("search") ?? "").trim();
     const propertyIdParam = Number(searchParams.get("propertyId"));
+    const statusParam = (searchParams.get("status") ?? "").trim();
+    const priorityParam = (searchParams.get("priority") ?? "").trim();
 
     const page = Number.isFinite(pageParam) && pageParam >= 0 ? Math.floor(pageParam) : 0;
     const size = Number.isFinite(sizeParam) && sizeParam > 0 ? Math.floor(sizeParam) : 10;
@@ -53,6 +56,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
         ? propertyIdParam
         : null;
+    const status = statusParam && statusParam in TicketStatus ? statusParam : null;
+    const priority = priorityParam && priorityParam in TicketPriority ? priorityParam : null;
 
     const where: TicketsWhereInput = {};
 
@@ -62,6 +67,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
 
     if (propertyId !== null) {
       where.property_id = propertyId;
+    }
+
+    if (status !== null) {
+      where.status = status as (typeof TicketStatus)[keyof typeof TicketStatus];
+    }
+
+    if (priority !== null) {
+      where.priority = priority as (typeof TicketPriority)[keyof typeof TicketPriority];
     }
 
     const tickets = await prisma.tickets.findMany({

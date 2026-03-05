@@ -80,6 +80,8 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedPriority, setSelectedPriority] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
@@ -109,6 +111,14 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
         params.set("propertyId", selectedPropertyId);
       }
 
+      if (selectedStatus !== "all") {
+        params.set("status", selectedStatus);
+      }
+
+      if (selectedPriority !== "all") {
+        params.set("priority", selectedPriority);
+      }
+
       const response = await fetch(`/api/tickets?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
@@ -136,7 +146,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
       setData([]);
       setTotalCount(0);
     }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
+  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPriority, selectedPropertyId, selectedStatus]);
 
   useEffect(() => {
     void fetchTickets();
@@ -287,7 +297,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search by title..."
-            className="max-w-sm"
+            className="sm:max-w-sm"
           />
           <Select
             value={selectedPropertyId}
@@ -306,6 +316,40 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
                   {property.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedStatus}
+            onValueChange={(value) => {
+              setSelectedStatus(value);
+              setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedPriority}
+            onValueChange={(value) => {
+              setSelectedPriority(value);
+              setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by priority" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All priorities</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
             </SelectContent>
           </Select>
         </div>
