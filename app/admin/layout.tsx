@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar />
       <main className="w-full h-full">
         <AdminHeader />
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-8">{children}</div>
+        <div className="p-4 lg:px-8 max-w-7xl mx-auto space-y-8">{children}</div>
       </main>
     </SidebarProvider>
   );

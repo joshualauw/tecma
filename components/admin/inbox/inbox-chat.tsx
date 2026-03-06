@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -265,236 +266,238 @@ export default function InboxChat({ properties }: InboxChatProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid h-[calc(100vh-7.5rem)] min-h-[520px] overflow-hidden rounded-md border bg-background md:grid-cols-[320px_1fr]">
-        <div className="flex min-h-0 flex-col border-r">
-          <div className="border-b p-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-bold">Rooms</p>
-              <div className="flex items-center gap-3">
-                <p className="text-sm text-muted-foreground">Total: {rooms.length}</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button type="button" size="icon-sm" variant="outline" aria-label="Open room filters">
-                      <FilterIcon />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 space-y-3">
-                    <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Filter by property" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        <SelectItem value="all">All properties</SelectItem>
-                        {properties.map((property) => (
-                          <SelectItem key={property.id} value={String(property.id)}>
-                            {property.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+    <Card className="overflow-hidden rounded-sm p-0">
+      <CardContent className="p-0">
+        <div className="grid h-[calc(100vh-6rem)] min-h-[520px] md:grid-cols-[320px_1fr]">
+          <div className="flex min-h-0 flex-col border-r">
+            <div className="border-b p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold">Rooms</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-muted-foreground">Total: {rooms.length}</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type="button" size="icon-sm" variant="outline" aria-label="Open room filters">
+                        <FilterIcon />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-64 space-y-3">
+                      <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Filter by property" />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          <SelectItem value="all">All properties</SelectItem>
+                          {properties.map((property) => (
+                            <SelectItem key={property.id} value={String(property.id)}>
+                              {property.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                    <Select
-                      value={selectedRoomStatus}
-                      onValueChange={(value: "all" | RoomApiItem["status"]) => setSelectedRoomStatus(value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        <SelectItem value="all">All status</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Select
+                        value={selectedRoomStatus}
+                        onValueChange={(value: "all" | RoomApiItem["status"]) => setSelectedRoomStatus(value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          <SelectItem value="all">All status</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="closed">Closed</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                        </SelectContent>
+                      </Select>
 
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        setSelectedPropertyId("all");
-                        setSelectedRoomStatus("all");
-                      }}
-                    >
-                      Clear
-                    </Button>
-                  </PopoverContent>
-                </Popover>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedPropertyId("all");
+                          setSelectedRoomStatus("all");
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {rooms.length ? (
-              <div className="p-0">
-                {rooms.map((room) => (
-                  <div
-                    key={room.id}
-                    onClick={() => setSelectedRoomId(room.id)}
-                    className={`w-full cursor-pointer border-b px-4 py-2 text-left transition-colors hover:bg-muted ${
-                      selectedRoomId === room.id ? "bg-muted" : ""
-                    }`}
-                  >
-                    <div className="mb-2 flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{room.tenant?.name ?? "Unknown Tenant"}</p>
-                        <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
-                          <PhoneIcon className="size-3" />
-                          <span>{room.whatsapp?.display_name ?? "-"}</span>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {rooms.length ? (
+                <div className="p-0">
+                  {rooms.map((room) => (
+                    <div
+                      key={room.id}
+                      onClick={() => setSelectedRoomId(room.id)}
+                      className={`w-full cursor-pointer border-b px-4 py-2 text-left transition-colors hover:bg-muted ${
+                        selectedRoomId === room.id ? "bg-muted" : ""
+                      }`}
+                    >
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium">{room.tenant?.name ?? "Unknown Tenant"}</p>
+                          <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+                            <PhoneIcon className="size-3" />
+                            <span>{room.whatsapp?.display_name ?? "-"}</span>
+                          </div>
+                          <p className="line-clamp-1 text-sm text-muted-foreground">{room.last_message ?? "-"}</p>
                         </div>
-                        <p className="line-clamp-1 text-sm text-muted-foreground">{room.last_message ?? "-"}</p>
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground">
-                        <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>
-                          {formatStatusLabel(room.status)}
-                        </Badge>
-                        <p>{formatLastMessageDate(room.last_message_at)}</p>
-                        <p>{formatLastMessageTime(room.last_message_at)}</p>
+                        <div className="text-right text-xs text-muted-foreground">
+                          <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>
+                            {formatStatusLabel(room.status)}
+                          </Badge>
+                          <p>{formatLastMessageDate(room.last_message_at)}</p>
+                          <p>{formatLastMessageTime(room.last_message_at)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <div className="flex h-full items-center justify-center px-4 text-sm text-muted-foreground">
+                  No rooms found.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex min-h-0 flex-col">
+            {selectedRoomId === null ? (
+              <div className="flex h-full items-center justify-center p-6">
+                <p className="text-sm text-muted-foreground">Select a room to view chat messages.</p>
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center px-4 text-sm text-muted-foreground">
-                No rooms found.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex min-h-0 flex-col">
-          {selectedRoomId === null ? (
-            <div className="flex h-full items-center justify-center p-6">
-              <p className="text-sm text-muted-foreground">Select a room to view chat messages.</p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between gap-4 px-4 py-3">
-                <div onClick={() => setIsRoomDataOpen((prev) => !prev)} className="cursor-pointer">
-                  <p className="text-sm font-semibold">{roomDetail?.tenant?.name ?? "Unknown Tenant"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Expires in {roomDetail?.expired_at ? formatExpiresIn(roomDetail.expired_at) : "-"}
-                  </p>
+              <>
+                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                  <div onClick={() => setIsRoomDataOpen((prev) => !prev)} className="cursor-pointer">
+                    <p className="text-sm font-semibold">{roomDetail?.tenant?.name ?? "Unknown Tenant"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Expires in {roomDetail?.expired_at ? formatExpiresIn(roomDetail.expired_at) : "-"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setIsResolveDialogOpen(true)}
+                      disabled={!roomDetail || !isRoomActive || isResolvingRoom}
+                    >
+                      Resolve
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="outline"
+                      aria-label="Open room data"
+                      onClick={() => setIsRoomDataOpen((prev) => !prev)}
+                      disabled={!roomDetail}
+                    >
+                      <PanelRightOpenIcon />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setIsResolveDialogOpen(true)}
-                    disabled={!roomDetail || !isRoomActive || isResolvingRoom}
-                  >
-                    Resolve
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="outline"
-                    aria-label="Open room data"
-                    onClick={() => setIsRoomDataOpen((prev) => !prev)}
-                    disabled={!roomDetail}
-                  >
-                    <PanelRightOpenIcon />
-                  </Button>
-                </div>
-              </div>
 
-              <Separator />
+                <Separator />
 
-              <div className="min-h-0 flex flex-1">
-                <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
-                  <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-                    {isLoadingRoomData ? (
-                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        Loading chat...
-                      </div>
-                    ) : messages.length ? (
-                      <div className="space-y-3">
-                        {messages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex ${message.sender_type === "tenant" ? "justify-start" : "justify-end"}`}
-                          >
-                            <div className={messageBubbleClasses(message.sender_type)}>
-                              <p>{message.content}</p>
-                              <p className="mt-1 text-[10px] opacity-80">{formatLastMessageAt(message.created_at)}</p>
+                <div className="min-h-0 flex flex-1">
+                  <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
+                    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+                      {isLoadingRoomData ? (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          Loading chat...
+                        </div>
+                      ) : messages.length ? (
+                        <div className="space-y-3">
+                          {messages.map((message) => (
+                            <div
+                              key={message.id}
+                              className={`flex ${message.sender_type === "tenant" ? "justify-start" : "justify-end"}`}
+                            >
+                              <div className={messageBubbleClasses(message.sender_type)}>
+                                <p>{message.content}</p>
+                                <p className="mt-1 text-[10px] opacity-80">{formatLastMessageAt(message.created_at)}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          No messages yet.
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {isRoomActive ? (
+                      <form
+                        className="flex items-center gap-2 p-4"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                        }}
+                      >
+                        <Input
+                          value={draftMessage}
+                          onChange={(event) => setDraftMessage(event.target.value)}
+                          placeholder="Type a message..."
+                        />
+                        <Button type="submit">Send</Button>
+                      </form>
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        No messages yet.
+                      <div className="px-4 py-3 text-sm text-muted-foreground">
+                        Room is {currentRoomStatus === "expired" ? "expired" : "closed"}. Messaging is disabled.
                       </div>
                     )}
                   </div>
 
-                  <Separator />
-
-                  {isRoomActive ? (
-                    <form
-                      className="flex items-center gap-2 p-4"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                      }}
-                    >
-                      <Input
-                        value={draftMessage}
-                        onChange={(event) => setDraftMessage(event.target.value)}
-                        placeholder="Type a message..."
+                  {isRoomDataOpen && (
+                    <div className="min-h-0 basis-0 grow border-l">
+                      <RoomDataSidebar
+                        roomDetail={roomDetail}
+                        formatStatusLabel={formatStatusLabel}
+                        statusBadgeVariant={statusBadgeVariant}
                       />
-                      <Button type="submit">Send</Button>
-                    </form>
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-muted-foreground">
-                      Room is {currentRoomStatus === "expired" ? "expired" : "closed"}. Messaging is disabled.
                     </div>
                   )}
                 </div>
-
-                {isRoomDataOpen && (
-                  <div className="min-h-0 basis-0 grow border-l">
-                    <RoomDataSidebar
-                      roomDetail={roomDetail}
-                      formatStatusLabel={formatStatusLabel}
-                      statusBadgeVariant={statusBadgeVariant}
-                    />
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Resolve this room?</AlertDialogTitle>
-            <AlertDialogDescription>This will close the room and end the conversation</AlertDialogDescription>
-          </AlertDialogHeader>
+        <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Resolve this room?</AlertDialogTitle>
+              <AlertDialogDescription>This will close the room and end the conversation</AlertDialogDescription>
+            </AlertDialogHeader>
 
-          {openTicketsCount > 0 && (
-            <Alert variant="warning">
-              <AlertTriangleIcon />
-              <AlertTitle>Open tickets still exist</AlertTitle>
-              <AlertDescription>
-                {openTicketsCount} {openTicketsCount === 1 ? "ticket is" : "tickets are"} still open.
-              </AlertDescription>
-            </Alert>
-          )}
+            {openTicketsCount > 0 && (
+              <Alert variant="warning">
+                <AlertTriangleIcon />
+                <AlertTitle>Open tickets still exist</AlertTitle>
+                <AlertDescription>
+                  {openTicketsCount} {openTicketsCount === 1 ? "ticket is" : "tickets are"} still open.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isResolvingRoom}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onConfirmResolveRoom} disabled={isResolvingRoom}>
-              {isResolvingRoom ? "Resolving..." : "Resolve"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isResolvingRoom}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={onConfirmResolveRoom} disabled={isResolvingRoom}>
+                {isResolvingRoom ? "Resolving..." : "Resolve"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
   );
 }

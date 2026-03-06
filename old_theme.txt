@@ -1,3 +1,5 @@
+Orange
+
 :root {
   --radius: 0.625rem;
 
@@ -83,4 +85,95 @@
   --sidebar-accent-foreground: oklch(0.92 0.02 65);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.75 0.15 60);
+}
+
+Gold
+
+:root {
+  --radius: 0.625rem;
+
+  /* Light Mode - Ivory & Champagne */
+  --background: oklch(0.99 0.003 75); /* Clean ivory */
+  --foreground: oklch(0.25 0.02 70); /* Soft graphite with gold undertone */
+  --card: oklch(98.753% 0.00253 107.125);
+  --card-foreground: oklch(0.25 0.02 70);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.02 70);
+
+  /* Primary - Burnished Gold */
+  --primary: oklch(75.401% 0.12452 75.087); /* Bright, classic gold */
+  --primary-foreground: oklch(97.183% 0.00275 129.89);
+
+  /* Secondary - Soft Sand */
+  --secondary: oklch(0.95 0.03 80);
+  --secondary-foreground: oklch(0.45 0.08 70);
+  --muted: oklch(0.97 0.01 80);
+  --muted-foreground: oklch(0.55 0.04 70);
+  --accent: oklch(0.92 0.06 85); /* Pale gold accent */
+  --accent-foreground: oklch(0.35 0.1 70);
+
+  --destructive: oklch(0.55 0.18 25);
+  --border: oklch(0.9 0.03 80);
+  --input: oklch(0.9 0.03 80);
+  --ring: oklch(0.78 0.12 75);
+
+  /* Charts - Gold & Metallic Palette */
+  --chart-1: oklch(0.78 0.12 75); /* Gold */
+  --chart-2: oklch(0.65 0.08 65); /* Bronze */
+  --chart-3: oklch(0.85 0.15 90); /* Pale Citrine */
+  --chart-4: oklch(0.5 0.06 60); /* Deep Brass */
+  --chart-5: oklch(0.7 0.1 80); /* Soft Gold */
+
+  /* Sidebar */
+  --sidebar: oklch(0.98 0.005 80);
+  --sidebar-foreground: oklch(0.25 0.02 70);
+  --sidebar-primary: oklch(0.78 0.12 75);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.03 80);
+  --sidebar-accent-foreground: oklch(0.45 0.08 70);
+  --sidebar-border: oklch(0.93 0.02 80);
+  --sidebar-ring: oklch(0.78 0.12 75);
+}
+
+.dark {
+  /* Dark Mode - Obsidian & Molten Gold */
+  --background: oklch(0.12 0.01 70); /* Deep, near-black with warmth */
+  --foreground: oklch(0.95 0.01 80);
+  --card: oklch(0.16 0.01 70);
+  --card-foreground: oklch(0.95 0.01 80);
+  --popover: oklch(0.16 0.01 70);
+  --popover-foreground: oklch(0.95 0.01 80);
+
+  /* Primary - Luminous Gold */
+  --primary: oklch(0.82 0.15 85); /* "Glowing" gold for dark backgrounds */
+  --primary-foreground: oklch(0.12 0.01 70);
+
+  --secondary: oklch(0.22 0.02 75);
+  --secondary-foreground: oklch(0.95 0.03 85);
+  --muted: oklch(0.2 0.02 75);
+  --muted-foreground: oklch(0.65 0.03 80);
+  --accent: oklch(0.28 0.04 80);
+  --accent-foreground: oklch(0.98 0.06 85);
+
+  --destructive: oklch(0.5 0.18 25);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.82 0.15 85);
+
+  /* Charts - Glowing Metallics */
+  --chart-1: oklch(0.82 0.15 85);
+  --chart-2: oklch(0.7 0.12 75);
+  --chart-3: oklch(0.9 0.1 95);
+  --chart-4: oklch(0.6 0.08 65);
+  --chart-5: oklch(0.75 0.1 80);
+
+  /* Sidebar */
+  --sidebar: oklch(0.1 0.01 70);
+  --sidebar-foreground: oklch(0.95 0.01 80);
+  --sidebar-primary: oklch(0.82 0.15 85);
+  --sidebar-primary-foreground: oklch(0.12 0.01 70);
+  --sidebar-accent: oklch(0.18 0.02 75);
+  --sidebar-accent-foreground: oklch(0.95 0.03 85);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.82 0.15 85);
 }
