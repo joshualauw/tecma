@@ -1,10 +1,11 @@
+import type { RoomsModel, TicketsModel } from "@/generated/prisma/models";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export type RoomDetailApiItem = {
   id: number;
-  status: "active" | "closed" | "expired";
+  status: RoomsModel["status"];
   tenant: {
     id: number;
     name: string;
@@ -31,8 +32,8 @@ export type RoomDetailApiItem = {
   tickets: {
     id: number;
     title: string;
-    status: "open" | "in_progress" | "closed";
-    priority: "low" | "medium" | "high";
+    status: TicketsModel["status"];
+    priority: TicketsModel["priority"];
     category: {
       id: number;
       name: string;

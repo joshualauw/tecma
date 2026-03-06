@@ -1,5 +1,6 @@
 import { RoomStatus } from "@/generated/prisma/enums";
 import { RoomsWhereInput } from "@/generated/prisma/models";
+import type { RoomsModel } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -16,7 +17,7 @@ export type RoomApiItem = {
   } | null;
   last_message: string | null;
   last_message_at: Date | null;
-  status: "active" | "closed" | "expired";
+  status: RoomsModel["status"];
 };
 
 export type RoomsApiData = {

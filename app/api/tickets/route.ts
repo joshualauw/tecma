@@ -1,5 +1,6 @@
 import { TicketsWhereInput } from "@/generated/prisma/models";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import type { TicketsModel } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,8 +9,8 @@ export type TicketApiItem = {
   id: number;
   title: string;
   description: string | null;
-  status: "open" | "in_progress" | "closed";
-  priority: "low" | "medium" | "high";
+  status: TicketsModel["status"];
+  priority: TicketsModel["priority"];
   properties: {
     id: number;
     name: string;
