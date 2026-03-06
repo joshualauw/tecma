@@ -3,7 +3,19 @@
 
 import type { MessagesApiResponse, MessageApiItem } from "@/app/api/messages/route";
 import type { RoomDetailApiItem, RoomDetailApiResponse } from "@/app/api/rooms/[id]/route";
+import type { ResolveRoomApiResponse } from "@/app/api/rooms/[id]/resolve/route";
 import type { RoomsApiResponse, RoomApiItem } from "@/app/api/rooms/route";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { RoomDataSidebar } from "@/components/admin/inbox/room-data-sidebar";
 import dayjs from "dayjs";
-import { FilterIcon, PanelRightOpenIcon, PhoneIcon } from "lucide-react";
+import { AlertTriangleIcon, FilterIcon, PanelRightOpenIcon, PhoneIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -101,7 +113,7 @@ function messageBubbleClasses(senderType: MessageApiItem["sender_type"]) {
 
 export default function InboxChat({ properties }: InboxChatProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
-  const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomApiItem["status"]>("all");
+  const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomApiItem["status"]>("active");
   const [rooms, setRooms] = useState<RoomApiItem[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [roomDetail, setRoomDetail] = useState<RoomDetailApiItem | null>(null);
@@ -109,6 +121,8 @@ export default function InboxChat({ properties }: InboxChatProps) {
   const [isLoadingRoomData, setIsLoadingRoomData] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
   const [isRoomDataOpen, setIsRoomDataOpen] = useState(false);
+  const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
+  const [isResolvingRoom, setIsResolvingRoom] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -214,6 +228,41 @@ export default function InboxChat({ properties }: InboxChatProps) {
   useEffect(() => {
     void fetchRoomData();
   }, [fetchRoomData]);
+
+  const selectedRoom = selectedRoomId === null ? null : (rooms.find((room) => room.id === selectedRoomId) ?? null);
+  const currentRoomStatus = roomDetail?.status ?? selectedRoom?.status ?? null;
+  const isRoomActive = currentRoomStatus === "active";
+  const openTicketsCount = roomDetail?.tickets.length ?? 0;
+
+  async function onConfirmResolveRoom() {
+    if (selectedRoomId === null) {
+      return;
+    }
+
+    try {
+      setIsResolvingRoom(true);
+
+      const response = await fetch(`/api/rooms/${selectedRoomId}/resolve`, {
+        method: "POST",
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as ResolveRoomApiResponse;
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || "Failed to resolve room");
+      }
+
+      toast.success("Room resolved successfully");
+      setIsResolveDialogOpen(false);
+
+      await Promise.all([fetchRooms(), fetchRoomData()]);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to resolve room");
+    } finally {
+      setIsResolvingRoom(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -332,7 +381,12 @@ export default function InboxChat({ properties }: InboxChatProps) {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button type="button" size="sm">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsResolveDialogOpen(true)}
+                    disabled={!roomDetail || !isRoomActive || isResolvingRoom}
+                  >
                     Resolve
                   </Button>
                   <Button
@@ -380,19 +434,25 @@ export default function InboxChat({ properties }: InboxChatProps) {
 
                   <Separator />
 
-                  <form
-                    className="flex items-center gap-2 p-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                    }}
-                  >
-                    <Input
-                      value={draftMessage}
-                      onChange={(event) => setDraftMessage(event.target.value)}
-                      placeholder="Type a message..."
-                    />
-                    <Button type="submit">Send</Button>
-                  </form>
+                  {isRoomActive ? (
+                    <form
+                      className="flex items-center gap-2 p-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                      }}
+                    >
+                      <Input
+                        value={draftMessage}
+                        onChange={(event) => setDraftMessage(event.target.value)}
+                        placeholder="Type a message..."
+                      />
+                      <Button type="submit">Send</Button>
+                    </form>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-muted-foreground">
+                      Room is {currentRoomStatus === "expired" ? "expired" : "closed"}. Messaging is disabled.
+                    </div>
+                  )}
                 </div>
 
                 {isRoomDataOpen && (
@@ -409,6 +469,32 @@ export default function InboxChat({ properties }: InboxChatProps) {
           )}
         </div>
       </div>
+
+      <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resolve this room?</AlertDialogTitle>
+            <AlertDialogDescription>This will close the room and end the conversation</AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {openTicketsCount > 0 && (
+            <Alert variant="warning">
+              <AlertTriangleIcon />
+              <AlertTitle>Open tickets still exist</AlertTitle>
+              <AlertDescription>
+                {openTicketsCount} {openTicketsCount === 1 ? "ticket is" : "tickets are"} still open.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isResolvingRoom}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirmResolveRoom} disabled={isResolvingRoom}>
+              {isResolvingRoom ? "Resolving..." : "Resolve"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
