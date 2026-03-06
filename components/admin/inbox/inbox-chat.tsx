@@ -7,10 +7,12 @@ import type { RoomsApiResponse, RoomApiItem } from "@/app/api/rooms/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { RoomDataSidebar } from "@/components/admin/inbox/room-data-sidebar";
-import { PanelRightOpenIcon } from "lucide-react";
+import dayjs from "dayjs";
+import { FilterIcon, PanelRightOpenIcon, PhoneIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -41,7 +43,23 @@ function formatLastMessageAt(value: Date | string | null) {
     return "-";
   }
 
-  return new Date(value).toLocaleString();
+  return dayjs(value).format("DD/MM/YYYY HH:mm");
+}
+
+function formatLastMessageDate(value: Date | string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  return dayjs(value).format("DD/MM/YYYY");
+}
+
+function formatLastMessageTime(value: Date | string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  return dayjs(value).format("HH:mm");
 }
 
 function formatExpiresIn(value: Date | string) {
@@ -199,42 +217,65 @@ export default function InboxChat({ properties }: InboxChatProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid h-[calc(100vh-7.5rem)] min-h-[520px] gap-4 rounded-md bg-background md:grid-cols-[320px_1fr]">
-        <div className="flex min-h-0 flex-col rounded-md border">
-          <div className="space-y-3 border-b p-3">
+      <div className="grid h-[calc(100vh-7.5rem)] min-h-[520px] overflow-hidden rounded-md border bg-background md:grid-cols-[320px_1fr]">
+        <div className="flex min-h-0 flex-col border-r">
+          <div className="border-b p-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-bold">Rooms</p>
-              <p className="text-xs text-muted-foreground">Total: {rooms.length}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted-foreground">Total: {rooms.length}</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button type="button" size="icon-sm" variant="outline" aria-label="Open room filters">
+                      <FilterIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-64 space-y-3">
+                    <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Filter by property" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="all">All properties</SelectItem>
+                        {properties.map((property) => (
+                          <SelectItem key={property.id} value={String(property.id)}>
+                            {property.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={selectedRoomStatus}
+                      onValueChange={(value: "all" | RoomApiItem["status"]) => setSelectedRoomStatus(value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="all">All status</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                        <SelectItem value="expired">Expired</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setSelectedPropertyId("all");
+                        setSelectedRoomStatus("all");
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-
-            <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Filter by property" />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                <SelectItem value="all">All properties</SelectItem>
-                {properties.map((property) => (
-                  <SelectItem key={property.id} value={String(property.id)}>
-                    {property.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedRoomStatus}
-              onValueChange={(value: "all" | RoomApiItem["status"]) => setSelectedRoomStatus(value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                <SelectItem value="all">All status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -244,23 +285,27 @@ export default function InboxChat({ properties }: InboxChatProps) {
                   <div
                     key={room.id}
                     onClick={() => setSelectedRoomId(room.id)}
-                    className={`w-full cursor-pointer border-b p-4 text-left transition-colors hover:bg-muted ${
+                    className={`w-full cursor-pointer border-b px-4 py-2 text-left transition-colors hover:bg-muted ${
                       selectedRoomId === room.id ? "bg-muted" : ""
                     }`}
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div>
                         <p className="text-sm font-medium">{room.tenant?.name ?? "Unknown Tenant"}</p>
-                        <p className="text-xs text-muted-foreground">{room.whatsapp?.display_name ?? "-"}</p>
+                        <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+                          <PhoneIcon className="size-3" />
+                          <span>{room.whatsapp?.display_name ?? "-"}</span>
+                        </div>
+                        <p className="line-clamp-1 text-sm text-muted-foreground">{room.last_message ?? "-"}</p>
                       </div>
-                      <Badge variant={statusBadgeVariant(room.status)}>{formatStatusLabel(room.status)}</Badge>
+                      <div className="text-right text-xs text-muted-foreground">
+                        <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>
+                          {formatStatusLabel(room.status)}
+                        </Badge>
+                        <p>{formatLastMessageDate(room.last_message_at)}</p>
+                        <p>{formatLastMessageTime(room.last_message_at)}</p>
+                      </div>
                     </div>
-                    {room.last_message && (
-                      <p className="line-clamp-1 text-sm text-muted-foreground">{room.last_message}</p>
-                    )}
-                    {room.last_message_at && (
-                      <p className="mt-1 text-xs text-muted-foreground">{formatLastMessageAt(room.last_message_at)}</p>
-                    )}
                   </div>
                 ))}
               </div>
@@ -272,7 +317,7 @@ export default function InboxChat({ properties }: InboxChatProps) {
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-col rounded-md border">
+        <div className="flex min-h-0 flex-col">
           {selectedRoomId === null ? (
             <div className="flex h-full items-center justify-center p-6">
               <p className="text-sm text-muted-foreground">Select a room to view chat messages.</p>
@@ -280,7 +325,7 @@ export default function InboxChat({ properties }: InboxChatProps) {
           ) : (
             <>
               <div className="flex items-center justify-between gap-4 px-4 py-3">
-                <div>
+                <div onClick={() => setIsRoomDataOpen((prev) => !prev)} className="cursor-pointer">
                   <p className="text-sm font-semibold">{roomDetail?.tenant?.name ?? "Unknown Tenant"}</p>
                   <p className="text-xs text-muted-foreground">
                     Expires in {roomDetail?.expired_at ? formatExpiresIn(roomDetail.expired_at) : "-"}

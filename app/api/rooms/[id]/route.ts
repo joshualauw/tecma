@@ -9,6 +9,14 @@ export type RoomDetailApiItem = {
     id: number;
     name: string;
     phone_number: string;
+    property: {
+      id: number;
+      name: string;
+    } | null;
+    unit: {
+      id: number;
+      code: string;
+    } | null;
   } | null;
   whatsapp: {
     id: number;
@@ -20,6 +28,21 @@ export type RoomDetailApiItem = {
   expired_at: Date;
   closed_at: Date | null;
   created_at: Date | null;
+  tickets: {
+    id: number;
+    title: string;
+    status: "open" | "in_progress" | "closed";
+    priority: "low" | "medium" | "high";
+    category: {
+      id: number;
+      name: string;
+    } | null;
+    employee: {
+      id: number;
+      name: string;
+    } | null;
+    created_at: Date | null;
+  }[];
 };
 
 export type RoomDetailApiResponse = ApiResponse<RoomDetailApiItem>;
@@ -60,6 +83,18 @@ export async function GET(
             id: true,
             name: true,
             phone_number: true,
+            properties: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            unit: {
+              select: {
+                id: true,
+                code: true,
+              },
+            },
           },
         },
         whatsapp: {
@@ -83,6 +118,37 @@ export async function GET(
       );
     }
 
+    const tickets = room.tenants
+      ? await prisma.tickets.findMany({
+          where: {
+            tenant_id: room.tenants.id,
+            status: { not: "closed" },
+          },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            priority: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            employee: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            created_at: true,
+          },
+          orderBy: {
+            created_at: "desc",
+          },
+        })
+      : [];
+
     return NextResponse.json({
       data: {
         id: room.id,
@@ -92,6 +158,18 @@ export async function GET(
               id: room.tenants.id,
               name: room.tenants.name,
               phone_number: room.tenants.phone_number,
+              property: room.tenants.properties
+                ? {
+                    id: room.tenants.properties.id,
+                    name: room.tenants.properties.name,
+                  }
+                : null,
+              unit: room.tenants.unit
+                ? {
+                    id: room.tenants.unit.id,
+                    code: room.tenants.unit.code,
+                  }
+                : null,
             }
           : null,
         whatsapp: room.whatsapp
@@ -106,6 +184,7 @@ export async function GET(
         expired_at: room.expired_at,
         closed_at: room.closed_at,
         created_at: room.created_at,
+        tickets,
       },
       message: "Room detail fetched successfully",
       success: true,
