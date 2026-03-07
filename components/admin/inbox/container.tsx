@@ -5,6 +5,7 @@ import type { MessagesApiResponse, MessageApiItem } from "@/app/api/messages/rou
 import type { RoomDetailApiItem, RoomDetailApiResponse } from "@/app/api/rooms/[id]/route";
 import type { ResolveRoomApiResponse } from "@/app/api/rooms/[id]/resolve/route";
 import type { RoomsApiResponse, RoomApiItem } from "@/app/api/rooms/route";
+import type { ApiResponse } from "@/types/ApiResponse";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -19,17 +20,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { RoomDataSidebar } from "@/components/admin/inbox/room-data-sidebar";
 import dayjs from "dayjs";
 import { AlertTriangleIcon, FilterIcon, PanelRightOpenIcon, PhoneIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import InboxChat from "@/components/admin/inbox/chat";
+import InboxInfo from "@/components/admin/inbox/info";
 
-interface InboxChatProps {
+interface InboxContainerProps {
   properties: {
     id: number;
     name: string;
@@ -49,14 +50,6 @@ function statusBadgeVariant(status: RoomApiItem["status"]): "default" | "seconda
     case "expired":
       return "destructive";
   }
-}
-
-function formatLastMessageAt(value: Date | string | null) {
-  if (!value) {
-    return "-";
-  }
-
-  return dayjs(value).format("DD/MM/YYYY HH:mm");
 }
 
 function formatLastMessageDate(value: Date | string | null) {
@@ -100,19 +93,7 @@ function formatExpiresIn(value: Date | string) {
   return `${minutes}m`;
 }
 
-function messageBubbleClasses(senderType: MessageApiItem["sender_type"]) {
-  if (senderType === "tenant") {
-    return "max-w-[80%] rounded-lg bg-muted px-3 py-2 text-sm text-foreground";
-  }
-
-  if (senderType === "bot") {
-    return "max-w-[80%] rounded-lg bg-secondary px-3 py-2 text-sm text-secondary-foreground";
-  }
-
-  return "max-w-[80%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground";
-}
-
-export default function InboxChat({ properties }: InboxChatProps) {
+export default function InboxContainer({ properties }: InboxContainerProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomApiItem["status"]>("active");
   const [rooms, setRooms] = useState<RoomApiItem[]>([]);
@@ -120,10 +101,10 @@ export default function InboxChat({ properties }: InboxChatProps) {
   const [roomDetail, setRoomDetail] = useState<RoomDetailApiItem | null>(null);
   const [messages, setMessages] = useState<MessageApiItem[]>([]);
   const [isLoadingRoomData, setIsLoadingRoomData] = useState(false);
-  const [draftMessage, setDraftMessage] = useState("");
   const [isRoomDataOpen, setIsRoomDataOpen] = useState(false);
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
   const [isResolvingRoom, setIsResolvingRoom] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -265,6 +246,66 @@ export default function InboxChat({ properties }: InboxChatProps) {
     }
   }
 
+  async function onSendMessage(content: string) {
+    if (!isRoomActive || selectedRoomId === null || isSendingMessage) {
+      return false;
+    }
+
+    const propertyId = roomDetail?.tenant?.property?.id;
+
+    if (!propertyId) {
+      toast.error("Failed to send message");
+      return false;
+    }
+
+    try {
+      setIsSendingMessage(true);
+
+      const response = await fetch("/api/messages/send", {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content,
+          roomId: selectedRoomId,
+          propertyId,
+        }),
+      });
+
+      const payload = (await response.json()) as ApiResponse<MessageApiItem>;
+
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.message || "Failed to send message");
+      }
+
+      const createdMessage = payload.data;
+
+      setMessages((previousMessages) => [...previousMessages, createdMessage]);
+
+      setRooms((previousRooms) =>
+        previousRooms.map((room) =>
+          room.id === selectedRoomId
+            ? {
+                ...room,
+                last_message: createdMessage.content,
+                last_message_at: createdMessage.created_at,
+              }
+            : room,
+        ),
+      );
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to send message");
+      return false;
+    } finally {
+      setIsSendingMessage(false);
+    }
+  }
+
   return (
     <Card className="overflow-hidden rounded-sm p-0">
       <CardContent className="p-0">
@@ -310,19 +351,6 @@ export default function InboxChat({ properties }: InboxChatProps) {
                           <SelectItem value="expired">Expired</SelectItem>
                         </SelectContent>
                       </Select>
-
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedPropertyId("all");
-                          setSelectedRoomStatus("all");
-                        }}
-                      >
-                        Clear
-                      </Button>
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -379,7 +407,7 @@ export default function InboxChat({ properties }: InboxChatProps) {
                   <div onClick={() => setIsRoomDataOpen((prev) => !prev)} className="cursor-pointer">
                     <p className="text-sm font-semibold">{roomDetail?.tenant?.name ?? "Unknown Tenant"}</p>
                     <p className="text-xs text-muted-foreground">
-                      Expires in {roomDetail?.expired_at ? formatExpiresIn(roomDetail.expired_at) : "-"}
+                      Expires in: {roomDetail?.expired_at ? formatExpiresIn(roomDetail.expired_at) : "-"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -407,59 +435,19 @@ export default function InboxChat({ properties }: InboxChatProps) {
                 <Separator />
 
                 <div className="min-h-0 flex flex-1">
-                  <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
-                    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-                      {isLoadingRoomData ? (
-                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                          Loading chat...
-                        </div>
-                      ) : messages.length ? (
-                        <div className="space-y-3">
-                          {messages.map((message) => (
-                            <div
-                              key={message.id}
-                              className={`flex ${message.sender_type === "tenant" ? "justify-start" : "justify-end"}`}
-                            >
-                              <div className={messageBubbleClasses(message.sender_type)}>
-                                <p>{message.content}</p>
-                                <p className="mt-1 text-[10px] opacity-80">{formatLastMessageAt(message.created_at)}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                          No messages yet.
-                        </div>
-                      )}
-                    </div>
-
-                    <Separator />
-
-                    {isRoomActive ? (
-                      <form
-                        className="flex items-center gap-2 p-4"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                        }}
-                      >
-                        <Input
-                          value={draftMessage}
-                          onChange={(event) => setDraftMessage(event.target.value)}
-                          placeholder="Type a message..."
-                        />
-                        <Button type="submit">Send</Button>
-                      </form>
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-muted-foreground">
-                        Room is {currentRoomStatus === "expired" ? "expired" : "closed"}. Messaging is disabled.
-                      </div>
-                    )}
-                  </div>
+                  <InboxChat
+                    isRoomDataOpen={isRoomDataOpen}
+                    isLoadingRoomData={isLoadingRoomData}
+                    messages={messages}
+                    isRoomActive={isRoomActive}
+                    currentRoomStatus={currentRoomStatus}
+                    isSendingMessage={isSendingMessage}
+                    onSendMessage={onSendMessage}
+                  />
 
                   {isRoomDataOpen && (
                     <div className="min-h-0 basis-0 grow border-l">
-                      <RoomDataSidebar
+                      <InboxInfo
                         roomDetail={roomDetail}
                         formatStatusLabel={formatStatusLabel}
                         statusBadgeVariant={statusBadgeVariant}

@@ -11,7 +11,6 @@ import z from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { loginAction } from "@/lib/actions/login";
-import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.email("Invalid email address").min(1, "Email is required"),

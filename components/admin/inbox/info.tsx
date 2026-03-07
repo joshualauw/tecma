@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import dayjs from "dayjs";
 import { HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
 
-interface RoomDataSidebarProps {
+interface InboxInfoProps {
   roomDetail: RoomDetailApiItem | null;
   statusBadgeVariant: (_status: RoomDetailApiItem["status"]) => "default" | "secondary" | "destructive";
   formatStatusLabel: (_status: RoomDetailApiItem["status"]) => string;
@@ -46,7 +46,7 @@ function ticketStatusBadgeVariant(
   }
 }
 
-export function RoomDataSidebar({ roomDetail, statusBadgeVariant, formatStatusLabel }: RoomDataSidebarProps) {
+export default function InboxInfo({ roomDetail, statusBadgeVariant, formatStatusLabel }: InboxInfoProps) {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="space-y-4">

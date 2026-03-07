@@ -38,12 +38,15 @@ model Employees {
 }
 
 model Messages {
-  id          Int        @id @default(autoincrement())
-  room_id     Int?
-  sender_type SenderType
-  content     String
-  created_at  DateTime?  @default(now()) @db.Timestamp(6)
-  property_id Int?
+  id           Int           @id @default(autoincrement())
+  wa_id        String?       @unique
+  room_id      Int?
+  sender_type  SenderType
+  content      String
+  message_type MessageType   @default(text)
+  status       MessageStatus @default(sent)
+  created_at   DateTime?     @default(now()) @db.Timestamp(6)
+  property_id  Int?
 
   properties Properties? @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_property_id_properties_id_fk")
   rooms      Rooms?      @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_room_id_rooms_id_fk")
@@ -232,6 +235,26 @@ enum TicketStatus {
   closed
 
   @@map("ticket_status")
+}
+
+enum MessageType {
+  text
+  image
+  document
+  audio
+  video
+  location
+
+  @@map("message_type")
+}
+
+enum MessageStatus {
+  sent
+  delivered
+  read
+  failed
+
+  @@map("message_status")
 }
 
 enum UserRole {

@@ -1,4 +1,4 @@
-import InboxChat from "@/components/admin/inbox/inbox-chat";
+import InboxContainer from "@/components/admin/inbox/container";
 import { prisma } from "@/lib/prisma";
 
 export default async function InboxPage() {
@@ -14,7 +14,7 @@ export default async function InboxPage() {
 
   return (
     <div className="space-y-6">
-      <InboxChat properties={properties} />
+      <InboxContainer properties={properties} />
     </div>
   );
 }
