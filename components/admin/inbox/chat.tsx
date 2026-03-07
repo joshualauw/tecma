@@ -1,10 +1,10 @@
 "use client";
 
 import type { MessageApiItem } from "@/app/api/messages/route";
-import type { RoomApiItem } from "@/app/api/rooms/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { RoomStatus, SenderType } from "@/generated/prisma/enums";
 import dayjs from "dayjs";
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ interface InboxChatProps {
   isLoadingRoomData: boolean;
   messages: MessageApiItem[];
   isRoomActive: boolean;
-  currentRoomStatus: RoomApiItem["status"] | null;
+  currentRoomStatus: RoomStatus | null;
   isSendingMessage: boolean;
   onSendMessage: (_content: string) => Promise<boolean>;
 }
@@ -26,7 +26,7 @@ function formatLastMessageAt(value: Date | string | null) {
   return dayjs(value).format("DD/MM/YYYY HH:mm");
 }
 
-function messageBubbleClasses(senderType: MessageApiItem["sender_type"]) {
+function messageBubbleClasses(senderType: SenderType) {
   if (senderType === "tenant") {
     return "max-w-[80%] rounded-lg bg-muted px-3 py-2 text-sm text-foreground";
   }

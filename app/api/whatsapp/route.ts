@@ -9,7 +9,8 @@ export type WhatsappApiItem = {
   waba_id: string;
   phone_id: string;
   phone_number: string;
-  created_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type WhatsappApiData = {
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
         phone_id: true,
         phone_number: true,
         created_at: true,
+        updated_at: true,
       },
       where,
       skip: page * size,

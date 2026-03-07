@@ -9,7 +9,7 @@ export type LeanTenantApiItem = {
   unit: {
     id: number;
     code: string;
-  } | null;
+  };
 };
 
 export type LeanTenantsApiData = {

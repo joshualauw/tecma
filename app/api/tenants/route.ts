@@ -8,15 +8,16 @@ export type TenantApiItem = {
   name: string;
   phone_number: string;
   address: string | null;
-  properties: {
+  property: {
     id: number;
     name: string;
-  } | null;
+  };
   unit: {
     id: number;
     code: string;
-  } | null;
-  created_at: Date | null;
+  };
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type TenantsApiData = {
@@ -62,7 +63,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
         phone_number: true,
         address: true,
         created_at: true,
-        properties: {
+        updated_at: true,
+        property: {
           select: {
             id: true,
             name: true,

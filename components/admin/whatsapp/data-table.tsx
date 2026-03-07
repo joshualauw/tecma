@@ -28,6 +28,7 @@ import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 const PAGE_SIZE = 6;
 
@@ -81,16 +82,7 @@ export default function WhatsappDataTable() {
         throw new Error(payload.message || "No WhatsApp data returned");
       }
 
-      setData(
-        payload.data.whatsapps.map((whatsapp) => ({
-          id: whatsapp.id,
-          display_name: whatsapp.display_name,
-          waba_id: whatsapp.waba_id,
-          phone_id: whatsapp.phone_id,
-          phone_number: whatsapp.phone_number,
-          created_at: whatsapp.created_at,
-        })),
-      );
+      setData(payload.data.whatsapps);
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
@@ -141,11 +133,15 @@ export default function WhatsappDataTable() {
       header: "Created At",
       cell: ({ row }) => {
         const value = row.original.created_at;
-        if (!value) {
-          return "-";
-        }
-
-        return new Date(value).toLocaleDateString();
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated At",
+      cell: ({ row }) => {
+        const value = row.original.updated_at;
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {

@@ -1,11 +1,11 @@
-import type { RoomsModel } from "@/generated/prisma/models";
+import { RoomStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 
 export type ResolveRoomApiItem = {
   id: number;
-  status: RoomsModel["status"];
+  status: RoomStatus;
   closed_at: Date | null;
 };
 
@@ -56,7 +56,7 @@ export async function POST(
         id: roomId,
       },
       data: {
-        status: "closed",
+        status: RoomStatus.closed,
         closed_at: closedAt,
       },
       select: {

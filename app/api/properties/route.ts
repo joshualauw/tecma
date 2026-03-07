@@ -7,7 +7,8 @@ export type PropertyApiItem = {
   id: number;
   name: string;
   address: string | null;
-  created_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type PropertiesApiData = {
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Properties
       : {};
 
     const properties = await prisma.properties.findMany({
-      select: { id: true, name: true, address: true, created_at: true },
+      select: { id: true, name: true, address: true, created_at: true, updated_at: true },
       where,
       skip: page * size,
       take: size,

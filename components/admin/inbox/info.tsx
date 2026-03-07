@@ -4,13 +4,14 @@ import type { RoomDetailApiItem } from "@/app/api/rooms/[id]/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import dayjs from "dayjs";
+import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
 import { HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
+import dayjs from "dayjs";
 
 interface InboxInfoProps {
   roomDetail: RoomDetailApiItem | null;
-  statusBadgeVariant: (_status: RoomDetailApiItem["status"]) => "default" | "secondary" | "destructive";
-  formatStatusLabel: (_status: RoomDetailApiItem["status"]) => string;
+  statusBadgeVariant: (_status: RoomStatus) => "default" | "secondary" | "destructive";
+  formatStatusLabel: (_status: RoomStatus) => string;
 }
 
 function formatTimestamp(value: Date | string | null) {
@@ -21,7 +22,7 @@ function formatTimestamp(value: Date | string | null) {
   return dayjs(value).format("DD/MM/YYYY HH:mm");
 }
 
-function formatTicketStatusLabel(status: RoomDetailApiItem["tickets"][number]["status"]) {
+function formatTicketStatusLabel(status: TicketStatus) {
   if (status === "in_progress") {
     return "In Progress";
   }
@@ -33,9 +34,7 @@ function formatTicketPriorityLabel(priority: RoomDetailApiItem["tickets"][number
   return priority.charAt(0).toUpperCase() + priority.slice(1);
 }
 
-function ticketStatusBadgeVariant(
-  status: RoomDetailApiItem["tickets"][number]["status"],
-): "default" | "secondary" | "destructive" {
+function ticketStatusBadgeVariant(status: TicketStatus): "default" | "secondary" | "destructive" {
   switch (status) {
     case "open":
       return "secondary";

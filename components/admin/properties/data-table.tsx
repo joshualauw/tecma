@@ -28,6 +28,7 @@ import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 const PAGE_SIZE = 6;
 
@@ -81,14 +82,7 @@ export default function PropertiesDataTable() {
         throw new Error(payload.message || "No property data returned");
       }
 
-      setData(
-        payload.data.properties.map((property) => ({
-          id: property.id,
-          name: property.name,
-          address: property.address,
-          created_at: property.created_at,
-        })),
-      );
+      setData(payload.data.properties);
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
@@ -132,11 +126,15 @@ export default function PropertiesDataTable() {
       header: "Created At",
       cell: ({ row }) => {
         const value = row.original.created_at;
-        if (!value) {
-          return "-";
-        }
-
-        return new Date(value).toLocaleDateString();
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated At",
+      cell: ({ row }) => {
+        const value = row.original.updated_at;
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {

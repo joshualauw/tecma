@@ -32,13 +32,13 @@ const formSchema = z.object({
 interface TicketUpdateFormProps {
   data: {
     id: number;
-    propertyId: number | null;
-    tenantId: number | null;
-    unitId: number | null;
-    categoryId: number | null;
-    employeeId: number | null;
-    status: "open" | "in_progress" | "closed";
-    priority: "low" | "medium" | "high";
+    propertyId: number;
+    tenantId: number;
+    unitId: number;
+    categoryId: number;
+    employeeId: number;
+    status: TicketStatus;
+    priority: TicketPriority;
     title: string;
     description: string | null;
   };
@@ -70,16 +70,16 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   const [employees, setEmployees] = useState<LeanEmployeeApiItem[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
-  const initialPropertyId = data.propertyId ? String(data.propertyId) : "";
+  const initialPropertyId = String(data.propertyId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       propertyId: initialPropertyId,
-      tenantId: data.tenantId ? String(data.tenantId) : "",
-      unitId: data.unitId ? String(data.unitId) : "",
-      categoryId: data.categoryId ? String(data.categoryId) : "",
-      employeeId: data.employeeId ? String(data.employeeId) : "",
+      tenantId: String(data.tenantId),
+      unitId: String(data.unitId),
+      categoryId: String(data.categoryId),
+      employeeId: String(data.employeeId),
       status: data.status,
       priority: data.priority,
       title: data.title,

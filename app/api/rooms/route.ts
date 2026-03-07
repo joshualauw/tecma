@@ -1,6 +1,5 @@
 import { RoomStatus } from "@/generated/prisma/enums";
 import { RoomsWhereInput } from "@/generated/prisma/models";
-import type { RoomsModel } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,10 +13,10 @@ export type RoomApiItem = {
   whatsapp: {
     id: number;
     display_name: string;
-  } | null;
+  };
   last_message: string | null;
   last_message_at: Date | null;
-  status: RoomsModel["status"];
+  status: RoomStatus;
 };
 
 export type RoomsApiData = {
@@ -55,10 +54,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
     const rooms = await prisma.rooms.findMany({
       select: {
         id: true,
-        status: true,
-        last_message: true,
-        last_message_at: true,
-        tenants: {
+        tenant: {
           select: {
             id: true,
             name: true,
@@ -70,34 +66,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
             display_name: true,
           },
         },
+        status: true,
+        last_message: true,
+        last_message_at: true,
       },
       where,
       orderBy: [{ last_message_at: "desc" }, { created_at: "desc" }],
     });
 
-    const mappedRooms: RoomApiItem[] = rooms.map((room) => ({
-      id: room.id,
-      tenant: room.tenants
-        ? {
-            id: room.tenants.id,
-            name: room.tenants.name,
-          }
-        : null,
-      whatsapp: room.whatsapp
-        ? {
-            id: room.whatsapp.id,
-            display_name: room.whatsapp.display_name,
-          }
-        : null,
-      last_message: room.last_message,
-      last_message_at: room.last_message_at,
-      status: room.status,
-    }));
-
     return NextResponse.json({
       data: {
-        rooms: mappedRooms,
-        count: mappedRooms.length,
+        rooms,
+        count: rooms.length,
       },
       message: "Rooms fetched successfully",
       success: true,

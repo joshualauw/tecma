@@ -148,11 +148,11 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     }
 
     const selectedTenant = tenants.find((tenant) => tenant.id === tenantId);
-    form.setValue("unitId", selectedTenant?.unit?.id ? String(selectedTenant.unit.id) : "");
+    form.setValue("unitId", selectedTenant ? String(selectedTenant.unit.id) : "");
   }, [form, selectedTenantId, tenants]);
 
   const selectedTenant = tenants.find((tenant) => tenant.id === Number(selectedTenantId));
-  const unitCode = selectedTenant?.unit?.code ?? "";
+  const unitCode = selectedTenant ? selectedTenant.unit.code : "";
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();

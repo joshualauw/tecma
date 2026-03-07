@@ -11,27 +11,28 @@ export type TicketApiItem = {
   description: string | null;
   status: TicketsModel["status"];
   priority: TicketsModel["priority"];
-  properties: {
+  property: {
     id: number;
     name: string;
-  } | null;
+  };
   tenant: {
     id: number;
     name: string;
-    unit: {
-      id: number;
-      code: string;
-    } | null;
-  } | null;
+  };
+  unit: {
+    id: number;
+    code: string;
+  };
   category: {
     id: number;
     name: string;
-  } | null;
+  };
   employee: {
     id: number;
     name: string;
-  } | null;
-  created_at: Date | null;
+  };
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type TicketsApiData = {
@@ -86,7 +87,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
         status: true,
         priority: true,
         created_at: true,
-        properties: {
+        updated_at: true,
+        property: {
           select: {
             id: true,
             name: true,
@@ -96,12 +98,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
           select: {
             id: true,
             name: true,
-            unit: {
-              select: {
-                id: true,
-                code: true,
-              },
-            },
+          },
+        },
+        unit: {
+          select: {
+            id: true,
+            code: true,
           },
         },
         category: {

@@ -21,13 +21,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { TicketCategoriesApiResponse, TicketCategoryApiItem } from "@/app/api/ticket-categories/route";
+import type { TicketCategoriesApiResponse, TicketCategoryApiItem } from "@/app/api/tickets/categories/route";
 import { deleteTicketCategoryAction } from "@/lib/actions/ticket-categories/delete-ticket-category";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 const PAGE_SIZE = 6;
 
@@ -62,7 +63,7 @@ export default function TicketCategoriesDataTable() {
         params.set("search", searchValue);
       }
 
-      const response = await fetch(`/api/ticket-categories?${params.toString()}`, {
+      const response = await fetch(`/api/tickets/categories?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
@@ -81,14 +82,7 @@ export default function TicketCategoriesDataTable() {
         throw new Error(payload.message || "No ticket category data returned");
       }
 
-      setData(
-        payload.data.ticketCategories.map((category) => ({
-          id: category.id,
-          name: category.name,
-          description: category.description,
-          created_at: category.created_at,
-        })),
-      );
+      setData(payload.data.ticketCategories);
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
@@ -132,11 +126,15 @@ export default function TicketCategoriesDataTable() {
       header: "Created At",
       cell: ({ row }) => {
         const value = row.original.created_at;
-        if (!value) {
-          return "-";
-        }
-
-        return new Date(value).toLocaleDateString();
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated At",
+      cell: ({ row }) => {
+        const value = row.original.updated_at;
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {

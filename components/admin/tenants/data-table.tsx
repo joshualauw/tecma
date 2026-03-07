@@ -29,6 +29,7 @@ import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 const PAGE_SIZE = 6;
 
@@ -94,17 +95,7 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
         throw new Error(payload.message || "No tenant data returned");
       }
 
-      setData(
-        payload.data.tenants.map((tenant) => ({
-          id: tenant.id,
-          name: tenant.name,
-          phone_number: tenant.phone_number,
-          address: tenant.address,
-          properties: tenant.properties,
-          unit: tenant.unit,
-          created_at: tenant.created_at,
-        })),
-      );
+      setData(payload.data.tenants);
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
@@ -141,12 +132,12 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
     {
       id: "property",
       header: "Property",
-      cell: ({ row }) => row.original.properties?.name ?? "-",
+      cell: ({ row }) => row.original.property.name,
     },
     {
       id: "unit",
       header: "Unit",
-      cell: ({ row }) => row.original.unit?.code ?? "-",
+      cell: ({ row }) => row.original.unit.code,
     },
     {
       accessorKey: "phone_number",
@@ -162,11 +153,15 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       header: "Created At",
       cell: ({ row }) => {
         const value = row.original.created_at;
-        if (!value) {
-          return "-";
-        }
-
-        return new Date(value).toLocaleDateString();
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated At",
+      cell: ({ row }) => {
+        const value = row.original.updated_at;
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {

@@ -29,6 +29,7 @@ import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 const PAGE_SIZE = 6;
 
@@ -94,16 +95,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
         throw new Error(payload.message || "No employee data returned");
       }
 
-      setData(
-        payload.data.employees.map((employee) => ({
-          id: employee.id,
-          name: employee.name,
-          phone_number: employee.phone_number,
-          address: employee.address,
-          properties: employee.properties,
-          created_at: employee.created_at,
-        })),
-      );
+      setData(payload.data.employees);
       setTotalCount(payload.data.count);
     } catch (error) {
       console.error(error);
@@ -140,7 +132,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
     {
       id: "property",
       header: "Property",
-      cell: ({ row }) => row.original.properties?.name ?? "-",
+      cell: ({ row }) => row.original.property.name,
     },
     {
       accessorKey: "phone_number",
@@ -156,11 +148,15 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       header: "Created At",
       cell: ({ row }) => {
         const value = row.original.created_at;
-        if (!value) {
-          return "-";
-        }
-
-        return new Date(value).toLocaleDateString();
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated At",
+      cell: ({ row }) => {
+        const value = row.original.updated_at;
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {

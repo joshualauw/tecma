@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import dayjs from "dayjs";
 
 const PAGE_SIZE = 6;
 
@@ -176,27 +177,27 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
     {
       id: "property",
       header: "Property",
-      cell: ({ row }) => row.original.properties?.name ?? "-",
+      cell: ({ row }) => row.original.property.name,
     },
     {
       id: "tenant",
       header: "Tenant",
-      cell: ({ row }) => row.original.tenant?.name ?? "-",
+      cell: ({ row }) => row.original.tenant.name,
     },
     {
       id: "unit",
       header: "Unit",
-      cell: ({ row }) => row.original.tenant?.unit?.code ?? "-",
+      cell: ({ row }) => row.original.unit.code,
     },
     {
       id: "category",
       header: "Category",
-      cell: ({ row }) => row.original.category?.name ?? "-",
+      cell: ({ row }) => row.original.category.name,
     },
     {
       id: "employee",
       header: "Employee",
-      cell: ({ row }) => row.original.employee?.name ?? "-",
+      cell: ({ row }) => row.original.employee.name,
     },
     {
       accessorKey: "status",
@@ -219,11 +220,15 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
       header: "Created At",
       cell: ({ row }) => {
         const value = row.original.created_at;
-        if (!value) {
-          return "-";
-        }
-
-        return new Date(value).toLocaleDateString();
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated At",
+      cell: ({ row }) => {
+        const value = row.original.updated_at;
+        return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {

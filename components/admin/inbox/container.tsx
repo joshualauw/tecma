@@ -29,6 +29,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import InboxChat from "@/components/admin/inbox/chat";
 import InboxInfo from "@/components/admin/inbox/info";
+import { RoomStatus } from "@/generated/prisma/enums";
 
 interface InboxContainerProps {
   properties: {
@@ -37,11 +38,11 @@ interface InboxContainerProps {
   }[];
 }
 
-function formatStatusLabel(status: RoomApiItem["status"]) {
+function formatStatusLabel(status: RoomStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function statusBadgeVariant(status: RoomApiItem["status"]): "default" | "secondary" | "destructive" {
+function statusBadgeVariant(status: RoomStatus): "default" | "secondary" | "destructive" {
   switch (status) {
     case "active":
       return "secondary";
@@ -95,7 +96,7 @@ function formatExpiresIn(value: Date | string) {
 
 export default function InboxContainer({ properties }: InboxContainerProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
-  const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomApiItem["status"]>("active");
+  const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomStatus>("active");
   const [rooms, setRooms] = useState<RoomApiItem[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [roomDetail, setRoomDetail] = useState<RoomDetailApiItem | null>(null);
@@ -339,7 +340,7 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
 
                       <Select
                         value={selectedRoomStatus}
-                        onValueChange={(value: "all" | RoomApiItem["status"]) => setSelectedRoomStatus(value)}
+                        onValueChange={(value: "all" | RoomStatus) => setSelectedRoomStatus(value)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Filter by status" />
