@@ -2,6 +2,7 @@ import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type EmployeeApiItem = {
   id: number;
@@ -21,22 +22,39 @@ export type EmployeesApiData = {
   count: number;
 };
 
+const employeeQuery = z.object({
+  page: z.coerce.number().int().default(0),
+  size: z.coerce.number().int().positive().default(10),
+  search: z.string().trim().nullable(),
+  propertyId: z.coerce.number().int().positive().nullable(),
+});
+
 export type EmployeesApiResponse = ApiResponse<EmployeesApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<EmployeesApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const pageParam = Number(searchParams.get("page") ?? 0);
-    const sizeParam = Number(searchParams.get("size") ?? 10);
-    const search = (searchParams.get("search") ?? "").trim();
-    const propertyIdParam = Number(searchParams.get("propertyId"));
 
-    const page = Number.isFinite(pageParam) && pageParam >= 0 ? Math.floor(pageParam) : 0;
-    const size = Number.isFinite(sizeParam) && sizeParam > 0 ? Math.floor(sizeParam) : 10;
-    const propertyId =
-      Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
-        ? propertyIdParam
-        : null;
+    const parsed = employeeQuery.safeParse({
+      page: searchParams.get("page"),
+      size: searchParams.get("size"),
+      search: searchParams.get("search"),
+      propertyId: searchParams.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Employee query validation failed:", parsed.error);
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Invalid query parameters",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { page, size, search, propertyId } = parsed.data;
 
     const where: EmployeesWhereInput = {};
 

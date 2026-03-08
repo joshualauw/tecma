@@ -184,17 +184,18 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     formData.append("status", values.status);
     formData.append("priority", values.priority);
     formData.append("title", values.title);
-    formData.append("description", values.description ?? "");
+    if (values.description) {
+      formData.append("description", values.description);
+    }
 
     const result = await updateTicketAction(formData);
 
     if (result.success) {
       router.push("/admin/tickets");
       toast.success("Ticket updated successfully");
-      return;
+    } else {
+      toast.error(result.message || "Failed to update ticket");
     }
-
-    form.setError("title", { message: result.message });
   }
 
   return (

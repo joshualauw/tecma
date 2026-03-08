@@ -50,7 +50,7 @@ export default function PropertyUpdateForm({ data }: PropertyUpdateFormProps) {
       router.push("/admin/properties");
       toast.success("Property updated successfully");
     } else {
-      form.setError("name", { message: result.message });
+      toast.error(result.message || "Failed to update property");
     }
   }
 

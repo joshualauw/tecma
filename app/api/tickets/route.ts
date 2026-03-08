@@ -1,16 +1,16 @@
 import { TicketsWhereInput } from "@/generated/prisma/models";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
-import type { TicketsModel } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type TicketApiItem = {
   id: number;
   title: string;
   description: string | null;
-  status: TicketsModel["status"];
-  priority: TicketsModel["priority"];
+  status: TicketStatus;
+  priority: TicketPriority;
   property: {
     id: number;
     name: string;
@@ -40,26 +40,43 @@ export type TicketsApiData = {
   count: number;
 };
 
+const ticketQuery = z.object({
+  page: z.coerce.number().int().default(0),
+  size: z.coerce.number().int().positive().default(10),
+  search: z.string().trim().nullable(),
+  propertyId: z.coerce.number().int().positive().nullable(),
+  status: z.enum(TicketStatus).nullable(),
+  priority: z.enum(TicketPriority).nullable(),
+});
+
 export type TicketsApiResponse = ApiResponse<TicketsApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<TicketsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const pageParam = Number(searchParams.get("page") ?? 0);
-    const sizeParam = Number(searchParams.get("size") ?? 10);
-    const search = (searchParams.get("search") ?? "").trim();
-    const propertyIdParam = Number(searchParams.get("propertyId"));
-    const statusParam = (searchParams.get("status") ?? "").trim();
-    const priorityParam = (searchParams.get("priority") ?? "").trim();
 
-    const page = Number.isFinite(pageParam) && pageParam >= 0 ? Math.floor(pageParam) : 0;
-    const size = Number.isFinite(sizeParam) && sizeParam > 0 ? Math.floor(sizeParam) : 10;
-    const propertyId =
-      Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
-        ? propertyIdParam
-        : null;
-    const status = statusParam && statusParam in TicketStatus ? statusParam : null;
-    const priority = priorityParam && priorityParam in TicketPriority ? priorityParam : null;
+    const parsed = ticketQuery.safeParse({
+      page: searchParams.get("page"),
+      size: searchParams.get("size"),
+      search: searchParams.get("search"),
+      propertyId: searchParams.get("propertyId"),
+      status: searchParams.get("status"),
+      priority: searchParams.get("priority"),
+    });
+
+    if (!parsed.success) {
+      console.error("Ticket query validation failed:", parsed.error);
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Invalid query parameters",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { page, size, search, propertyId, status, priority } = parsed.data;
 
     const where: TicketsWhereInput = {};
 
@@ -72,11 +89,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
     }
 
     if (status !== null) {
-      where.status = status as (typeof TicketStatus)[keyof typeof TicketStatus];
+      where.status = status;
     }
 
     if (priority !== null) {
-      where.priority = priority as (typeof TicketPriority)[keyof typeof TicketPriority];
+      where.priority = priority;
     }
 
     const tickets = await prisma.tickets.findMany({

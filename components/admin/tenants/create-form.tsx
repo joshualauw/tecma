@@ -1,6 +1,6 @@
 "use client";
 
-import { AvailableUnitsApiItem } from "@/app/api/units/available/route";
+import { AvailableUnitsApiItem, AvailableUnitsApiResponse } from "@/app/api/units/available/route";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -17,7 +17,11 @@ import z from "zod";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Tenant name is required"),
-  phoneNumber: z.string().trim().min(1, "Phone number is required"),
+  phoneNumber: z
+    .string()
+    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .trim()
+    .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
   propertyId: z.string().trim().min(1, "Property is required"),
   unitId: z.string().trim().min(1, "Unit is required"),
@@ -67,11 +71,7 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
         const response = await fetch(`/api/units/available?propertyId=${propertyId}`, {
           signal: controller.signal,
         });
-        const payload = (await response.json()) as {
-          success: boolean;
-          data: { units: { id: number; code: string }[] } | null;
-          message?: string;
-        };
+        const payload = (await response.json()) as AvailableUnitsApiResponse;
 
         if (!response.ok || !payload.success) {
           throw new Error(payload.message || "Failed to fetch available units");
@@ -110,7 +110,7 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
       router.push("/admin/tenants");
       toast.success("Tenant created successfully");
     } else {
-      form.setError("name", { message: result.message });
+      toast.error(result.message || "Failed to create tenant");
     }
   }
 

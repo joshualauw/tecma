@@ -3,7 +3,7 @@
 
 import type { MessagesApiResponse, MessageApiItem } from "@/app/api/messages/route";
 import type { RoomDetailApiItem, RoomDetailApiResponse } from "@/app/api/rooms/[id]/route";
-import type { ResolveRoomApiResponse } from "@/app/api/rooms/[id]/resolve/route";
+import { resolveRoomAction } from "@/lib/actions/rooms/resolve-room";
 import type { RoomsApiResponse, RoomApiItem } from "@/app/api/rooms/route";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -70,27 +70,19 @@ function formatLastMessageTime(value: Date | string | null) {
 }
 
 function formatExpiresIn(value: Date | string) {
-  const expiresAt = new Date(value).getTime();
-  const now = Date.now();
-  const diff = expiresAt - now;
+  const diff = dayjs(value).diff(dayjs());
 
   if (diff <= 0) {
     return "Expired";
   }
 
-  const totalMinutes = Math.floor(diff / 1000 / 60);
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
+  const d = dayjs.duration(diff);
+  const days = d.days();
+  const hours = d.hours();
+  const minutes = d.minutes();
 
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  }
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
 }
 
@@ -225,14 +217,11 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
     try {
       setIsResolvingRoom(true);
 
-      const response = await fetch(`/api/rooms/${selectedRoomId}/resolve`, {
-        method: "POST",
-        cache: "no-store",
-      });
-      const payload = (await response.json()) as ResolveRoomApiResponse;
+      const result = await resolveRoomAction(selectedRoomId);
 
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message || "Failed to resolve room");
+      if (!result.success) {
+        toast.error(result.message || "Failed to resolve room");
+        return;
       }
 
       toast.success("Room resolved successfully");

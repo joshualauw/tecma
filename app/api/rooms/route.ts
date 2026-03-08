@@ -3,6 +3,7 @@ import { RoomsWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type RoomApiItem = {
   id: number;
@@ -24,22 +25,35 @@ export type RoomsApiData = {
   count: number;
 };
 
+const roomQuery = z.object({
+  propertyId: z.coerce.number().int().positive().nullable(),
+  status: z.enum(RoomStatus).nullable(),
+});
+
 export type RoomsApiResponse = ApiResponse<RoomsApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const propertyIdParam = Number(searchParams.get("propertyId"));
-    const statusParam = (searchParams.get("status") ?? "").trim();
-    const roomStatuses = Object.values(RoomStatus) as Array<(typeof RoomStatus)[keyof typeof RoomStatus]>;
 
-    const propertyId =
-      Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
-        ? propertyIdParam
-        : null;
-    const status = roomStatuses.includes(statusParam as (typeof RoomStatus)[keyof typeof RoomStatus])
-      ? (statusParam as (typeof RoomStatus)[keyof typeof RoomStatus])
-      : null;
+    const parsed = roomQuery.safeParse({
+      propertyId: searchParams.get("propertyId"),
+      status: searchParams.get("status"),
+    });
+
+    if (!parsed.success) {
+      console.error("Room query validation failed:", parsed.error);
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Invalid query parameters",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { propertyId, status } = parsed.data;
 
     const where: RoomsWhereInput = {};
 

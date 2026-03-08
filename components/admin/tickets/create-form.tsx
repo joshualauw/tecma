@@ -164,17 +164,17 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     formData.append("status", data.status);
     formData.append("priority", data.priority);
     formData.append("title", data.title);
-    formData.append("description", data.description ?? "");
+    if (data.description) {
+      formData.append("description", data.description);
+    }
 
     const result = await createTicketAction(formData);
-
     if (result.success) {
       router.push("/admin/tickets");
       toast.success("Ticket created successfully");
-      return;
+    } else {
+      toast.error(result.message || "Failed to create ticket");
     }
-
-    form.setError("title", { message: result.message });
   }
 
   return (

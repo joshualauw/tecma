@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type AvailableUnitsApiItem = {
   id: number;
@@ -11,39 +12,35 @@ export type AvailableUnitsApiData = {
   units: AvailableUnitsApiItem[];
 };
 
+const availableUnitsQuery = z.object({
+  propertyId: z.coerce.number().int().positive(),
+  tenantId: z.coerce.number().int().positive(),
+});
+
 export type AvailableUnitsApiResponse = ApiResponse<AvailableUnitsApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<AvailableUnitsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const propertyIdParam = Number(searchParams.get("propertyId"));
-    const tenantIdParam = Number(searchParams.get("tenantId"));
 
-    if (!Number.isInteger(propertyIdParam) || propertyIdParam <= 0) {
+    const parsed = availableUnitsQuery.safeParse({
+      propertyId: searchParams.get("propertyId"),
+      tenantId: searchParams.get("tenantId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Available units query validation failed:", parsed.error);
       return NextResponse.json(
         {
           data: null,
-          message: "A valid propertyId is required",
+          message: "Invalid query parameters",
           success: false,
         },
         { status: 400 },
       );
     }
 
-    const tenantId = Number.isInteger(tenantIdParam) && tenantIdParam > 0 ? tenantIdParam : null;
-
-    let currentTenantUnitId: number | null = null;
-    if (tenantId !== null) {
-      const tenant = await prisma.tenants.findUnique({
-        where: {
-          id: tenantId,
-        },
-        select: {
-          unit_id: true,
-        },
-      });
-      currentTenantUnitId = tenant?.unit_id ?? null;
-    }
+    const { propertyId, tenantId } = parsed.data;
 
     const units = await prisma.units.findMany({
       select: {
@@ -51,17 +48,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
         code: true,
       },
       where: {
-        property_id: propertyIdParam,
+        property_id: propertyId,
         OR: [
           {
             tenants: {
               none: {},
             },
           },
-          ...(currentTenantUnitId !== null
+          ...(tenantId !== null
             ? [
                 {
-                  id: currentTenantUnitId,
+                  id: tenantId,
                 },
               ]
             : []),

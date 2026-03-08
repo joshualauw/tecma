@@ -15,7 +15,11 @@ const formSchema = z.object({
   displayName: z.string().trim().min(1, "Display name is required"),
   wabaId: z.string().trim().min(1, "WABA ID is required"),
   phoneId: z.string().trim().min(1, "Phone ID is required"),
-  phoneNumber: z.string().trim().min(1, "Phone number is required"),
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .min(1, "Phone number is required"),
 });
 
 interface WhatsappUpdateFormProps {
@@ -55,7 +59,7 @@ export default function WhatsappUpdateForm({ data }: WhatsappUpdateFormProps) {
       router.push("/admin/whatsapp");
       toast.success("WhatsApp updated successfully");
     } else {
-      form.setError("displayName", { message: result.message });
+      toast.error(result.message || "Failed to update WhatsApp");
     }
   }
 

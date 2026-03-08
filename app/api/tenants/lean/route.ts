@@ -2,6 +2,7 @@ import { TenantsWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type LeanTenantApiItem = {
   id: number;
@@ -16,19 +17,33 @@ export type LeanTenantsApiData = {
   tenants: LeanTenantApiItem[];
 };
 
+const leanTenantQuery = z.object({
+  propertyId: z.coerce.number().int().positive().nullable(),
+});
+
 export type LeanTenantsApiResponse = ApiResponse<LeanTenantsApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<LeanTenantsApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const propertyIdRaw = searchParams.get("propertyId");
 
-    const isPropertyIdNull = propertyIdRaw === null || propertyIdRaw.trim() === "" || propertyIdRaw === "null";
-    const propertyIdParam = Number(propertyIdRaw);
-    const propertyId =
-      !isPropertyIdNull && Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
-        ? propertyIdParam
-        : null;
+    const parsed = leanTenantQuery.safeParse({
+      propertyId: searchParams.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Lean tenant query validation failed:", parsed.error);
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Invalid query parameters",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { propertyId } = parsed.data;
 
     const where: TenantsWhereInput = {};
 

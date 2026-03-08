@@ -45,7 +45,7 @@ export default function UnitCreateForm({ properties }: UnitCreateFormProps) {
       router.push("/admin/units");
       toast.success("Unit created successfully");
     } else {
-      form.setError("code", { message: result.message });
+      toast.error(result.message || "Failed to create unit");
     }
   }
 

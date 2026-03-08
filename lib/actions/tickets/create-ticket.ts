@@ -3,73 +3,54 @@
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
+import z from "zod";
+
+const createTicketSchema = z.object({
+  propertyId: z.coerce.number().int().positive(),
+  tenantId: z.coerce.number().int().positive(),
+  categoryId: z.coerce.number().int().positive(),
+  employeeId: z.coerce.number().int().positive(),
+  title: z.string().trim().min(1),
+  description: z.string().trim().nullable(),
+  status: z.enum(TicketStatus),
+  priority: z.enum(TicketPriority),
+  unitId: z.coerce.number().int().positive(),
+});
 
 type CreateTicketActionResponse = ApiResponse<null>;
 
 export async function createTicketAction(formData: FormData): Promise<CreateTicketActionResponse> {
-  const propertyId = formData.get("propertyId");
-  const tenantId = formData.get("tenantId");
-  const categoryId = formData.get("categoryId");
-  const employeeId = formData.get("employeeId");
-  const title = formData.get("title");
-  const description = formData.get("description");
-  const status = formData.get("status");
-  const priority = formData.get("priority");
-  const unitId = formData.get("unitId");
+  const parsed = createTicketSchema.safeParse({
+    propertyId: formData.get("propertyId"),
+    tenantId: formData.get("tenantId"),
+    categoryId: formData.get("categoryId"),
+    employeeId: formData.get("employeeId"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    status: formData.get("status"),
+    priority: formData.get("priority"),
+    unitId: formData.get("unitId"),
+  });
 
-  const parsedPropertyId = Number(propertyId);
-  if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, message: "Invalid property id" };
+  if (!parsed.success) {
+    console.error("Create Ticket validation failed:", parsed.error);
+    return { success: false, message: "Invalid input" };
   }
 
-  const parsedTenantId = Number(tenantId);
-  if (!Number.isInteger(parsedTenantId) || parsedTenantId <= 0) {
-    return { success: false, message: "Invalid tenant id" };
-  }
-
-  const parsedCategoryId = Number(categoryId);
-  if (!Number.isInteger(parsedCategoryId) || parsedCategoryId <= 0) {
-    return { success: false, message: "Invalid category id" };
-  }
-
-  const parsedEmployeeId = Number(employeeId);
-  if (!Number.isInteger(parsedEmployeeId) || parsedEmployeeId <= 0) {
-    return { success: false, message: "Invalid employee id" };
-  }
-
-  const parsedUnitId = Number(unitId);
-  if (!Number.isInteger(parsedUnitId) || parsedUnitId <= 0) {
-    return { success: false, message: "Invalid unit id" };
-  }
-
-  const normalizedTitle = String(title ?? "").trim();
-  if (!normalizedTitle) {
-    return { success: false, message: "Title is required" };
-  }
-
-  const normalizedStatus = String(status ?? "");
-  const normalizedPriority = String(priority ?? "");
-
-  if (!(normalizedStatus in TicketStatus)) {
-    return { success: false, message: "Invalid ticket status" };
-  }
-
-  if (!(normalizedPriority in TicketPriority)) {
-    return { success: false, message: "Invalid ticket priority" };
-  }
+  const { propertyId, tenantId, categoryId, employeeId, title, description, status, priority, unitId } = parsed.data;
 
   try {
     await prisma.tickets.create({
       data: {
-        property_id: parsedPropertyId,
-        tenant_id: parsedTenantId,
-        unit_id: parsedUnitId,
-        category_id: parsedCategoryId,
-        employee_id: parsedEmployeeId,
-        title: normalizedTitle,
-        description: String(description ?? "").trim() || null,
-        status: normalizedStatus as (typeof TicketStatus)[keyof typeof TicketStatus],
-        priority: normalizedPriority as (typeof TicketPriority)[keyof typeof TicketPriority],
+        property_id: propertyId,
+        tenant_id: tenantId,
+        unit_id: unitId,
+        category_id: categoryId,
+        employee_id: employeeId,
+        title: title,
+        description: description,
+        status: status,
+        priority: priority,
       },
     });
 

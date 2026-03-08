@@ -1,52 +1,49 @@
 "use server";
 
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
+import z from "zod";
+
+const updateUnitSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  code: z.string().trim().min(1),
+  propertyId: z.coerce.number().int().positive(),
+});
 
 type UpdateUnitActionResponse = ApiResponse<null>;
 
 export async function updateUnitAction(formData: FormData): Promise<UpdateUnitActionResponse> {
-  const id = formData.get("id");
-  const code = formData.get("code");
-  const propertyId = formData.get("propertyId");
+  const parsed = updateUnitSchema.safeParse({
+    id: formData.get("id"),
+    code: formData.get("code"),
+    propertyId: formData.get("propertyId"),
+  });
 
-  const unitId = Number(id);
-  if (!Number.isInteger(unitId) || unitId <= 0) {
-    return { success: false, message: "Invalid unit id" };
+  if (!parsed.success) {
+    console.error("Update Unit validation failed:", parsed.error);
+    return { success: false, message: "Invalid input" };
   }
 
-  const parsedPropertyId = Number(propertyId);
-  if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, message: "Invalid property id" };
-  }
+  const { id, code, propertyId } = parsed.data;
 
   try {
-    const existingUnit = await prisma.units.findUnique({
-      where: {
-        id: unitId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!existingUnit) {
-      return { success: false, message: "Unit not found" };
-    }
-
     await prisma.units.update({
       where: {
-        id: unitId,
+        id,
       },
       data: {
-        code: code as string,
-        property_id: parsedPropertyId,
+        code: code,
+        property_id: propertyId,
       },
     });
 
     return { success: true, message: "Unit updated successfully" };
   } catch (error) {
     console.error("Error updating unit:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return { success: false, message: "Unit not found" };
+    }
     return { success: false, message: "An unexpected error occurred" };
   }
 }

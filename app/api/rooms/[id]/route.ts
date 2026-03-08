@@ -2,6 +2,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { RoomStatus, TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import z from "zod";
 
 export type RoomDetailApiItem = {
   id: number;
@@ -46,6 +47,10 @@ export type RoomDetailApiItem = {
   }[];
 };
 
+const roomDetailQuery = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
 export type RoomDetailApiResponse = ApiResponse<RoomDetailApiItem>;
 
 export async function GET(
@@ -53,23 +58,28 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<RoomDetailApiResponse>> {
   try {
-    const { id: idParam } = await context.params;
-    const roomId = Number(idParam);
+    const contextParams = await context.params;
+    const parsed = roomDetailQuery.safeParse({
+      id: contextParams.id,
+    });
 
-    if (!Number.isInteger(roomId) || roomId <= 0) {
+    if (!parsed.success) {
+      console.error("Room detail query validation failed:", parsed.error);
       return NextResponse.json(
         {
           data: null,
-          message: "Invalid room id",
+          message: "Invalid query parameters",
           success: false,
         },
         { status: 400 },
       );
     }
 
+    const { id } = parsed.data;
+
     const room = await prisma.rooms.findUnique({
       where: {
-        id: roomId,
+        id,
       },
       select: {
         id: true,

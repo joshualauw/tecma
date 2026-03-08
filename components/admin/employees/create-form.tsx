@@ -52,7 +52,7 @@ export default function EmployeeCreateForm({ properties }: EmployeeCreateFormPro
       router.push("/admin/employees");
       toast.success("Employee created successfully");
     } else {
-      form.setError("name", { message: result.message });
+      toast.error(result.message || "Failed to create employee");
     }
   }
 

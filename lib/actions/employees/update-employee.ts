@@ -1,56 +1,59 @@
 "use server";
 
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
+import z from "zod";
+
+const updateEmployeeSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  name: z.string().trim().min(1),
+  phoneNumber: z.string().trim().min(1),
+  address: z.string().optional(),
+  propertyId: z.coerce.number().int().positive(),
+});
 
 type UpdateEmployeeActionResponse = ApiResponse<null>;
 
 export async function updateEmployeeAction(formData: FormData): Promise<UpdateEmployeeActionResponse> {
-  const id = formData.get("id");
-  const name = formData.get("name");
-  const phoneNumber = formData.get("phoneNumber");
-  const address = formData.get("address");
-  const propertyId = formData.get("propertyId");
+  const parsed = updateEmployeeSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    phoneNumber: formData.get("phoneNumber"),
+    address: formData.get("address"),
+    propertyId: formData.get("propertyId"),
+  });
 
-  const employeeId = Number(id);
-  if (!Number.isInteger(employeeId) || employeeId <= 0) {
-    return { success: false, message: "Invalid employee id" };
+  if (!parsed.success) {
+    console.error("Update Employee validation failed:", parsed.error);
+    return { success: false, message: "Invalid input" };
   }
 
-  const parsedPropertyId = Number(propertyId);
-  if (!Number.isInteger(parsedPropertyId) || parsedPropertyId <= 0) {
-    return { success: false, message: "Invalid property id" };
-  }
+  const { id, name, phoneNumber, address, propertyId } = parsed.data;
 
   try {
-    const existingEmployee = await prisma.employees.findUnique({
-      where: {
-        id: employeeId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!existingEmployee) {
-      return { data: null, success: false, message: "Employee not found" };
-    }
-
     await prisma.employees.update({
       where: {
-        id: employeeId,
+        id,
       },
       data: {
-        name: name as string,
-        phone_number: phoneNumber as string,
-        address: (address as string) || null,
-        property_id: parsedPropertyId,
+        name: name,
+        phone_number: phoneNumber,
+        address: address,
+        property_id: propertyId,
       },
     });
 
     return { success: true, message: "Employee updated successfully" };
   } catch (error) {
     console.error("Error updating employee:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return { success: false, message: "Employee not found" };
+      } else if (error.code === "P2002") {
+        return { success: false, message: "Employee with this phone number already exists" };
+      }
+    }
     return { success: false, message: "An unexpected error occurred" };
   }
 }

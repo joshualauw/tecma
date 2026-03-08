@@ -2,31 +2,28 @@
 
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
+import z from "zod";
+
+const deleteEmployeeSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
 
 type DeleteEmployeeActionResponse = ApiResponse<null>;
 
 export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEmployeeActionResponse> {
-  if (!Number.isInteger(employeeId) || employeeId <= 0) {
-    return { success: false, message: "Invalid employee id" };
+  const parsed = deleteEmployeeSchema.safeParse({ id: employeeId });
+
+  if (!parsed.success) {
+    console.error("Delete Employee validation failed:", parsed.error);
+    return { success: false, message: "Invalid employee ID" };
   }
 
+  const { id } = parsed.data;
+
   try {
-    const existingEmployee = await prisma.employees.findUnique({
-      where: {
-        id: employeeId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!existingEmployee) {
-      return { success: false, message: "Employee not found" };
-    }
-
     await prisma.employees.delete({
       where: {
-        id: employeeId,
+        id,
       },
     });
 

@@ -2,6 +2,7 @@ import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type LeanEmployeeApiItem = {
   id: number;
@@ -12,19 +13,33 @@ export type LeanEmployeesApiData = {
   employees: LeanEmployeeApiItem[];
 };
 
+const leanEmployeeQuery = z.object({
+  propertyId: z.coerce.number().int().positive().nullable(),
+});
+
 export type LeanEmployeesApiResponse = ApiResponse<LeanEmployeesApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<LeanEmployeesApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const propertyIdRaw = searchParams.get("propertyId");
 
-    const isPropertyIdNull = propertyIdRaw === null || propertyIdRaw.trim() === "" || propertyIdRaw === "null";
-    const propertyIdParam = Number(propertyIdRaw);
-    const propertyId =
-      !isPropertyIdNull && Number.isFinite(propertyIdParam) && Number.isInteger(propertyIdParam) && propertyIdParam > 0
-        ? propertyIdParam
-        : null;
+    const parsed = leanEmployeeQuery.safeParse({
+      propertyId: searchParams.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Lean employee query validation failed:", parsed.error);
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Invalid query parameters",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { propertyId } = parsed.data;
 
     const where: EmployeesWhereInput = {};
 

@@ -3,71 +3,35 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import type { MessageApiItem } from "@/app/api/messages/route";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
+import { Prisma } from "@/generated/prisma/client";
 
-type SendMessagePayload = {
-  roomId?: number;
-  propertyId?: number;
-  content?: string;
-};
+const sendMessageSchema = z.object({
+  roomId: z.coerce.number().int().positive(),
+  propertyId: z.coerce.number().int().positive(),
+  content: z.string().trim().min(1),
+});
 
 type SendMessageApiResponse = ApiResponse<MessageApiItem>;
 
 export async function POST(request: NextRequest): Promise<NextResponse<SendMessageApiResponse>> {
   try {
-    const body = (await request.json()) as SendMessagePayload;
+    const body = await request.json();
+    const parsed = sendMessageSchema.safeParse(body);
 
-    const roomId = Number(body.roomId);
-    const propertyId = Number(body.propertyId);
-    const content = (body.content ?? "").trim();
-
-    if (!Number.isInteger(roomId) || roomId <= 0) {
+    if (!parsed.success) {
+      console.error("Send message schema validation failed:", parsed.error);
       return NextResponse.json(
         {
           data: null,
           success: false,
-          message: "roomId is required",
+          message: "Invalid request body",
         },
         { status: 400 },
       );
     }
 
-    if (!Number.isInteger(propertyId) || propertyId <= 0) {
-      return NextResponse.json(
-        {
-          data: null,
-          success: false,
-          message: "propertyId is required",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (!content) {
-      return NextResponse.json(
-        {
-          data: null,
-          success: false,
-          message: "content is required",
-        },
-        { status: 400 },
-      );
-    }
-
-    const room = await prisma.rooms.findUnique({
-      where: { id: roomId },
-      select: { id: true },
-    });
-
-    if (!room) {
-      return NextResponse.json(
-        {
-          data: null,
-          success: false,
-          message: "Room not found",
-        },
-        { status: 404 },
-      );
-    }
+    const { roomId, propertyId, content } = parsed.data;
 
     const message = await prisma.messages.create({
       data: {
@@ -99,6 +63,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<SendMessa
     });
   } catch (error) {
     console.error("Error sending message:", error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return NextResponse.json({ data: null, success: false, message: "Room not found" }, { status: 404 });
+      }
+      if (error.code === "P2002") {
+        return NextResponse.json({ data: null, success: false, message: "Property not found" }, { status: 404 });
+      }
+    }
 
     return NextResponse.json(
       {

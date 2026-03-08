@@ -1,47 +1,49 @@
 "use server";
 
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
+import z from "zod";
+
+const updateTicketCategorySchema = z.object({
+  id: z.coerce.number().int().positive(),
+  name: z.string().trim().min(1),
+  description: z.string().trim().nullable(),
+});
 
 type UpdateTicketCategoryActionResponse = ApiResponse<null>;
 
 export async function updateTicketCategoryAction(formData: FormData): Promise<UpdateTicketCategoryActionResponse> {
-  const id = formData.get("id");
-  const name = formData.get("name");
-  const description = formData.get("description");
+  const parsed = updateTicketCategorySchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    description: formData.get("description"),
+  });
 
-  const ticketCategoryId = Number(id);
-  if (!Number.isInteger(ticketCategoryId) || ticketCategoryId <= 0) {
-    return { success: false, message: "Invalid ticket category id" };
+  if (!parsed.success) {
+    console.error("Update Ticket Category validation failed:", parsed.error);
+    return { success: false, message: "Invalid input" };
   }
 
+  const { id, name, description } = parsed.data;
+
   try {
-    const existingCategory = await prisma.ticketCategories.findUnique({
-      where: {
-        id: ticketCategoryId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!existingCategory) {
-      return { success: false, message: "Ticket category not found" };
-    }
-
     await prisma.ticketCategories.update({
       where: {
-        id: ticketCategoryId,
+        id,
       },
       data: {
-        name: name as string,
-        description: (description as string) || null,
+        name: name,
+        description: description,
       },
     });
 
     return { success: true, message: "Ticket category updated successfully" };
   } catch (error) {
     console.error("Error updating ticket category:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return { success: false, message: "Ticket category not found" };
+    }
     return { success: false, message: "An unexpected error occurred" };
   }
 }

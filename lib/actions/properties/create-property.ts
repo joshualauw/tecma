@@ -2,18 +2,33 @@
 
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
+import z from "zod";
+
+const createPropertySchema = z.object({
+  name: z.string().trim().min(1),
+  address: z.string().trim().min(1).nullable(),
+});
 
 type CreatePropertyActionResponse = ApiResponse<null>;
 
 export async function createPropertyAction(formData: FormData): Promise<CreatePropertyActionResponse> {
-  const name = formData.get("name");
-  const address = formData.get("address");
+  const parsed = createPropertySchema.safeParse({
+    name: formData.get("name"),
+    address: formData.get("address"),
+  });
+
+  if (!parsed.success) {
+    console.error("Create Property validation failed:", parsed.error);
+    return { success: false, message: "Invalid input" };
+  }
+
+  const { name, address } = parsed.data;
 
   try {
     await prisma.properties.create({
       data: {
-        name: name as string,
-        address: address as string,
+        name: name,
+        address: address,
       },
     });
 

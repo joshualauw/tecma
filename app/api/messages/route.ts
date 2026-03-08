@@ -4,6 +4,7 @@ import type { MessagesModel } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 
 export type MessageApiItem = {
   id: number;
@@ -17,35 +18,39 @@ export type MessagesApiData = {
   count: number;
 };
 
+const messagesQuery = z.object({
+  roomId: z.coerce.number().int().positive(),
+  senderType: z.enum(SenderType).nullable(),
+});
+
 export type MessagesApiResponse = ApiResponse<MessagesApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<MessagesApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const roomIdParam = Number(searchParams.get("roomId"));
-    const senderTypeParam = (searchParams.get("senderType") ?? "").trim();
+    const parsed = messagesQuery.safeParse({
+      roomId: searchParams.get("roomId"),
+      senderType: searchParams.get("senderType"),
+    });
 
-    const roomId =
-      Number.isFinite(roomIdParam) && Number.isInteger(roomIdParam) && roomIdParam > 0 ? roomIdParam : null;
-    const senderType = senderTypeParam && senderTypeParam in SenderType ? senderTypeParam : null;
-
-    if (roomId === null) {
+    if (!parsed.success) {
+      console.error("Messages query validation failed:", parsed.error);
       return NextResponse.json(
         {
           data: null,
-          message: "roomId is required",
+          message: "Invalid query parameters",
           success: false,
         },
         { status: 400 },
       );
     }
 
-    const where: MessagesWhereInput = {
-      room_id: roomId,
-    };
+    const { roomId, senderType } = parsed.data;
+
+    const where: MessagesWhereInput = { room_id: roomId };
 
     if (senderType !== null) {
-      where.sender_type = senderType as (typeof SenderType)[keyof typeof SenderType];
+      where.sender_type = senderType;
     }
 
     const messages = await prisma.messages.findMany({
