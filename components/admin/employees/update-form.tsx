@@ -15,7 +15,11 @@ import z from "zod";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Employee name is required"),
-  phoneNumber: z.string().trim().min(1, "Phone number is required"),
+  phoneNumber: z
+    .string()
+    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .trim()
+    .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
   propertyId: z.string().trim().min(1, "Property is required"),
 });

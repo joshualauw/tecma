@@ -13,20 +13,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deletePropertyAction } from "@/lib/actions/properties/delete-property";
 import { Button } from "@/components/ui/button";
-import type { PropertiesApiResponse, PropertyApiItem } from "@/app/api/properties/route";
+import type { PropertyApiItem } from "@/app/api/properties/route";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useProperties } from "@/lib/fetching/properties/use-properties";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -34,8 +35,6 @@ const PAGE_SIZE = 6;
 
 export default function PropertiesDataTable() {
   const router = useRouter();
-  const [data, setData] = useState<PropertyApiItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
@@ -46,55 +45,25 @@ export default function PropertiesDataTable() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { data: apiData, error, isLoading, mutate } = useProperties({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    search: globalFilter,
+  });
+
+  const data = apiData?.properties ?? [];
+  const totalCount = apiData?.count ?? 0;
+
   const pageCount = useMemo(
     () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     [totalCount, pagination.pageSize],
   );
 
-  const fetchProperties = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pagination.pageIndex),
-        size: String(pagination.pageSize),
-      });
-
-      const searchValue = globalFilter.trim();
-      if (searchValue) {
-        params.set("search", searchValue);
-      }
-
-      const response = await fetch(`/api/properties?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch properties");
-      }
-
-      const payload = (await response.json()) as PropertiesApiResponse;
-
-      if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch properties");
-      }
-
-      if (!payload.data) {
-        throw new Error(payload.message || "No property data returned");
-      }
-
-      setData(payload.data.properties);
-      setTotalCount(payload.data.count);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch properties");
-      setData([]);
-      setTotalCount(0);
-    }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
-
   useEffect(() => {
-    void fetchProperties();
-  }, [fetchProperties]);
+    if (error) {
+      toast.error("Failed to fetch properties");
+    }
+  }, [error]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -178,7 +147,7 @@ export default function PropertiesDataTable() {
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setPropertyToDelete(null);
-      await fetchProperties();
+      await mutate();
     } else {
       toast.error(result.message);
     }
@@ -236,8 +205,8 @@ export default function PropertiesDataTable() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No properties found.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {isLoading ? "Loading..." : error ? "Failed to load properties." : "No properties found."}
                     </TableCell>
                   </TableRow>
                 )}

@@ -1,10 +1,8 @@
 "use client";
 "use no memo";
 
-import type { MessagesApiResponse, MessageApiItem } from "@/app/api/messages/route";
-import type { RoomDetailApiItem, RoomDetailApiResponse } from "@/app/api/rooms/[id]/route";
+import type { MessageApiItem } from "@/app/api/messages/route";
 import { resolveRoomAction } from "@/lib/actions/rooms/resolve-room";
-import type { RoomsApiResponse, RoomApiItem } from "@/app/api/rooms/route";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -25,11 +23,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import dayjs from "dayjs";
 import { AlertTriangleIcon, FilterIcon, PanelRightOpenIcon, PhoneIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import InboxChat from "@/components/admin/inbox/chat";
 import InboxInfo from "@/components/admin/inbox/info";
 import { RoomStatus } from "@/generated/prisma/enums";
+import { useMessages } from "@/lib/fetching/messages/use-messages";
+import { useRoomDetail } from "@/lib/fetching/rooms/use-room-detail";
+import { useRooms } from "@/lib/fetching/rooms/use-rooms";
 
 interface InboxContainerProps {
   properties: {
@@ -89,120 +90,65 @@ function formatExpiresIn(value: Date | string) {
 export default function InboxContainer({ properties }: InboxContainerProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomStatus>("active");
-  const [rooms, setRooms] = useState<RoomApiItem[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
-  const [roomDetail, setRoomDetail] = useState<RoomDetailApiItem | null>(null);
-  const [messages, setMessages] = useState<MessageApiItem[]>([]);
-  const [isLoadingRoomData, setIsLoadingRoomData] = useState(false);
   const [isRoomDataOpen, setIsRoomDataOpen] = useState(false);
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
   const [isResolvingRoom, setIsResolvingRoom] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
-  const fetchRooms = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
+  const {
+    data: roomsData,
+    error: roomsError,
+    isLoading: isLoadingRooms,
+    mutate: mutateRooms,
+  } = useRooms({
+    propertyId: selectedPropertyId,
+    status: selectedRoomStatus,
+  });
 
-      if (selectedPropertyId !== "all") {
-        params.set("propertyId", selectedPropertyId);
-      }
+  const rooms = roomsData?.rooms ?? [];
 
-      if (selectedRoomStatus !== "all") {
-        params.set("status", selectedRoomStatus);
-      }
+  const {
+    data: roomDetail,
+    error: roomDetailError,
+    isLoading: isLoadingRoomDetail,
+    mutate: mutateRoomDetail,
+  } = useRoomDetail(selectedRoomId);
 
-      const queryString = params.toString();
-      const response = await fetch(`/api/rooms${queryString ? `?${queryString}` : ""}`, {
-        method: "GET",
-        cache: "no-store",
-      });
+  const {
+    data: messagesData,
+    error: messagesError,
+    isLoading: isLoadingMessages,
+    mutate: mutateMessages,
+  } = useMessages(selectedRoomId);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch rooms");
-      }
+  const messages = messagesData?.messages ?? [];
+  const isLoadingRoomData = isLoadingRoomDetail || isLoadingMessages;
 
-      const payload = (await response.json()) as RoomsApiResponse;
-
-      if (!payload.success || !payload.data) {
-        throw new Error(payload.message || "Failed to fetch rooms");
-      }
-
-      setRooms(payload.data.rooms);
-
-      if (selectedRoomId !== null && !payload.data.rooms.some((room) => room.id === selectedRoomId)) {
-        setSelectedRoomId(null);
-        setRoomDetail(null);
-        setMessages([]);
-      }
-    } catch (error) {
-      console.error(error);
+  useEffect(() => {
+    if (roomsError) {
       toast.error("Failed to fetch rooms");
-      setRooms([]);
       setSelectedRoomId(null);
-      setRoomDetail(null);
-      setMessages([]);
     }
-  }, [selectedPropertyId, selectedRoomId, selectedRoomStatus]);
-
-  const fetchRoomData = useCallback(async () => {
-    if (selectedRoomId === null) {
-      setRoomDetail(null);
-      setMessages([]);
-      return;
-    }
-
-    try {
-      setIsLoadingRoomData(true);
-
-      const [roomResponse, messagesResponse] = await Promise.all([
-        fetch(`/api/rooms/${selectedRoomId}`, {
-          method: "GET",
-          cache: "no-store",
-        }),
-        fetch(`/api/messages?roomId=${selectedRoomId}`, {
-          method: "GET",
-          cache: "no-store",
-        }),
-      ]);
-
-      if (!roomResponse.ok) {
-        throw new Error("Failed to fetch room detail");
-      }
-
-      if (!messagesResponse.ok) {
-        throw new Error("Failed to fetch messages");
-      }
-
-      const roomPayload = (await roomResponse.json()) as RoomDetailApiResponse;
-      const messagesPayload = (await messagesResponse.json()) as MessagesApiResponse;
-
-      if (!roomPayload.success || !roomPayload.data) {
-        throw new Error(roomPayload.message || "Failed to fetch room detail");
-      }
-
-      if (!messagesPayload.success || !messagesPayload.data) {
-        throw new Error(messagesPayload.message || "Failed to fetch messages");
-      }
-
-      setRoomDetail(roomPayload.data);
-      setMessages(messagesPayload.data.messages);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch chat data");
-      setRoomDetail(null);
-      setMessages([]);
-    } finally {
-      setIsLoadingRoomData(false);
-    }
-  }, [selectedRoomId]);
+  }, [roomsError]);
 
   useEffect(() => {
-    void fetchRooms();
-  }, [fetchRooms]);
+    if (roomDetailError) {
+      toast.error("Failed to fetch room detail");
+    }
+  }, [roomDetailError]);
 
   useEffect(() => {
-    void fetchRoomData();
-  }, [fetchRoomData]);
+    if (messagesError) {
+      toast.error("Failed to fetch messages");
+    }
+  }, [messagesError]);
+
+  useEffect(() => {
+    if (selectedRoomId !== null && roomsData && !rooms.some((room) => room.id === selectedRoomId)) {
+      setSelectedRoomId(null);
+    }
+  }, [rooms, roomsData, selectedRoomId]);
 
   const selectedRoom = selectedRoomId === null ? null : (rooms.find((room) => room.id === selectedRoomId) ?? null);
   const currentRoomStatus = roomDetail?.status ?? selectedRoom?.status ?? null;
@@ -219,15 +165,14 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
 
       const result = await resolveRoomAction(selectedRoomId);
 
-      if (!result.success) {
+      if (result.success) {
+        toast.success("Room resolved successfully");
+        setIsResolveDialogOpen(false);
+
+        await Promise.all([mutateRooms(), mutateRoomDetail(), mutateMessages()]);
+      } else {
         toast.error(result.message || "Failed to resolve room");
-        return;
       }
-
-      toast.success("Room resolved successfully");
-      setIsResolveDialogOpen(false);
-
-      await Promise.all([fetchRooms(), fetchRoomData()]);
     } catch (error) {
       console.error(error);
       toast.error("Failed to resolve room");
@@ -272,19 +217,36 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
 
       const createdMessage = payload.data;
 
-      setMessages((previousMessages) => [...previousMessages, createdMessage]);
-
-      setRooms((previousRooms) =>
-        previousRooms.map((room) =>
-          room.id === selectedRoomId
-            ? {
-                ...room,
-                last_message: createdMessage.content,
-                last_message_at: createdMessage.created_at,
-              }
-            : room,
+      await Promise.all([
+        mutateMessages(
+          (current) => {
+            if (!current) return current;
+            return {
+              ...current,
+              messages: [...current.messages, createdMessage],
+            };
+          },
+          { revalidate: false },
         ),
-      );
+        mutateRooms(
+          (current) => {
+            if (!current) return current;
+            return {
+              ...current,
+              rooms: current.rooms.map((room) =>
+                room.id === selectedRoomId
+                  ? {
+                      ...room,
+                      last_message: createdMessage.content,
+                      last_message_at: createdMessage.created_at,
+                    }
+                  : room,
+              ),
+            };
+          },
+          { revalidate: false },
+        ),
+      ]);
 
       return true;
     } catch (error) {
@@ -380,7 +342,7 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
                 </div>
               ) : (
                 <div className="flex h-full items-center justify-center px-4 text-sm text-muted-foreground">
-                  No rooms found.
+                  {isLoadingRooms ? "Loading..." : roomsError ? "Failed to load rooms." : "No rooms found."}
                 </div>
               )}
             </div>
@@ -438,7 +400,7 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
                   {isRoomDataOpen && (
                     <div className="min-h-0 basis-0 grow border-l">
                       <InboxInfo
-                        roomDetail={roomDetail}
+                        roomDetail={roomDetail ?? null}
                         formatStatusLabel={formatStatusLabel}
                         statusBadgeVariant={statusBadgeVariant}
                       />

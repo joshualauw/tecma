@@ -1,0 +1,36 @@
+import type { EmployeesApiData } from "@/app/api/employees/route";
+import { fetcher } from "@/lib/fetcher";
+import useSWR, { type SWRConfiguration } from "swr";
+
+type UseEmployeesParams = {
+  pageIndex: number;
+  pageSize: number;
+  search: string;
+  propertyId: string;
+};
+
+export function useEmployees(
+  { pageIndex, pageSize, search, propertyId }: UseEmployeesParams,
+  options?: SWRConfiguration<EmployeesApiData>,
+) {
+  const params = new URLSearchParams({
+    page: String(pageIndex),
+    size: String(pageSize),
+  });
+  const searchValue = search.trim();
+  if (searchValue) {
+    params.set("search", searchValue);
+  }
+  if (propertyId !== "all") {
+    params.set("propertyId", propertyId);
+  }
+  const key = `/api/employees?${params.toString()}`;
+
+  const swr = useSWR<EmployeesApiData>(key, fetcher, {
+    keepPreviousData: true,
+    errorRetryCount: 3,
+    ...options,
+  });
+
+  return swr;
+}

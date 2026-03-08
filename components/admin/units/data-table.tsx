@@ -19,15 +19,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUnits } from "@/lib/fetching/units/use-units";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { UnitApiItem, UnitsApiResponse } from "@/app/api/units/route";
+import type { UnitApiItem } from "@/app/api/units/route";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -42,8 +43,6 @@ interface UnitsDataTableProps {
 
 export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
   const router = useRouter();
-  const [data, setData] = useState<UnitApiItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
@@ -55,59 +54,31 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const {
+    data: apiData,
+    error,
+    isLoading,
+    mutate,
+  } = useUnits({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    search: globalFilter,
+    propertyId: selectedPropertyId,
+  });
+
+  const data = apiData?.units ?? [];
+  const totalCount = apiData?.count ?? 0;
+
   const pageCount = useMemo(
     () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     [totalCount, pagination.pageSize],
   );
 
-  const fetchUnits = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pagination.pageIndex),
-        size: String(pagination.pageSize),
-      });
-
-      const searchValue = globalFilter.trim();
-      if (searchValue) {
-        params.set("search", searchValue);
-      }
-
-      if (selectedPropertyId !== "all") {
-        params.set("propertyId", selectedPropertyId);
-      }
-
-      const response = await fetch(`/api/units?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch units");
-      }
-
-      const payload = (await response.json()) as UnitsApiResponse;
-
-      if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch units");
-      }
-
-      if (!payload.data) {
-        throw new Error(payload.message || "No unit data returned");
-      }
-
-      setData(payload.data.units);
-      setTotalCount(payload.data.count);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch units");
-      setData([]);
-      setTotalCount(0);
-    }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
-
   useEffect(() => {
-    void fetchUnits();
-  }, [fetchUnits]);
+    if (error) {
+      toast.error("Failed to fetch units");
+    }
+  }, [error]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -191,7 +162,7 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setUnitToDelete(null);
-      await fetchUnits();
+      await mutate();
     } else {
       toast.error(result.message);
     }
@@ -270,8 +241,8 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No units found.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {isLoading ? "Loading..." : error ? "Failed to load units." : "No units found."}
                     </TableCell>
                   </TableRow>
                 )}

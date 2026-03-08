@@ -18,16 +18,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTenants } from "@/lib/fetching/tenants/use-tenants";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { TenantApiItem, TenantsApiResponse } from "@/app/api/tenants/route";
+import type { TenantApiItem } from "@/app/api/tenants/route";
 import { deleteTenantAction } from "@/lib/actions/tenants/delete-tenant";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -42,8 +43,6 @@ interface TenantsDataTableProps {
 
 export default function TenantsDataTable({ properties }: TenantsDataTableProps) {
   const router = useRouter();
-  const [data, setData] = useState<TenantApiItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
@@ -55,59 +54,26 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { data: apiData, error, isLoading, mutate } = useTenants({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    search: globalFilter,
+    propertyId: selectedPropertyId,
+  });
+
+  const data = apiData?.tenants ?? [];
+  const totalCount = apiData?.count ?? 0;
+
   const pageCount = useMemo(
     () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     [totalCount, pagination.pageSize],
   );
 
-  const fetchTenants = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pagination.pageIndex),
-        size: String(pagination.pageSize),
-      });
-
-      const searchValue = globalFilter.trim();
-      if (searchValue) {
-        params.set("search", searchValue);
-      }
-
-      if (selectedPropertyId !== "all") {
-        params.set("propertyId", selectedPropertyId);
-      }
-
-      const response = await fetch(`/api/tenants?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch tenants");
-      }
-
-      const payload = (await response.json()) as TenantsApiResponse;
-
-      if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch tenants");
-      }
-
-      if (!payload.data) {
-        throw new Error(payload.message || "No tenant data returned");
-      }
-
-      setData(payload.data.tenants);
-      setTotalCount(payload.data.count);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch tenants");
-      setData([]);
-      setTotalCount(0);
-    }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
-
   useEffect(() => {
-    void fetchTenants();
-  }, [fetchTenants]);
+    if (error) {
+      toast.error("Failed to fetch tenants");
+    }
+  }, [error]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -205,7 +171,7 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setTenantToDelete(null);
-      await fetchTenants();
+      await mutate();
     } else {
       toast.error(result.message);
     }
@@ -284,8 +250,8 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No tenants found.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {isLoading ? "Loading..." : error ? "Failed to load tenants." : "No tenants found."}
                     </TableCell>
                   </TableRow>
                 )}

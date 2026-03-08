@@ -19,8 +19,8 @@ const formSchema = z.object({
   phoneId: z.string().trim().min(1, "Phone ID is required"),
   phoneNumber: z
     .string()
-    .trim()
     .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .trim()
     .min(1, "Phone number is required"),
 });
 

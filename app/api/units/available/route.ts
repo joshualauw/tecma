@@ -14,7 +14,7 @@ export type AvailableUnitsApiData = {
 
 const availableUnitsQuery = z.object({
   propertyId: z.coerce.number().int().positive(),
-  tenantId: z.coerce.number().int().positive(),
+  tenantId: z.coerce.number().int().positive().nullable(),
 });
 
 export type AvailableUnitsApiResponse = ApiResponse<AvailableUnitsApiData>;

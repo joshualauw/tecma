@@ -25,8 +25,6 @@ export type RoomDetailApiItem = {
     display_name: string;
     phone_number: string;
   };
-  last_message: string | null;
-  last_message_at: Date | null;
   expired_at: Date;
   closed_at: Date | null;
   created_at: Date;
@@ -84,8 +82,6 @@ export async function GET(
       select: {
         id: true,
         status: true,
-        last_message: true,
-        last_message_at: true,
         expired_at: true,
         closed_at: true,
         created_at: true,

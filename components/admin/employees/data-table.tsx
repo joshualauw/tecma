@@ -18,16 +18,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEmployees } from "@/lib/fetching/employees/use-employees";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { EmployeeApiItem, EmployeesApiResponse } from "@/app/api/employees/route";
+import type { EmployeeApiItem } from "@/app/api/employees/route";
 import { deleteEmployeeAction } from "@/lib/actions/employees/delete-employee";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -42,8 +43,6 @@ interface EmployeesDataTableProps {
 
 export default function EmployeesDataTable({ properties }: EmployeesDataTableProps) {
   const router = useRouter();
-  const [data, setData] = useState<EmployeeApiItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
@@ -55,59 +54,26 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { data: apiData, error, isLoading, mutate } = useEmployees({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    search: globalFilter,
+    propertyId: selectedPropertyId,
+  });
+
+  const data = apiData?.employees ?? [];
+  const totalCount = apiData?.count ?? 0;
+
   const pageCount = useMemo(
     () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     [totalCount, pagination.pageSize],
   );
 
-  const fetchEmployees = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pagination.pageIndex),
-        size: String(pagination.pageSize),
-      });
-
-      const searchValue = globalFilter.trim();
-      if (searchValue) {
-        params.set("search", searchValue);
-      }
-
-      if (selectedPropertyId !== "all") {
-        params.set("propertyId", selectedPropertyId);
-      }
-
-      const response = await fetch(`/api/employees?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch employees");
-      }
-
-      const payload = (await response.json()) as EmployeesApiResponse;
-
-      if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch employees");
-      }
-
-      if (!payload.data) {
-        throw new Error(payload.message || "No employee data returned");
-      }
-
-      setData(payload.data.employees);
-      setTotalCount(payload.data.count);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch employees");
-      setData([]);
-      setTotalCount(0);
-    }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPropertyId]);
-
   useEffect(() => {
-    void fetchEmployees();
-  }, [fetchEmployees]);
+    if (error) {
+      toast.error("Failed to fetch employees");
+    }
+  }, [error]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -200,7 +166,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setEmployeeToDelete(null);
-      await fetchEmployees();
+      await mutate();
     } else {
       toast.error(result.message);
     }
@@ -279,8 +245,8 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No employees found.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {isLoading ? "Loading..." : error ? "Failed to load employees." : "No employees found."}
                     </TableCell>
                   </TableRow>
                 )}

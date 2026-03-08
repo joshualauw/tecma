@@ -7,31 +7,31 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 
 const resolveRoomSchema = z.object({
-  roomId: z.coerce.number().int().positive(),
+  id: z.coerce.number().int().positive(),
 });
 
 type ResolveRoomActionResponse = ApiResponse<null>;
 
 export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActionResponse> {
-  const parsed = resolveRoomSchema.safeParse({ roomId });
+  const parsed = resolveRoomSchema.safeParse({ id: roomId });
 
   if (!parsed.success) {
     console.error("Resolve Room validation failed:", parsed.error);
     return { success: false, message: "Invalid room ID" };
   }
 
-  const { roomId: id } = parsed.data;
-
-  const existingRoom = await prisma.rooms.findUnique({
-    where: { id },
-    select: { id: true },
-  });
-
-  if (!existingRoom) {
-    return { success: false, message: "Room not found" };
-  }
+  const { id } = parsed.data;
 
   try {
+    const room = await prisma.rooms.findFirstOrThrow({
+      where: { id },
+      select: { status: true },
+    });
+
+    if (room.status != "active") {
+      return { success: false, message: "Room already closed" };
+    }
+
     await prisma.rooms.update({
       where: { id },
       data: {

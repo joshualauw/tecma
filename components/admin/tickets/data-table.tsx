@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { TicketApiItem, TicketsApiResponse } from "@/app/api/tickets/route";
+import type { TicketApiItem } from "@/app/api/tickets/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTickets } from "@/lib/fetching/tickets/use-tickets";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,7 +28,7 @@ import { deleteTicketAction } from "@/lib/actions/tickets/delete-ticket";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import dayjs from "dayjs";
@@ -77,8 +78,6 @@ function priorityBadgeVariant(priority: TicketApiItem["priority"]): "secondary" 
 
 export default function TicketsDataTable({ properties }: TicketsDataTableProps) {
   const router = useRouter();
-  const [data, setData] = useState<TicketApiItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
@@ -92,67 +91,28 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { data: apiData, error, isLoading, mutate } = useTickets({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    search: globalFilter,
+    propertyId: selectedPropertyId,
+    status: selectedStatus,
+    priority: selectedPriority,
+  });
+
+  const data = apiData?.tickets ?? [];
+  const totalCount = apiData?.count ?? 0;
+
   const pageCount = useMemo(
     () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     [totalCount, pagination.pageSize],
   );
 
-  const fetchTickets = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pagination.pageIndex),
-        size: String(pagination.pageSize),
-      });
-
-      const searchValue = globalFilter.trim();
-      if (searchValue) {
-        params.set("search", searchValue);
-      }
-
-      if (selectedPropertyId !== "all") {
-        params.set("propertyId", selectedPropertyId);
-      }
-
-      if (selectedStatus !== "all") {
-        params.set("status", selectedStatus);
-      }
-
-      if (selectedPriority !== "all") {
-        params.set("priority", selectedPriority);
-      }
-
-      const response = await fetch(`/api/tickets?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch tickets");
-      }
-
-      const payload = (await response.json()) as TicketsApiResponse;
-
-      if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch tickets");
-      }
-
-      if (!payload.data) {
-        throw new Error(payload.message || "No ticket data returned");
-      }
-
-      setData(payload.data.tickets);
-      setTotalCount(payload.data.count);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch tickets");
-      setData([]);
-      setTotalCount(0);
-    }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, selectedPriority, selectedPropertyId, selectedStatus]);
-
   useEffect(() => {
-    void fetchTickets();
-  }, [fetchTickets]);
+    if (error) {
+      toast.error("Failed to fetch tickets");
+    }
+  }, [error]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -272,7 +232,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setTicketToDelete(null);
-      await fetchTickets();
+      await mutate();
     } else {
       toast.error(result.message);
     }
@@ -385,8 +345,8 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No tickets found.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {isLoading ? "Loading..." : error ? "Failed to load tickets." : "No tickets found."}
                     </TableCell>
                   </TableRow>
                 )}

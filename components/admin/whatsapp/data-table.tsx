@@ -19,14 +19,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useWhatsapp } from "@/lib/fetching/whatsapp/use-whatsapp";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { WhatsappApiItem, WhatsappApiResponse } from "@/app/api/whatsapp/route";
+import type { WhatsappApiItem } from "@/app/api/whatsapp/route";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -34,8 +35,6 @@ const PAGE_SIZE = 6;
 
 export default function WhatsappDataTable() {
   const router = useRouter();
-  const [data, setData] = useState<WhatsappApiItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
@@ -46,55 +45,25 @@ export default function WhatsappDataTable() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { data: apiData, error, isLoading, mutate } = useWhatsapp({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    search: globalFilter,
+  });
+
+  const data = apiData?.whatsapps ?? [];
+  const totalCount = apiData?.count ?? 0;
+
   const pageCount = useMemo(
     () => Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     [totalCount, pagination.pageSize],
   );
 
-  const fetchWhatsapp = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pagination.pageIndex),
-        size: String(pagination.pageSize),
-      });
-
-      const searchValue = globalFilter.trim();
-      if (searchValue) {
-        params.set("search", searchValue);
-      }
-
-      const response = await fetch(`/api/whatsapp?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch WhatsApp");
-      }
-
-      const payload = (await response.json()) as WhatsappApiResponse;
-
-      if (!payload.success) {
-        throw new Error(payload.message || "Failed to fetch WhatsApp");
-      }
-
-      if (!payload.data) {
-        throw new Error(payload.message || "No WhatsApp data returned");
-      }
-
-      setData(payload.data.whatsapps);
-      setTotalCount(payload.data.count);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch WhatsApp");
-      setData([]);
-      setTotalCount(0);
-    }
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize]);
-
   useEffect(() => {
-    void fetchWhatsapp();
-  }, [fetchWhatsapp]);
+    if (error) {
+      toast.error("Failed to fetch WhatsApp");
+    }
+  }, [error]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -185,7 +154,7 @@ export default function WhatsappDataTable() {
       toast.success(result.message);
       setIsDeleteDialogOpen(false);
       setWhatsappToDelete(null);
-      await fetchWhatsapp();
+      await mutate();
     } else {
       toast.error(result.message);
     }
@@ -245,8 +214,8 @@ export default function WhatsappDataTable() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No WhatsApp records found.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {isLoading ? "Loading..." : error ? "Failed to load WhatsApp." : "No WhatsApp records found."}
                     </TableCell>
                   </TableRow>
                 )}
