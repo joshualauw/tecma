@@ -10,7 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { loginAction } from "@/lib/actions/login";
+import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.email("Invalid email address").min(1, "Email is required"),
@@ -29,16 +30,25 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    const formData = new FormData();
-    formData.append("email", data.email);
-    formData.append("password", data.password);
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
 
-    const result = await loginAction(formData);
+      if (result && result.error) {
+        form.setError("email", { message: "Invalid credentials" });
+        return;
+      }
 
-    if (!result.success) {
-      form.setError("email", { message: result.message });
-    } else {
-      router.push("/admin/dashboard");
+      if (result && result.ok) {
+        router.push("/admin/dashboard");
+        router.refresh();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An unexpected error occurred");
     }
   }
 

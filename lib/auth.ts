@@ -1,6 +1,7 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import type { UserRole } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 
 class InvalidLoginError extends CredentialsSignin {
@@ -21,6 +22,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return false;
       }
       return true;
+    },
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user && token.id != null && token.role != null) {
+        const ext = session.user as { id: number; role: UserRole };
+        ext.id = Number(token.id);
+        ext.role = token.role;
+      }
+      return session;
     },
   },
   providers: [
@@ -43,16 +59,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!user) throw new InvalidLoginError();
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
-        if (passwordsMatch) {
-          return {
-            id: user.id.toString(),
-            email: user.email,
-            name: user.name,
-            role: user.role,
-          };
+        if (!passwordsMatch) {
+          throw new InvalidLoginError();
         }
 
-        throw new InvalidLoginError();
+        return {
+          id: user.id.toString(),
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       },
     }),
   ],
