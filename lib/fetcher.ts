@@ -1,7 +1,7 @@
 import type { ApiResponse } from "@/types/ApiResponse";
 
 export async function fetcher<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, { method: "GET", cache: "no-store", ...init });
+  const response = await fetch(url, { method: "GET", ...init });
 
   if (!response.ok) {
     throw new Error("Failed to fetch");
