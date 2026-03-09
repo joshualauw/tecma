@@ -34,10 +34,7 @@ export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActi
 
     await prisma.rooms.update({
       where: { id },
-      data: {
-        status: RoomStatus.closed,
-        closed_at: new Date(),
-      },
+      data: { status: RoomStatus.closed, closedAt: new Date() },
     });
 
     return { success: true, message: "Room resolved successfully" };

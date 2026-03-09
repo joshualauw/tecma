@@ -106,18 +106,18 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
       cell: ({ row }) => row.original.property.name,
     },
     {
-      accessorKey: "created_at",
+      accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        const value = row.original.created_at;
+        const value = row.original.createdAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {
-      accessorKey: "updated_at",
+      accessorKey: "updatedAt",
       header: "Updated At",
       cell: ({ row }) => {
-        const value = row.original.updated_at;
+        const value = row.original.updatedAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },

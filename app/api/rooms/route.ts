@@ -13,10 +13,10 @@ export type RoomApiItem = {
   } | null;
   whatsapp: {
     id: number;
-    display_name: string;
+    displayName: string;
   };
-  last_message: string | null;
-  last_message_at: Date | null;
+  lastMessage: string | null;
+  lastMessageAt: Date | null;
   status: RoomStatus;
 };
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
     const where: RoomsWhereInput = {};
 
     if (propertyId !== null) {
-      where.property_id = propertyId;
+      where.propertyId = propertyId;
     }
 
     if (status !== null) {
@@ -77,15 +77,15 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
         whatsapp: {
           select: {
             id: true,
-            display_name: true,
+            displayName: true,
           },
         },
         status: true,
-        last_message: true,
-        last_message_at: true,
+        lastMessage: true,
+        lastMessageAt: true,
       },
       where,
-      orderBy: [{ last_message_at: "desc" }, { created_at: "desc" }],
+      orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
     });
 
     return NextResponse.json({

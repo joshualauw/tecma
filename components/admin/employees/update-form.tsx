@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateEmployeeAction } from "@/lib/actions/employees/update-employee";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -17,7 +18,7 @@ const formSchema = z.object({
   name: z.string().trim().min(1, "Employee name is required"),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .regex(PHONE_NUMBER_REGEX, "Invalid phone number format")
     .trim()
     .min(1, "Phone number is required"),
   address: z.string().trim().optional(),

@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -11,7 +12,7 @@ const createWhatsappSchema = z.object({
   phoneId: z.string().trim().min(1),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/)
+    .regex(PHONE_NUMBER_REGEX)
     .trim()
     .min(1),
 });
@@ -36,10 +37,10 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
   try {
     await prisma.whatsapp.create({
       data: {
-        display_name: displayName,
-        waba_id: wabaId,
-        phone_id: phoneId,
-        phone_number: phoneNumber,
+        displayName,
+        wabaId,
+        phoneId,
+        phoneNumber,
       },
     });
 

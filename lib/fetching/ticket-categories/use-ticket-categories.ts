@@ -1,4 +1,5 @@
 import type { TicketCategoriesApiData } from "@/app/api/tickets/categories/route";
+import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
@@ -24,6 +25,7 @@ export function useTicketCategories(
 
   const swr = useSWR<TicketCategoriesApiData>(key, fetcher, {
     keepPreviousData: true,
+    errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
 

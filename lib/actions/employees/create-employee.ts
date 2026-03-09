@@ -1,13 +1,18 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 
 const createEmployeeSchema = z.object({
   name: z.string().trim().min(1),
-  phoneNumber: z.string().trim().min(1),
+  phoneNumber: z
+    .string()
+    .regex(PHONE_NUMBER_REGEX)
+    .trim()
+    .min(1),
   address: z.string().optional(),
   propertyId: z.coerce.number().int().positive(),
 });
@@ -31,12 +36,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
 
   try {
     await prisma.employees.create({
-      data: {
-        name: name,
-        phone_number: phoneNumber,
-        address: address,
-        property_id: propertyId,
-      },
+      data: { name, phoneNumber, address, propertyId },
     });
 
     return { success: true, message: "Employee created successfully" };

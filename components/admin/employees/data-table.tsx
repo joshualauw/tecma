@@ -101,7 +101,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       cell: ({ row }) => row.original.property.name,
     },
     {
-      accessorKey: "phone_number",
+      accessorKey: "phoneNumber",
       header: "Phone Number",
     },
     {
@@ -110,18 +110,18 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       cell: ({ row }) => row.original.address ?? "-",
     },
     {
-      accessorKey: "created_at",
+      accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        const value = row.original.created_at;
+        const value = row.original.createdAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {
-      accessorKey: "updated_at",
+      accessorKey: "updatedAt",
       header: "Updated At",
       cell: ({ row }) => {
-        const value = row.original.updated_at;
+        const value = row.original.updatedAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
@@ -287,7 +287,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. Deleting{" "}
-              <strong>{employeeToDelete?.phone_number ?? "this employee"}</strong> will permanently remove it and
+              <strong>{employeeToDelete?.phoneNumber ?? "this employee"}</strong> will permanently remove it and
               everything related to it.
             </AlertDialogDescription>
           </AlertDialogHeader>

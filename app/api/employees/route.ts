@@ -7,14 +7,14 @@ import z from "zod";
 export type EmployeeApiItem = {
   id: number;
   name: string;
-  phone_number: string;
+  phoneNumber: string;
   address: string | null;
   property: {
     id: number;
     name: string;
   };
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type EmployeesApiData = {
@@ -61,23 +61,23 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
-        { phone_number: { contains: search, mode: "insensitive" } },
+        { phoneNumber: { contains: search, mode: "insensitive" } },
         { address: { contains: search, mode: "insensitive" } },
       ];
     }
 
     if (propertyId !== null) {
-      where.property_id = propertyId;
+      where.propertyId = propertyId;
     }
 
     const employees = await prisma.employees.findMany({
       select: {
         id: true,
         name: true,
-        phone_number: true,
+        phoneNumber: true,
         address: true,
-        created_at: true,
-        updated_at: true,
+        createdAt: true,
+        updatedAt: true,
         property: {
           select: {
             id: true,
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       skip: page * size,
       take: size,
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

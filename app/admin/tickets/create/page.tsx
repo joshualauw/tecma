@@ -9,7 +9,7 @@ export default async function TicketCreatePage() {
         name: true,
       },
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     }),
     prisma.ticketCategories.findMany({
@@ -18,7 +18,7 @@ export default async function TicketCreatePage() {
         name: true,
       },
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     }),
   ]);

@@ -25,16 +25,14 @@ export async function deleteWhatsappAction(whatsappId: number): Promise<DeleteWh
 
   try {
     await prisma.whatsapp.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
 
     return { success: true, message: "WhatsApp deleted successfully" };
   } catch (error) {
     console.error("Error deleting WhatsApp:", error);
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return { success: false, message: "WhatsApp entry not found" };
+      return { success: false, message: "WhatsApp not found" };
     }
     return { success: false, message: "An unexpected error occurred" };
   }

@@ -21,7 +21,7 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
     select: {
       id: true,
       code: true,
-      property_id: true,
+      propertyId: true,
     },
   });
 
@@ -35,7 +35,7 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
       name: true,
     },
     orderBy: {
-      created_at: "asc",
+      createdAt: "asc",
     },
   });
 
@@ -44,7 +44,7 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Unit</h1>
       </div>
-      <UnitUpdateForm data={{ id: unit.id, code: unit.code, propertyId: unit.property_id }} properties={properties} />
+      <UnitUpdateForm data={unit} properties={properties} />
     </div>
   );
 }

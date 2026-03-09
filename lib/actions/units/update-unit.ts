@@ -29,13 +29,8 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
 
   try {
     await prisma.units.update({
-      where: {
-        id,
-      },
-      data: {
-        code: code,
-        property_id: propertyId,
-      },
+      where: { id },
+      data: { code, propertyId },
     });
 
     return { success: true, message: "Unit updated successfully" };

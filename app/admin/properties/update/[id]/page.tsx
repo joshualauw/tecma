@@ -29,7 +29,7 @@ export default async function PropertyUpdatePage({ params }: PropertyUpdatePageP
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Property</h1>
       </div>
-      <PropertyUpdateForm data={{ id: property.id, name: property.name, address: property.address }} />
+      <PropertyUpdateForm data={property} />
     </div>
   );
 }

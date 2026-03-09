@@ -20,11 +20,11 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
     },
     select: {
       id: true,
-      property_id: true,
-      tenant_id: true,
-      unit_id: true,
-      category_id: true,
-      employee_id: true,
+      propertyId: true,
+      tenantId: true,
+      unitId: true,
+      categoryId: true,
+      employeeId: true,
       title: true,
       description: true,
       status: true,
@@ -43,7 +43,7 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
         name: true,
       },
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     }),
     prisma.ticketCategories.findMany({
@@ -52,7 +52,7 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
         name: true,
       },
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     }),
   ]);
@@ -62,22 +62,7 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Ticket</h1>
       </div>
-      <TicketUpdateForm
-        data={{
-          id: ticket.id,
-          propertyId: ticket.property_id,
-          tenantId: ticket.tenant_id,
-          unitId: ticket.unit_id,
-          categoryId: ticket.category_id,
-          employeeId: ticket.employee_id,
-          status: ticket.status,
-          priority: ticket.priority,
-          title: ticket.title,
-          description: ticket.description,
-        }}
-        properties={properties}
-        categories={categories}
-      />
+      <TicketUpdateForm data={ticket} properties={properties} categories={categories} />
     </div>
   );
 }

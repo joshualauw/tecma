@@ -1,4 +1,5 @@
 import type { EmployeesApiData } from "@/app/api/employees/route";
+import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
@@ -28,7 +29,7 @@ export function useEmployees(
 
   const swr = useSWR<EmployeesApiData>(key, fetcher, {
     keepPreviousData: true,
-    errorRetryCount: 3,
+    errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
 

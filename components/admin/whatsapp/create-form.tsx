@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createWhatsappAction } from "@/lib/actions/whatsapp/create-whatsapp";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,7 +20,7 @@ const formSchema = z.object({
   phoneId: z.string().trim().min(1, "Phone ID is required"),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .regex(PHONE_NUMBER_REGEX, "Invalid phone number format")
     .trim()
     .min(1, "Phone number is required"),
 });

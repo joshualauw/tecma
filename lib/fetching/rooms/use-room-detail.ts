@@ -1,4 +1,5 @@
 import type { RoomDetailApiItem } from "@/app/api/rooms/[id]/route";
+import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
@@ -7,7 +8,7 @@ export function useRoomDetail(roomId: number | null, options?: SWRConfiguration<
 
   return useSWR<RoomDetailApiItem>(key, fetcher, {
     keepPreviousData: true,
-    errorRetryCount: 3,
+    errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
 }

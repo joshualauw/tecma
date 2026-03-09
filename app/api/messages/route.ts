@@ -8,9 +8,9 @@ import z from "zod";
 
 export type MessageApiItem = {
   id: number;
-  sender_type: MessagesModel["sender_type"];
+  senderType: MessagesModel["senderType"];
   content: string;
-  created_at: Date | null;
+  createdAt: Date | null;
 };
 
 export type MessagesApiData = {
@@ -47,22 +47,22 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
 
     const { roomId, senderType } = parsed.data;
 
-    const where: MessagesWhereInput = { room_id: roomId };
+    const where: MessagesWhereInput = { roomId };
 
     if (senderType !== null) {
-      where.sender_type = senderType;
+      where.senderType = senderType;
     }
 
     const messages = await prisma.messages.findMany({
       select: {
         id: true,
-        sender_type: true,
+        senderType: true,
         content: true,
-        created_at: true,
+        createdAt: true,
       },
       where,
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

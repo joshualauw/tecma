@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -9,7 +10,7 @@ const createTenantSchema = z.object({
   name: z.string().trim().min(1),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/)
+    .regex(PHONE_NUMBER_REGEX)
     .trim()
     .min(1),
   address: z.string().trim().min(1).nullable(),
@@ -39,7 +40,7 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
     const availableUnit = await prisma.units.findFirst({
       where: {
         id: unitId,
-        property_id: propertyId,
+        propertyId,
         tenants: {
           none: {},
         },
@@ -56,10 +57,10 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
     await prisma.tenants.create({
       data: {
         name: name,
-        phone_number: phoneNumber,
+        phoneNumber,
         address: address,
-        property_id: propertyId,
-        unit_id: unitId,
+        propertyId,
+        unitId,
       },
     });
 

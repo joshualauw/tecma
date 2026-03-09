@@ -20,10 +20,10 @@ export default async function WhatsappUpdatePage({ params }: WhatsappUpdatePageP
     },
     select: {
       id: true,
-      display_name: true,
-      waba_id: true,
-      phone_id: true,
-      phone_number: true,
+      displayName: true,
+      wabaId: true,
+      phoneId: true,
+      phoneNumber: true,
     },
   });
 
@@ -36,15 +36,7 @@ export default async function WhatsappUpdatePage({ params }: WhatsappUpdatePageP
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update WhatsApp</h1>
       </div>
-      <WhatsappUpdateForm
-        data={{
-          id: whatsapp.id,
-          displayName: whatsapp.display_name,
-          wabaId: whatsapp.waba_id,
-          phoneId: whatsapp.phone_id,
-          phoneNumber: whatsapp.phone_number,
-        }}
-      />
+      <WhatsappUpdateForm data={whatsapp} />
     </div>
   );
 }

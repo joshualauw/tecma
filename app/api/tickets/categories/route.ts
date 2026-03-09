@@ -8,8 +8,8 @@ export type TicketCategoryApiItem = {
   id: number;
   name: string;
   description: string | null;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type TicketCategoriesApiData = {
@@ -63,14 +63,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketCate
         id: true,
         name: true,
         description: true,
-        created_at: true,
-        updated_at: true,
+        createdAt: true,
+        updatedAt: true,
       },
       where,
       skip: page * size,
       take: size,
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

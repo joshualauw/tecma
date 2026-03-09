@@ -23,9 +23,7 @@ export async function deleteUnitAction(unitId: number): Promise<DeleteUnitAction
 
   try {
     await prisma.units.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
 
     return { success: true, message: "Unit deleted successfully" };

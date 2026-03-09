@@ -1,7 +1,5 @@
 "use client";
 
-import type { LeanEmployeeApiItem, LeanEmployeesApiResponse } from "@/app/api/employees/lean/route";
-import type { LeanTenantApiItem, LeanTenantsApiResponse } from "@/app/api/tenants/lean/route";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -10,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { createTicketAction } from "@/lib/actions/tickets/create-ticket";
+import { useLeanEmployees } from "@/lib/fetching/employees/use-lean-employees";
+import { useLeanTenants } from "@/lib/fetching/tenants/use-lean-tenants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -54,9 +54,6 @@ const priorityOptions = [
 
 export default function TicketCreateForm({ properties, categories }: TicketCreateFormProps) {
   const router = useRouter();
-  const [tenants, setTenants] = useState<LeanTenantApiItem[]>([]);
-  const [employees, setEmployees] = useState<LeanEmployeeApiItem[]>([]);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,67 +73,19 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
   const selectedPropertyId = form.watch("propertyId");
   const selectedTenantId = form.watch("tenantId");
 
-  useEffect(() => {
-    const propertyId = Number(selectedPropertyId);
+  const { tenants, isLoading: isLoadingTenants, error: tenantsError } = useLeanTenants({
+    propertyId: selectedPropertyId,
+  });
+  const { employees, isLoading: isLoadingEmployees, error: employeesError } = useLeanEmployees({
+    propertyId: selectedPropertyId,
+  });
 
+  const isLoadingOptions = isLoadingTenants || isLoadingEmployees;
+
+  useEffect(() => {
     form.setValue("tenantId", "");
     form.setValue("employeeId", "");
     form.setValue("unitId", "");
-
-    if (!Number.isInteger(propertyId) || propertyId <= 0) {
-      setTenants([]);
-      setEmployees([]);
-      return;
-    }
-
-    const controller = new AbortController();
-
-    async function fetchPropertyOptions() {
-      setIsLoadingOptions(true);
-
-      try {
-        const [tenantsResponse, employeesResponse] = await Promise.all([
-          fetch(`/api/tenants/lean?propertyId=${propertyId}`, {
-            signal: controller.signal,
-            cache: "no-store",
-          }),
-          fetch(`/api/employees/lean?propertyId=${propertyId}`, {
-            signal: controller.signal,
-            cache: "no-store",
-          }),
-        ]);
-
-        if (!tenantsResponse.ok || !employeesResponse.ok) {
-          throw new Error("Failed to fetch property options");
-        }
-
-        const tenantsPayload = (await tenantsResponse.json()) as LeanTenantsApiResponse;
-        const employeesPayload = (await employeesResponse.json()) as LeanEmployeesApiResponse;
-
-        if (!tenantsPayload.success || !employeesPayload.success) {
-          throw new Error(tenantsPayload.message || employeesPayload.message || "Failed to load options");
-        }
-
-        setTenants(tenantsPayload.data?.tenants ?? []);
-        setEmployees(employeesPayload.data?.employees ?? []);
-      } catch (error) {
-        if ((error as Error).name === "AbortError") {
-          return;
-        }
-
-        setTenants([]);
-        setEmployees([]);
-        toast.error("Failed to load tenants and employees");
-      } finally {
-        setIsLoadingOptions(false);
-      }
-    }
-
-    void fetchPropertyOptions();
-
-    return () => {
-      controller.abort();
-    };
   }, [form, selectedPropertyId]);
 
   useEffect(() => {
@@ -150,6 +99,12 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     const selectedTenant = tenants.find((tenant) => tenant.id === tenantId);
     form.setValue("unitId", selectedTenant ? String(selectedTenant.unit.id) : "");
   }, [form, selectedTenantId, tenants]);
+
+  useEffect(() => {
+    if (tenantsError || employeesError) {
+      toast.error("Failed to load tenants and employees");
+    }
+  }, [tenantsError, employeesError]);
 
   const selectedTenant = tenants.find((tenant) => tenant.id === Number(selectedTenantId));
   const unitCode = selectedTenant ? selectedTenant.unit.code : "";

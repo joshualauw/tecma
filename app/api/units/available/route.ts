@@ -48,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
         code: true,
       },
       where: {
-        property_id: propertyId,
+        propertyId,
         OR: [
           {
             tenants: {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
         ],
       },
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

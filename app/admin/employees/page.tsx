@@ -11,7 +11,7 @@ export default async function EmployeesPage() {
       name: true,
     },
     orderBy: {
-      created_at: "asc",
+      createdAt: "asc",
     },
   });
 

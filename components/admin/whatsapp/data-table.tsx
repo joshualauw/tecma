@@ -82,34 +82,34 @@ export default function WhatsappDataTable() {
       cell: ({ row }) => row.index + 1,
     },
     {
-      accessorKey: "display_name",
+      accessorKey: "displayName",
       header: "Display Name",
     },
     {
-      accessorKey: "phone_number",
+      accessorKey: "phoneNumber",
       header: "Phone Number",
     },
     {
-      accessorKey: "waba_id",
+      accessorKey: "wabaId",
       header: "WABA ID",
     },
     {
-      accessorKey: "phone_id",
+      accessorKey: "phoneId",
       header: "Phone ID",
     },
     {
-      accessorKey: "created_at",
+      accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        const value = row.original.created_at;
+        const value = row.original.createdAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {
-      accessorKey: "updated_at",
+      accessorKey: "updatedAt",
       header: "Updated At",
       cell: ({ row }) => {
-        const value = row.original.updated_at;
+        const value = row.original.updatedAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
@@ -255,7 +255,7 @@ export default function WhatsappDataTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Deleting <strong>{whatsappToDelete?.display_name ?? "this record"}</strong>{" "}
+              This action cannot be undone. Deleting <strong>{whatsappToDelete?.displayName ?? "this record"}</strong>{" "}
               will permanently remove it and everything related to it.
             </AlertDialogDescription>
           </AlertDialogHeader>

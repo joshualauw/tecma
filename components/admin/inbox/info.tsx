@@ -56,7 +56,7 @@ export default function InboxInfo({ roomDetail, statusBadgeVariant, formatStatus
             <p className="text-sm font-medium mb-1">{roomDetail?.tenant?.name ?? "-"}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <PhoneIcon className="size-3" />
-              {roomDetail?.tenant?.phone_number ?? "-"}
+              {roomDetail?.tenant?.phoneNumber ?? "-"}
             </p>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPinIcon className="size-3" />
@@ -70,10 +70,10 @@ export default function InboxInfo({ roomDetail, statusBadgeVariant, formatStatus
 
           <div>
             <p className="text-xs text-muted-foreground">WhatsApp</p>
-            <p className="text-sm font-medium mb-1">{roomDetail?.whatsapp?.display_name ?? "-"}</p>
+            <p className="text-sm font-medium mb-1">{roomDetail?.whatsapp?.displayName ?? "-"}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <PhoneIcon className="size-3" />
-              {roomDetail?.whatsapp?.phone_number ?? "-"}
+              {roomDetail?.whatsapp?.phoneNumber ?? "-"}
             </p>
           </div>
         </div>
@@ -89,13 +89,13 @@ export default function InboxInfo({ roomDetail, statusBadgeVariant, formatStatus
           )}
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
             <span className="text-muted-foreground">Opened at:</span>
-            <span>{formatTimestamp(roomDetail?.created_at ?? null)}</span>
+            <span>{formatTimestamp(roomDetail?.createdAt ?? null)}</span>
 
             <span className="text-muted-foreground">Expired at:</span>
-            <span>{formatTimestamp(roomDetail?.expired_at ?? null)}</span>
+            <span>{formatTimestamp(roomDetail?.expiredAt ?? null)}</span>
 
             <span className="text-muted-foreground">Closed at:</span>
-            <span>{formatTimestamp(roomDetail?.closed_at ?? null)}</span>
+            <span>{formatTimestamp(roomDetail?.closedAt ?? null)}</span>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export default function InboxInfo({ roomDetail, statusBadgeVariant, formatStatus
                     <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
                       {formatTicketStatusLabel(ticket.status)}
                     </Badge>
-                    <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.created_at)}</p>
+                    <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.createdAt)}</p>
                   </div>
                 </a>
               ))}

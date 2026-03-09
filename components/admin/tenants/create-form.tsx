@@ -1,6 +1,5 @@
 "use client";
 
-import { AvailableUnitsApiItem, AvailableUnitsApiResponse } from "@/app/api/units/available/route";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -8,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createTenantAction } from "@/lib/actions/tenants/create-tenant";
+import { useAvailableUnits } from "@/lib/fetching/units/use-available-units";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -19,7 +20,7 @@ const formSchema = z.object({
   name: z.string().trim().min(1, "Tenant name is required"),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number format")
+    .regex(PHONE_NUMBER_REGEX, "Invalid phone number format")
     .trim()
     .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
@@ -36,8 +37,6 @@ interface TenantCreateFormProps {
 
 export default function TenantCreateForm({ properties }: TenantCreateFormProps) {
   const router = useRouter();
-  const [availableUnits, setAvailableUnits] = useState<AvailableUnitsApiItem[]>([]);
-  const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,56 +51,31 @@ export default function TenantCreateForm({ properties }: TenantCreateFormProps) 
 
   const selectedPropertyId = form.watch("propertyId");
 
+  const {
+    units: availableUnits,
+    isLoading: isLoadingUnits,
+    error: unitsError,
+  } = useAvailableUnits({
+    propertyId: selectedPropertyId,
+  });
+
   useEffect(() => {
-    const propertyId = Number(selectedPropertyId);
-
     form.setValue("unitId", "");
-
-    if (!Number.isInteger(propertyId) || propertyId <= 0) {
-      setAvailableUnits([]);
-      return;
-    }
-
-    const controller = new AbortController();
-
-    async function fetchAvailableUnits() {
-      setIsLoadingUnits(true);
-
-      try {
-        const response = await fetch(`/api/units/available?propertyId=${propertyId}`, {
-          signal: controller.signal,
-        });
-        const payload = (await response.json()) as AvailableUnitsApiResponse;
-
-        if (!response.ok || !payload.success) {
-          throw new Error(payload.message || "Failed to fetch available units");
-        }
-
-        setAvailableUnits(payload.data?.units ?? []);
-      } catch (error) {
-        if ((error as Error).name === "AbortError") {
-          return;
-        }
-
-        setAvailableUnits([]);
-        toast.error("Failed to load available units");
-      } finally {
-        setIsLoadingUnits(false);
-      }
-    }
-
-    fetchAvailableUnits();
-
-    return () => {
-      controller.abort();
-    };
   }, [form, selectedPropertyId]);
+
+  useEffect(() => {
+    if (unitsError) {
+      toast.error("Failed to load available units");
+    }
+  }, [unitsError]);
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("phoneNumber", data.phoneNumber);
-    formData.append("address", data.address ?? "");
+    if (data.address) {
+      formData.append("address", data.address);
+    }
     formData.append("propertyId", data.propertyId);
     formData.append("unitId", data.unitId);
 

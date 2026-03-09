@@ -26,10 +26,7 @@ export async function createPropertyAction(formData: FormData): Promise<CreatePr
 
   try {
     await prisma.properties.create({
-      data: {
-        name: name,
-        address: address,
-      },
+      data: { name, address },
     });
 
     return { success: true, message: "Property created successfully" };

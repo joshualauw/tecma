@@ -1,0 +1,26 @@
+-- AlterTable
+ALTER TABLE "bots" ALTER COLUMN "name" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "employees" ALTER COLUMN "name" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "properties" ALTER COLUMN "name" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "sources" ALTER COLUMN "title" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "tenants" ALTER COLUMN "name" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "ticket_categories" ALTER COLUMN "name" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "tickets" ALTER COLUMN "title" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "users" ALTER COLUMN "name" SET DATA TYPE VARCHAR(255);
+
+-- AlterTable
+ALTER TABLE "whatsapp" ALTER COLUMN "display_name" SET DATA TYPE VARCHAR(255);

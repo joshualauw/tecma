@@ -34,13 +34,7 @@ export default async function TicketCategoryUpdatePage({ params }: TicketCategor
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Ticket Category</h1>
       </div>
-      <TicketCategoryUpdateForm
-        data={{
-          id: ticketCategory.id,
-          name: ticketCategory.name,
-          description: ticketCategory.description,
-        }}
-      />
+      <TicketCategoryUpdateForm data={ticketCategory} />
     </div>
   );
 }

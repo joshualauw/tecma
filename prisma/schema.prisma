@@ -9,12 +9,12 @@ datasource db {
 
 model Users {
   id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique(map: "users_email_unique") @db.VarChar
-  password String @db.VarChar
+  name     String @db.VarChar(255)
+  email    String @unique(map: "users_email_unique")
+  password String @db.VarChar(255)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   role UserRole
 
@@ -22,15 +22,15 @@ model Users {
 }
 
 model Whatsapp {
-  id             Int    @id @default(autoincrement())
-  display_name   String
-  waba_id        String @unique(map: "whatsapp_waba_id_unique") @db.VarChar
-  phone_id       String @unique(map: "whatsapp_phone_id_unique") @db.VarChar
-  phone_number   String @unique(map: "whatsapp_phone_number_unique") @db.VarChar
-  quality_rating String @default("high") @db.VarChar
+  id            Int    @id @default(autoincrement())
+  displayName   String @map("display_name") @db.VarChar(255)
+  wabaId        String @unique(map: "whatsapp_waba_id_unique") @map("waba_id")
+  phoneId       String @unique(map: "whatsapp_phone_id_unique") @map("phone_id")
+  phoneNumber   String @unique(map: "whatsapp_phone_number_unique") @map("phone_number") @db.VarChar(20)
+  qualityRating String @default("high") @map("quality_rating")
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   rooms Rooms[]
 
@@ -39,11 +39,11 @@ model Whatsapp {
 
 model Properties {
   id      Int     @id @default(autoincrement())
-  name    String
+  name    String  @db.VarChar(255)
   address String?
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   bots      Bots[]
   employees Employees[]
@@ -58,14 +58,14 @@ model Properties {
 }
 
 model Units {
-  id          Int    @id @default(autoincrement())
-  property_id Int
-  code        String
+  id         Int    @id @default(autoincrement())
+  propertyId Int    @map("property_id")
+  code       String @db.VarChar(25)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
   tenants  Tenants[]
   tickets  Tickets[]
 
@@ -73,18 +73,18 @@ model Units {
 }
 
 model Tenants {
-  id           Int     @id @default(autoincrement())
-  property_id  Int
-  unit_id      Int
-  name         String
-  address      String?
-  phone_number String  @unique(map: "tenants_phone_number_unique") @db.VarChar
+  id          Int     @id @default(autoincrement())
+  propertyId  Int     @map("property_id")
+  unitId      Int     @map("unit_id")
+  name        String  @db.VarChar(255)
+  address     String?
+  phoneNumber String  @unique(map: "tenants_phone_number_unique") @map("phone_number") @db.VarChar(20)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
-  unit     Units      @relation(fields: [unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_unit_id_units_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
+  unit     Units      @relation(fields: [unitId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_unit_id_units_id_fk")
   rooms    Rooms[]
   tickets  Tickets[]
 
@@ -92,93 +92,93 @@ model Tenants {
 }
 
 model Employees {
-  id           Int     @id @default(autoincrement())
-  property_id  Int
-  name         String
-  address      String?
-  phone_number String  @unique(map: "employees_phone_number_unique") @db.VarChar
+  id          Int     @id @default(autoincrement())
+  propertyId  Int     @map("property_id")
+  name        String  @db.VarChar(255)
+  address     String?
+  phoneNumber String  @unique(map: "employees_phone_number_unique") @map("phone_number") @db.VarChar(20)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
   tickets  Tickets[]
 
   @@map("employees")
 }
 
 model Rooms {
-  id              Int        @id @default(autoincrement())
-  property_id     Int
-  tenant_id       Int?
-  whatsapp_id     Int
-  tenant_number   String     @db.VarChar
-  whatsapp_number String     @db.VarChar
-  last_message    String?
-  last_message_at DateTime?  @db.Timestamp(6)
-  status          RoomStatus @default(active)
-  closed_at       DateTime?  @db.Timestamp(6)
-  expired_at      DateTime   @db.Timestamp(6)
+  id             Int        @id @default(autoincrement())
+  propertyId     Int        @map("property_id")
+  tenantId       Int?       @map("tenant_id")
+  whatsappId     Int        @map("whatsapp_id")
+  tenantNumber   String     @map("tenant_number") @db.VarChar(20)
+  whatsappNumber String     @map("whatsapp_number") @db.VarChar(20)
+  lastMessage    String?    @map("last_message")
+  lastMessageAt  DateTime?  @map("last_message_at")
+  status         RoomStatus @default(active)
+  closedAt       DateTime?  @map("closed_at")
+  expiredAt      DateTime   @map("expired_at")
 
-  created_at DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   messages Messages[]
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_property_id_properties_id_fk")
-  tenant   Tenants?   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_tenant_id_tenants_id_fk")
-  whatsapp Whatsapp   @relation(fields: [whatsapp_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_whatsapp_id_whatsapp_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_property_id_properties_id_fk")
+  tenant   Tenants?   @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_tenant_id_tenants_id_fk")
+  whatsapp Whatsapp   @relation(fields: [whatsappId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_whatsapp_id_whatsapp_id_fk")
 
   @@map("rooms")
 }
 
 model Messages {
-  id           Int           @id @default(autoincrement())
-  property_id  Int
-  wa_id        String?       @unique
-  room_id      Int
-  sender_type  SenderType
-  content      String
-  message_type MessageType   @default(text)
-  status       MessageStatus @default(sent)
+  id          Int           @id @default(autoincrement())
+  propertyId  Int           @map("property_id")
+  waId        String?       @unique @map("wa_id")
+  roomId      Int           @map("room_id")
+  senderType  SenderType    @map("sender_type")
+  content     String
+  messageType MessageType   @default(text) @map("message_type")
+  status      MessageStatus @default(sent)
 
-  created_at DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_property_id_properties_id_fk")
-  room     Rooms      @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_room_id_rooms_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_property_id_properties_id_fk")
+  room     Rooms      @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_room_id_rooms_id_fk")
 
   @@map("messages")
 }
 
 model Tickets {
   id          Int            @id @default(autoincrement())
-  property_id Int
-  tenant_id   Int
-  unit_id     Int
-  category_id Int
-  employee_id Int
-  title       String
+  propertyId  Int            @map("property_id")
+  tenantId    Int            @map("tenant_id")
+  unitId      Int            @map("unit_id")
+  categoryId  Int            @map("category_id")
+  employeeId  Int            @map("employee_id")
+  title       String         @db.VarChar(255)
   description String?
   status      TicketStatus   @default(open)
   priority    TicketPriority @default(low)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  tenant   Tenants          @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_tenant_id_tenants_id_fk")
-  property Properties       @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
-  category TicketCategories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
-  employee Employees        @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
-  unit     Units            @relation(fields: [unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_unit_id_units_id_fk")
+  tenant   Tenants          @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_tenant_id_tenants_id_fk")
+  property Properties       @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
+  category TicketCategories @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
+  employee Employees        @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
+  unit     Units            @relation(fields: [unitId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_unit_id_units_id_fk")
 
   @@map("tickets")
 }
 
 model TicketCategories {
   id          Int     @id @default(autoincrement())
-  name        String
+  name        String  @db.VarChar(255)
   description String?
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   tickets Tickets[]
 
@@ -187,35 +187,35 @@ model TicketCategories {
 
 model Bots {
   id           Int    @id @default(autoincrement())
-  property_id  Int
-  name         String
+  propertyId   Int    @map("property_id")
+  name         String @db.VarChar(255)
   model        String @default("gpt-4o")
   instructions String
   temperature  Float  @default(0.5)
-  top_p        Float  @default(1)
+  topP         Float  @default(1) @map("top_p")
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "bots_property_id_properties_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "bots_property_id_properties_id_fk")
   sources  Sources[]
 
   @@map("bots")
 }
 
 model Sources {
-  id          Int        @id @default(autoincrement())
-  property_id Int
-  bot_id      Int
-  type        SourceType @default(text)
-  title       String
-  content     String
+  id         Int        @id @default(autoincrement())
+  propertyId Int        @map("property_id")
+  botId      Int        @map("bot_id")
+  type       SourceType @default(text)
+  title      String     @db.VarChar(255)
+  content    String
 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_property_id_properties_id_fk")
-  bot      Bots       @relation(fields: [bot_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_bot_id_bots_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_property_id_properties_id_fk")
+  bot      Bots       @relation(fields: [botId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_bot_id_bots_id_fk")
 
   @@map("sources")
 }
@@ -253,7 +253,7 @@ enum RoomStatus {
 
 enum TicketStatus {
   open
-  in_progress @map("in-progress")
+  in_progress
   closed
 
   @@map("ticket_status")
@@ -280,7 +280,7 @@ enum MessageStatus {
 }
 
 enum UserRole {
-  super_admin @map("super-admin")
+  super_admin
 
   @@map("user_role")
 }

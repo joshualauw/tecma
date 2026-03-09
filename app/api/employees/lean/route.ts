@@ -44,7 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanEmploy
     const where: EmployeesWhereInput = {};
 
     if (propertyId !== null) {
-      where.property_id = propertyId;
+      where.propertyId = propertyId;
     }
 
     const employees = await prisma.employees.findMany({

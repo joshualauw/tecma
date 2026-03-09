@@ -48,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanTenant
     const where: TenantsWhereInput = {};
 
     if (propertyId !== null) {
-      where.property_id = propertyId;
+      where.propertyId = propertyId;
     }
 
     const tenants = await prisma.tenants.findMany({

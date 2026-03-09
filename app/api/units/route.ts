@@ -11,8 +11,8 @@ export type UnitApiItem = {
     id: number;
     name: string;
   };
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type UnitsApiData = {
@@ -61,15 +61,15 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnitsApiRe
     }
 
     if (propertyId !== null) {
-      where.property_id = propertyId;
+      where.propertyId = propertyId;
     }
 
     const units = await prisma.units.findMany({
       select: {
         id: true,
         code: true,
-        created_at: true,
-        updated_at: true,
+        createdAt: true,
+        updatedAt: true,
         property: {
           select: {
             id: true,
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnitsApiRe
       skip: page * size,
       take: size,
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

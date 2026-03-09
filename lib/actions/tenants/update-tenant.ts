@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -10,7 +11,7 @@ const updateTenantSchema = z.object({
   name: z.string().trim().min(1),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/)
+    .regex(PHONE_NUMBER_REGEX)
     .trim()
     .min(1),
   address: z.string().trim().min(1).nullable(),
@@ -41,7 +42,7 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
     const availableUnit = await prisma.units.findFirst({
       where: {
         id: unitId,
-        property_id: propertyId,
+        propertyId,
         OR: [
           {
             tenants: {
@@ -68,10 +69,10 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
       },
       data: {
         name: name,
-        phone_number: phoneNumber as string,
+        phoneNumber: phoneNumber as string,
         address: address,
-        property_id: propertyId,
-        unit_id: unitId,
+        propertyId,
+        unitId,
       },
     });
 

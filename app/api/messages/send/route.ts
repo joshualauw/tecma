@@ -35,24 +35,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<SendMessa
 
     const message = await prisma.messages.create({
       data: {
-        room_id: roomId,
-        property_id: propertyId,
-        sender_type: SenderType.user,
+        roomId,
+        propertyId,
+        senderType: SenderType.user,
         content,
       },
       select: {
         id: true,
-        sender_type: true,
+        senderType: true,
         content: true,
-        created_at: true,
+        createdAt: true,
       },
     });
 
     await prisma.rooms.update({
       where: { id: roomId },
       data: {
-        last_message: message.content,
-        last_message_at: message.created_at,
+        lastMessage: message.content,
+        lastMessageAt: message.createdAt,
       },
     });
 

@@ -10,7 +10,7 @@ export type RoomDetailApiItem = {
   tenant: {
     id: number;
     name: string;
-    phone_number: string;
+    phoneNumber: string;
     property: {
       id: number;
       name: string;
@@ -22,12 +22,12 @@ export type RoomDetailApiItem = {
   } | null;
   whatsapp: {
     id: number;
-    display_name: string;
-    phone_number: string;
+    displayName: string;
+    phoneNumber: string;
   };
-  expired_at: Date;
-  closed_at: Date | null;
-  created_at: Date;
+  expiredAt: Date;
+  closedAt: Date | null;
+  createdAt: Date;
   tickets: {
     id: number;
     title: string;
@@ -41,7 +41,7 @@ export type RoomDetailApiItem = {
       id: number;
       name: string;
     };
-    created_at: Date;
+    createdAt: Date;
   }[];
 };
 
@@ -82,14 +82,14 @@ export async function GET(
       select: {
         id: true,
         status: true,
-        expired_at: true,
-        closed_at: true,
-        created_at: true,
+        expiredAt: true,
+        closedAt: true,
+        createdAt: true,
         tenant: {
           select: {
             id: true,
             name: true,
-            phone_number: true,
+            phoneNumber: true,
             property: {
               select: {
                 id: true,
@@ -107,8 +107,8 @@ export async function GET(
         whatsapp: {
           select: {
             id: true,
-            display_name: true,
-            phone_number: true,
+            displayName: true,
+            phoneNumber: true,
           },
         },
       },
@@ -128,7 +128,7 @@ export async function GET(
     const tickets = room.tenant
       ? await prisma.tickets.findMany({
           where: {
-            tenant_id: room.tenant.id,
+            tenantId: room.tenant.id,
             status: { not: "closed" },
           },
           select: {
@@ -148,10 +148,10 @@ export async function GET(
                 name: true,
               },
             },
-            created_at: true,
+            createdAt: true,
           },
           orderBy: {
-            created_at: "desc",
+            createdAt: "desc",
           },
         })
       : [];

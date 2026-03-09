@@ -31,8 +31,8 @@ export type TicketApiItem = {
     id: number;
     name: string;
   };
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type TicketsApiData = {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
     }
 
     if (propertyId !== null) {
-      where.property_id = propertyId;
+      where.propertyId = propertyId;
     }
 
     if (status !== null) {
@@ -103,8 +103,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
         description: true,
         status: true,
         priority: true,
-        created_at: true,
-        updated_at: true,
+        createdAt: true,
+        updatedAt: true,
         property: {
           select: {
             id: true,
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       skip: page * size,
       take: size,
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

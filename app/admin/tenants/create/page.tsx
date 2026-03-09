@@ -8,7 +8,7 @@ export default async function TenantCreatePage() {
       name: true,
     },
     orderBy: {
-      created_at: "asc",
+      createdAt: "asc",
     },
   });
 

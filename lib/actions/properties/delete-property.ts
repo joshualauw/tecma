@@ -23,9 +23,7 @@ export async function deletePropertyAction(propertyId: number): Promise<DeletePr
 
   try {
     await prisma.properties.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
 
     return { success: true, message: "Property deleted successfully" };

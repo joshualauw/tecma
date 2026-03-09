@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -8,7 +9,11 @@ import z from "zod";
 const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
   name: z.string().trim().min(1),
-  phoneNumber: z.string().trim().min(1),
+  phoneNumber: z
+    .string()
+    .regex(PHONE_NUMBER_REGEX)
+    .trim()
+    .min(1),
   address: z.string().optional(),
   propertyId: z.coerce.number().int().positive(),
 });
@@ -33,15 +38,8 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
 
   try {
     await prisma.employees.update({
-      where: {
-        id,
-      },
-      data: {
-        name: name,
-        phone_number: phoneNumber,
-        address: address,
-        property_id: propertyId,
-      },
+      where: { id },
+      data: { name, phoneNumber, address, propertyId },
     });
 
     return { success: true, message: "Employee updated successfully" };

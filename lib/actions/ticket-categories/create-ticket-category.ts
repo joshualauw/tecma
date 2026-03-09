@@ -26,10 +26,7 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
 
   try {
     await prisma.ticketCategories.create({
-      data: {
-        name: name,
-        description: description,
-      },
+      data: { name, description },
     });
 
     return { success: true, message: "Ticket category created successfully" };

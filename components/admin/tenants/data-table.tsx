@@ -106,7 +106,7 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       cell: ({ row }) => row.original.unit.code,
     },
     {
-      accessorKey: "phone_number",
+      accessorKey: "phoneNumber",
       header: "Phone Number",
     },
     {
@@ -115,18 +115,18 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       cell: ({ row }) => row.original.address ?? "-",
     },
     {
-      accessorKey: "created_at",
+      accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        const value = row.original.created_at;
+        const value = row.original.createdAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },
     {
-      accessorKey: "updated_at",
+      accessorKey: "updatedAt",
       header: "Updated At",
       cell: ({ row }) => {
-        const value = row.original.updated_at;
+        const value = row.original.updatedAt;
         return dayjs(value).format("DD/MM/YYYY HH:mm");
       },
     },

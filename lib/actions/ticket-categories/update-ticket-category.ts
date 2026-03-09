@@ -29,13 +29,8 @@ export async function updateTicketCategoryAction(formData: FormData): Promise<Up
 
   try {
     await prisma.ticketCategories.update({
-      where: {
-        id,
-      },
-      data: {
-        name: name,
-        description: description,
-      },
+      where: { id },
+      data: { name, description },
     });
 
     return { success: true, message: "Ticket category updated successfully" };

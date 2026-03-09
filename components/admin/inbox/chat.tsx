@@ -55,11 +55,11 @@ export default function InboxChat({
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender_type === "tenant" ? "justify-start" : "justify-end"}`}
+                className={`flex ${message.senderType === "tenant" ? "justify-start" : "justify-end"}`}
               >
-                <div className={messageBubbleClasses(message.sender_type)}>
+                <div className={messageBubbleClasses(message.senderType)}>
                   <p>{message.content}</p>
-                  <p className="mt-1 text-[10px] opacity-80">{formatLastMessageAt(message.created_at)}</p>
+                  <p className="mt-1 text-[10px] opacity-80">{formatLastMessageAt(message.createdAt)}</p>
                 </div>
               </div>
             ))}

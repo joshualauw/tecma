@@ -1,4 +1,5 @@
 import type { WhatsappApiData } from "@/app/api/whatsapp/route";
+import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
@@ -24,7 +25,7 @@ export function useWhatsapp(
 
   const swr = useSWR<WhatsappApiData>(key, fetcher, {
     keepPreviousData: true,
-    errorRetryCount: 3,
+    errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
 

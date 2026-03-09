@@ -21,9 +21,9 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
     select: {
       id: true,
       name: true,
-      phone_number: true,
+      phoneNumber: true,
       address: true,
-      property_id: true,
+      propertyId: true,
     },
   });
 
@@ -37,7 +37,7 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
       name: true,
     },
     orderBy: {
-      created_at: "asc",
+      createdAt: "asc",
     },
   });
 
@@ -46,16 +46,7 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Employee</h1>
       </div>
-      <EmployeeUpdateForm
-        data={{
-          id: employee.id,
-          name: employee.name,
-          phoneNumber: employee.phone_number,
-          address: employee.address,
-          propertyId: employee.property_id,
-        }}
-        properties={properties}
-      />
+      <EmployeeUpdateForm data={employee} properties={properties} />
     </div>
   );
 }

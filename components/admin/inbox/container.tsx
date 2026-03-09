@@ -237,8 +237,8 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
                 room.id === selectedRoomId
                   ? {
                       ...room,
-                      last_message: createdMessage.content,
-                      last_message_at: createdMessage.created_at,
+                      lastMessage: createdMessage.content,
+                      lastMessageAt: createdMessage.createdAt,
                     }
                   : room,
               ),
@@ -325,16 +325,16 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
                           <p className="text-sm font-medium">{room.tenant?.name ?? "Unknown Tenant"}</p>
                           <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
                             <PhoneIcon className="size-3" />
-                            <span>{room.whatsapp?.display_name ?? "-"}</span>
+                            <span>{room.whatsapp?.displayName ?? "-"}</span>
                           </div>
-                          <p className="line-clamp-1 text-sm text-muted-foreground">{room.last_message ?? "-"}</p>
+                          <p className="line-clamp-1 text-sm text-muted-foreground">{room.lastMessage ?? "-"}</p>
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
                           <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>
                             {formatStatusLabel(room.status)}
                           </Badge>
-                          <p>{formatLastMessageDate(room.last_message_at)}</p>
-                          <p>{formatLastMessageTime(room.last_message_at)}</p>
+                          <p>{formatLastMessageDate(room.lastMessageAt)}</p>
+                          <p>{formatLastMessageTime(room.lastMessageAt)}</p>
                         </div>
                       </div>
                     </div>
@@ -359,7 +359,7 @@ export default function InboxContainer({ properties }: InboxContainerProps) {
                   <div onClick={() => setIsRoomDataOpen((prev) => !prev)} className="cursor-pointer">
                     <p className="text-sm font-semibold">{roomDetail?.tenant?.name ?? "Unknown Tenant"}</p>
                     <p className="text-xs text-muted-foreground">
-                      Expires in: {roomDetail?.expired_at ? formatExpiresIn(roomDetail.expired_at) : "-"}
+                      Expires in: {roomDetail?.expiredAt ? formatExpiresIn(roomDetail.expiredAt) : "-"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

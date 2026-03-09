@@ -1,5 +1,6 @@
 import type { RoomsApiData } from "@/app/api/rooms/route";
 import type { RoomStatus } from "@/generated/prisma/enums";
+import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
@@ -24,7 +25,7 @@ export function useRooms({ propertyId, status }: UseRoomsParams, options?: SWRCo
 
   return useSWR<RoomsApiData>(key, fetcher, {
     keepPreviousData: true,
-    errorRetryCount: 3,
+    errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
 }

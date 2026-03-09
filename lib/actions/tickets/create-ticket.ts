@@ -42,11 +42,11 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
   try {
     await prisma.tickets.create({
       data: {
-        property_id: propertyId,
-        tenant_id: tenantId,
-        unit_id: unitId,
-        category_id: categoryId,
-        employee_id: employeeId,
+        propertyId,
+        tenantId,
+        unitId,
+        categoryId,
+        employeeId,
         title: title,
         description: description,
         status: status,

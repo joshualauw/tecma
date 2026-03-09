@@ -25,9 +25,7 @@ export async function deleteTicketCategoryAction(
 
   try {
     await prisma.ticketCategories.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
 
     return { success: true, message: "Ticket category deleted successfully" };

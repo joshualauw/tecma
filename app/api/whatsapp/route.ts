@@ -6,12 +6,12 @@ import z from "zod";
 
 export type WhatsappApiItem = {
   id: number;
-  display_name: string;
-  waba_id: string;
-  phone_id: string;
-  phone_number: string;
-  created_at: Date;
-  updated_at: Date;
+  displayName: string;
+  wabaId: string;
+  phoneId: string;
+  phoneNumber: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type WhatsappApiData = {
@@ -55,26 +55,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
 
     if (search) {
       where.OR = [
-        { display_name: { contains: search, mode: "insensitive" } },
-        { phone_number: { contains: search, mode: "insensitive" } },
+        { displayName: { contains: search, mode: "insensitive" } },
+        { phoneNumber: { contains: search, mode: "insensitive" } },
       ];
     }
 
     const whatsapps = await prisma.whatsapp.findMany({
       select: {
         id: true,
-        display_name: true,
-        waba_id: true,
-        phone_id: true,
-        phone_number: true,
-        created_at: true,
-        updated_at: true,
+        displayName: true,
+        wabaId: true,
+        phoneId: true,
+        phoneNumber: true,
+        createdAt: true,
+        updatedAt: true,
       },
       where,
       skip: page * size,
       take: size,
       orderBy: {
-        created_at: "asc",
+        createdAt: "asc",
       },
     });
 

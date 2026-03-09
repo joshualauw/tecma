@@ -21,10 +21,10 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
     select: {
       id: true,
       name: true,
-      phone_number: true,
+      phoneNumber: true,
       address: true,
-      property_id: true,
-      unit_id: true,
+      propertyId: true,
+      unitId: true,
     },
   });
 
@@ -38,7 +38,7 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
       name: true,
     },
     orderBy: {
-      created_at: "asc",
+      createdAt: "asc",
     },
   });
 
@@ -47,17 +47,7 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Tenant</h1>
       </div>
-      <TenantUpdateForm
-        data={{
-          id: tenant.id,
-          name: tenant.name,
-          phoneNumber: tenant.phone_number,
-          address: tenant.address,
-          propertyId: tenant.property_id,
-          unitId: tenant.unit_id,
-        }}
-        properties={properties}
-      />
+      <TenantUpdateForm data={tenant} properties={properties} />
     </div>
   );
 }
