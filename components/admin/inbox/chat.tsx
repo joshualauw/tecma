@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RoomStatus, SenderType } from "@/generated/prisma/enums";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { useState } from "react";
 
 interface InboxChatProps {
@@ -22,16 +22,16 @@ function formatLastMessageAt(value: Date | string | null) {
   if (!value) {
     return "-";
   }
-
   return dayjs(value).format("DD/MM/YYYY HH:mm");
 }
 
 function messageBubbleClasses(senderType: SenderType) {
+  const classes = "max-w-[80%] rounded-lg px-3 py-2 text-sm";
   if (senderType === "tenant") {
-    return "max-w-[80%] rounded-lg bg-muted px-3 py-2 text-sm text-foreground";
+    return `${classes} bg-muted text-foreground`;
+  } else {
+    return `${classes} bg-secondary text-secondary-foreground`;
   }
-
-  return "max-w-[80%] rounded-lg bg-secondary px-3 py-2 text-sm text-secondary-foreground";
 }
 
 export default function InboxChat({
@@ -44,6 +44,20 @@ export default function InboxChat({
   onSendMessage,
 }: InboxChatProps) {
   const [draftMessage, setDraftMessage] = useState("");
+
+  async function handleSendMessage(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const content = draftMessage.trim();
+    if (!content || isSendingMessage) {
+      return;
+    }
+
+    const isSent = await onSendMessage(content);
+    if (isSent) {
+      setDraftMessage("");
+    }
+  }
 
   return (
     <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
@@ -72,24 +86,7 @@ export default function InboxChat({
       <Separator />
 
       {isRoomActive ? (
-        <form
-          className="flex items-center gap-2 p-4"
-          onSubmit={async (event) => {
-            event.preventDefault();
-
-            const content = draftMessage.trim();
-
-            if (!content || isSendingMessage) {
-              return;
-            }
-
-            const isSent = await onSendMessage(content);
-
-            if (isSent) {
-              setDraftMessage("");
-            }
-          }}
-        >
+        <form className="flex items-center gap-2 p-4" onSubmit={handleSendMessage}>
           <Input
             value={draftMessage}
             onChange={(event) => setDraftMessage(event.target.value)}

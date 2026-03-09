@@ -6,12 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
 import { HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 
 interface InboxInfoProps {
   roomDetail: RoomDetailApiItem | null;
-  statusBadgeVariant: (_status: RoomStatus) => "default" | "secondary" | "destructive";
-  formatStatusLabel: (_status: RoomStatus) => string;
+}
+
+function formatStatusLabel(status: RoomStatus) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function statusBadgeVariant(status: RoomStatus): "default" | "secondary" | "destructive" {
+  switch (status) {
+    case "active":
+      return "secondary";
+    case "closed":
+      return "default";
+    case "expired":
+      return "destructive";
+  }
 }
 
 function formatTimestamp(value: Date | string | null) {
@@ -45,7 +58,7 @@ function ticketStatusBadgeVariant(status: TicketStatus): "default" | "secondary"
   }
 }
 
-export default function InboxInfo({ roomDetail, statusBadgeVariant, formatStatusLabel }: InboxInfoProps) {
+export default function InboxInfo({ roomDetail }: InboxInfoProps) {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="space-y-4">

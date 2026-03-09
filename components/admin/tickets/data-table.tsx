@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 

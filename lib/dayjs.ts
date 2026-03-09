@@ -12,3 +12,5 @@ dayjs.extend(localizedFormat);
 dayjs.extend(updateLocale);
 
 dayjs.locale("id");
+
+export default dayjs;
