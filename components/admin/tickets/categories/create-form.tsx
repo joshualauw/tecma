@@ -31,7 +31,9 @@ export default function TicketCategoryCreateForm() {
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("name", data.name);
-    formData.append("description", data.description ?? "");
+    if (data.description) {
+      formData.append("description", data.description);
+    }
 
     const result = await createTicketCategoryAction(formData);
     if (result.success) {

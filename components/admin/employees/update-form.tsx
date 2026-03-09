@@ -58,7 +58,9 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
     formData.append("id", String(id));
     formData.append("name", data.name);
     formData.append("phoneNumber", data.phoneNumber);
-    formData.append("address", data.address ?? "");
+    if (data.address) {
+      formData.append("address", data.address);
+    }
     formData.append("propertyId", data.propertyId);
 
     const result = await updateEmployeeAction(formData);

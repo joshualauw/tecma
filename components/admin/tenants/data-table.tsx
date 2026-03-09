@@ -31,8 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-
-const PAGE_SIZE = 6;
+import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
 interface TenantsDataTableProps {
   properties: {
@@ -48,13 +47,18 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: PAGE_SIZE,
+    pageSize: DATA_TABLE_PAGE_SIZE,
   });
   const [tenantToDelete, setTenantToDelete] = useState<TenantApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: apiData, error, isLoading, mutate } = useTenants({
+  const {
+    data: apiData,
+    error,
+    isLoading,
+    mutate,
+  } = useTenants({
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     search: globalFilter,

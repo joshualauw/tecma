@@ -32,8 +32,8 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import dayjs from "dayjs";
-
-const PAGE_SIZE = 6;
+import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
+import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 
 interface TicketsDataTableProps {
   properties: {
@@ -42,19 +42,33 @@ interface TicketsDataTableProps {
   }[];
 }
 
-function formatStatusLabel(status: TicketApiItem["status"]) {
-  if (status === "in_progress") {
-    return "In Progress";
+function formatStatusLabel(status: TicketStatus) {
+  switch (status) {
+    case "open":
+      return "Open";
+    case "in_progress":
+      return "In Progress";
+    case "closed":
+      return "Closed";
+    default:
+      return "Unknown";
   }
-
-  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function formatPriorityLabel(priority: TicketApiItem["priority"]) {
-  return priority.charAt(0).toUpperCase() + priority.slice(1);
+function formatPriorityLabel(priority: TicketPriority) {
+  switch (priority) {
+    case "low":
+      return "Low";
+    case "medium":
+      return "Medium";
+    case "high":
+      return "High";
+    default:
+      return "Unknown";
+  }
 }
 
-function statusBadgeVariant(status: TicketApiItem["status"]): "default" | "secondary" | "destructive" {
+function statusBadgeVariant(status: TicketStatus): "default" | "secondary" | "destructive" {
   switch (status) {
     case "open":
       return "secondary";
@@ -62,10 +76,12 @@ function statusBadgeVariant(status: TicketApiItem["status"]): "default" | "secon
       return "default";
     case "closed":
       return "destructive";
+    default:
+      return "default";
   }
 }
 
-function priorityBadgeVariant(priority: TicketApiItem["priority"]): "secondary" | "default" | "destructive" {
+function priorityBadgeVariant(priority: TicketPriority): "secondary" | "default" | "destructive" {
   switch (priority) {
     case "low":
       return "secondary";
@@ -73,6 +89,8 @@ function priorityBadgeVariant(priority: TicketApiItem["priority"]): "secondary" 
       return "default";
     case "high":
       return "destructive";
+    default:
+      return "default";
   }
 }
 
@@ -85,13 +103,18 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: PAGE_SIZE,
+    pageSize: DATA_TABLE_PAGE_SIZE,
   });
   const [ticketToDelete, setTicketToDelete] = useState<TicketApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: apiData, error, isLoading, mutate } = useTickets({
+  const {
+    data: apiData,
+    error,
+    isLoading,
+    mutate,
+  } = useTickets({
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     search: globalFilter,

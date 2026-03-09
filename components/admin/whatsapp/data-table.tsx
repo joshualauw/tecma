@@ -30,8 +30,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-
-const PAGE_SIZE = 6;
+import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
 export default function WhatsappDataTable() {
   const router = useRouter();
@@ -39,13 +38,18 @@ export default function WhatsappDataTable() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: PAGE_SIZE,
+    pageSize: DATA_TABLE_PAGE_SIZE,
   });
   const [whatsappToDelete, setWhatsappToDelete] = useState<WhatsappApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: apiData, error, isLoading, mutate } = useWhatsapp({
+  const {
+    data: apiData,
+    error,
+    isLoading,
+    mutate,
+  } = useWhatsapp({
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     search: globalFilter,

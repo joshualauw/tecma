@@ -49,7 +49,9 @@ export default function EmployeeCreateForm({ properties }: EmployeeCreateFormPro
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("phoneNumber", data.phoneNumber);
-    formData.append("address", data.address ?? "");
+    if (data.address) {
+      formData.append("address", data.address);
+    }
     formData.append("propertyId", data.propertyId);
 
     const result = await createEmployeeAction(formData);

@@ -31,8 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-
-const PAGE_SIZE = 6;
+import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
 interface UnitsDataTableProps {
   properties: {
@@ -48,7 +47,7 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: PAGE_SIZE,
+    pageSize: DATA_TABLE_PAGE_SIZE,
   });
   const [unitToDelete, setUnitToDelete] = useState<UnitApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

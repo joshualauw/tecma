@@ -30,8 +30,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-
-const PAGE_SIZE = 6;
+import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
 export default function TicketCategoriesDataTable() {
   const router = useRouter();
@@ -39,13 +38,18 @@ export default function TicketCategoriesDataTable() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: PAGE_SIZE,
+    pageSize: DATA_TABLE_PAGE_SIZE,
   });
   const [categoryToDelete, setCategoryToDelete] = useState<TicketCategoryApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: apiData, error, isLoading, mutate } = useTicketCategories({
+  const {
+    data: apiData,
+    error,
+    isLoading,
+    mutate,
+  } = useTicketCategories({
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     search: globalFilter,
@@ -206,7 +210,11 @@ export default function TicketCategoriesDataTable() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                      {isLoading ? "Loading..." : error ? "Failed to load ticket categories." : "No ticket categories found."}
+                      {isLoading
+                        ? "Loading..."
+                        : error
+                          ? "Failed to load ticket categories."
+                          : "No ticket categories found."}
                     </TableCell>
                   </TableRow>
                 )}

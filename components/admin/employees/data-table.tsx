@@ -31,8 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-
-const PAGE_SIZE = 6;
+import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
 interface EmployeesDataTableProps {
   properties: {
@@ -48,13 +47,18 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: PAGE_SIZE,
+    pageSize: DATA_TABLE_PAGE_SIZE,
   });
   const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeApiItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: apiData, error, isLoading, mutate } = useEmployees({
+  const {
+    data: apiData,
+    error,
+    isLoading,
+    mutate,
+  } = useEmployees({
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     search: globalFilter,
@@ -286,9 +290,8 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Deleting{" "}
-              <strong>{employeeToDelete?.phoneNumber ?? "this employee"}</strong> will permanently remove it and
-              everything related to it.
+              This action cannot be undone. Deleting <strong>{employeeToDelete?.phoneNumber ?? "this employee"}</strong>{" "}
+              will permanently remove it and everything related to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

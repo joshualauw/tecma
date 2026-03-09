@@ -1,6 +1,5 @@
 import { SenderType } from "@/generated/prisma/enums";
 import { MessagesWhereInput } from "@/generated/prisma/models";
-import type { MessagesModel } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,9 +7,9 @@ import z from "zod";
 
 export type MessageApiItem = {
   id: number;
-  senderType: MessagesModel["senderType"];
+  senderType: SenderType;
   content: string;
-  createdAt: Date | null;
+  createdAt: Date;
 };
 
 export type MessagesApiData = {

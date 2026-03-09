@@ -41,7 +41,9 @@ export default function TicketCategoryUpdateForm({ data }: TicketCategoryUpdateF
     const formData = new FormData();
     formData.append("id", String(id));
     formData.append("name", data.name);
-    formData.append("description", data.description ?? "");
+    if (data.description) {
+      formData.append("description", data.description);
+    }
 
     const result = await updateTicketCategoryAction(formData);
     if (result.success) {
