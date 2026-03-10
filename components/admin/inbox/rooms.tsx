@@ -135,7 +135,7 @@ function RoomItem({ room, isSelected, onSelect }: RoomItemProps) {
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-medium">{room.tenant?.name ?? "Unknown Tenant"}</p>
+          <p className="text-sm font-medium">{room.tenant.name}</p>
           <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
             <PhoneIcon className="size-3" />
             <span>{room.whatsapp.displayName ?? "-"}</span>

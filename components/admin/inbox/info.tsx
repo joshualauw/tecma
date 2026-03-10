@@ -65,21 +65,20 @@ export default function InboxInfo() {
           <p className="text-sm font-bold">Room Data</p>
           <div>
             <p className="text-xs text-muted-foreground">Tenant</p>
-            <p className="text-sm font-medium mb-1">{roomDetail?.tenant?.name ?? "-"}</p>
+            <p className="text-sm font-medium mb-1">{roomDetail?.tenant.name}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <PhoneIcon className="size-3" />
-              {roomDetail?.tenant?.phoneNumber ?? "-"}
+              {roomDetail?.tenant.phoneNumber}
             </p>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPinIcon className="size-3" />
-              {roomDetail?.tenant?.property?.name ?? "-"}
+              {roomDetail?.tenant.property.name}
             </p>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <HouseHeartIcon className="size-3" />
-              {roomDetail?.tenant?.unit?.code ?? "-"}
+              {roomDetail?.tenant.unit.code}
             </p>
           </div>
-
           <div>
             <p className="text-xs text-muted-foreground">WhatsApp</p>
             <p className="text-sm font-medium mb-1">{roomDetail?.whatsapp?.displayName ?? "-"}</p>

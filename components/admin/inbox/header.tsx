@@ -35,8 +35,7 @@ function formatExpiresIn(value: Date | string) {
 
 export default function InboxHeader() {
   const {
-    tenantName,
-    expiredAt,
+    roomDetail,
     setIsRoomDataOpen,
     isResolveDialogOpen,
     setIsResolveDialogOpen,
@@ -44,17 +43,17 @@ export default function InboxHeader() {
     isResolvingRoom,
     isRoomActive,
     hasRoomDetail,
-    openTicketsCount,
   } = useInbox();
 
   const onToggleRoomData = () => setIsRoomDataOpen((prev) => !prev);
+  const openTicketsCount = roomDetail?.tickets.length ?? 0;
 
   return (
     <>
       <div className="flex items-center justify-between gap-4 px-4 py-3">
         <div onClick={onToggleRoomData} className="cursor-pointer">
-          <p className="text-sm font-semibold">{tenantName}</p>
-          <p className="text-xs text-muted-foreground">Expires in: {formatExpiresIn(expiredAt)}</p>
+          <p className="text-sm font-semibold">{roomDetail?.tenant.name}</p>
+          <p className="text-xs text-muted-foreground">Expires in: {formatExpiresIn(roomDetail?.expiredAt ?? "")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button

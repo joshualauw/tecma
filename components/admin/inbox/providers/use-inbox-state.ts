@@ -185,8 +185,5 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     onConfirmResolveRoom,
     onSendMessage,
     hasRoomDetail: roomDetail != null,
-    tenantName: roomDetail?.tenant?.name ?? "Unknown Tenant",
-    expiredAt: roomDetail?.expiredAt ?? "",
-    openTicketsCount: roomDetail?.tickets.length ?? 0,
   };
 }

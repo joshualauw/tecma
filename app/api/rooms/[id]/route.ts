@@ -19,7 +19,7 @@ export type RoomDetailApiItem = {
       id: number;
       code: string;
     };
-  } | null;
+  };
   whatsapp: {
     id: number;
     displayName: string;
@@ -125,36 +125,34 @@ export async function GET(
       );
     }
 
-    const tickets = room.tenant
-      ? await prisma.tickets.findMany({
-          where: {
-            tenantId: room.tenant.id,
-            status: { not: "closed" },
-          },
+    const tickets = await prisma.tickets.findMany({
+      where: {
+        tenantId: room.tenant.id,
+        status: { not: "closed" },
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        priority: true,
+        category: {
           select: {
             id: true,
-            title: true,
-            status: true,
-            priority: true,
-            category: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            employee: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            createdAt: true,
+            name: true,
           },
-          orderBy: {
-            createdAt: "desc",
+        },
+        employee: {
+          select: {
+            id: true,
+            name: true,
           },
-        })
-      : [];
+        },
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     return NextResponse.json({
       data: {

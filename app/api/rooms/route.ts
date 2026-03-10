@@ -10,7 +10,7 @@ export type RoomApiItem = {
   tenant: {
     id: number;
     name: string;
-  } | null;
+  };
   whatsapp: {
     id: number;
     displayName: string;
