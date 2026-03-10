@@ -69,7 +69,7 @@
   --muted-foreground: oklch(0.5 0.05 45);
   --accent: oklch(0.9 0.06 60);
   --accent-foreground: oklch(0.35 0.1 45);
-  --destructive: oklch(0.6 0.2 25); /* Red kept for utility */
+  --destructive: oklch(0.6 0.2 25);
   --border: oklch(0.88 0.03 55);
   --input: oklch(0.88 0.03 55);
   --ring: oklch(0.6 0.18 45);
@@ -140,5 +140,24 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--secondary);
+    border: 3px solid transparent;
+    border-radius: 100px;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--primary), transparent 40%);
   }
 }
