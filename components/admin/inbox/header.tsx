@@ -12,21 +12,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import dayjs from "@/lib/dayjs";
 import { AlertTriangleIcon, PanelRightOpenIcon } from "lucide-react";
-
-export interface InboxHeaderProps {
-  tenantName: string;
-  onToggleRoomData: () => void;
-  isResolveDialogOpen: boolean;
-  onResolveDialogOpenChange: (_open: boolean) => void;
-  onConfirmResolve: () => void | Promise<void>;
-  isResolvingRoom: boolean;
-  isRoomActive: boolean;
-  hasRoomDetail: boolean;
-  expiredAt: Date | string;
-  openTicketsCount: number;
-}
 
 function formatExpiresIn(value: Date | string) {
   const diff = dayjs(value).diff(dayjs());
@@ -45,18 +33,22 @@ function formatExpiresIn(value: Date | string) {
   return `${minutes}m`;
 }
 
-export default function InboxHeader({
-  tenantName,
-  expiredAt,
-  onToggleRoomData,
-  isResolveDialogOpen,
-  onResolveDialogOpenChange,
-  onConfirmResolve,
-  isResolvingRoom,
-  isRoomActive,
-  hasRoomDetail,
-  openTicketsCount,
-}: InboxHeaderProps) {
+export default function InboxHeader() {
+  const {
+    tenantName,
+    expiredAt,
+    setIsRoomDataOpen,
+    isResolveDialogOpen,
+    setIsResolveDialogOpen,
+    onConfirmResolveRoom,
+    isResolvingRoom,
+    isRoomActive,
+    hasRoomDetail,
+    openTicketsCount,
+  } = useInbox();
+
+  const onToggleRoomData = () => setIsRoomDataOpen((prev) => !prev);
+
   return (
     <>
       <div className="flex items-center justify-between gap-4 px-4 py-3">
@@ -68,7 +60,7 @@ export default function InboxHeader({
           <Button
             type="button"
             size="sm"
-            onClick={() => onResolveDialogOpenChange(true)}
+            onClick={() => setIsResolveDialogOpen(true)}
             disabled={!hasRoomDetail || !isRoomActive || isResolvingRoom}
           >
             Resolve
@@ -86,7 +78,7 @@ export default function InboxHeader({
         </div>
       </div>
 
-      <AlertDialog open={isResolveDialogOpen} onOpenChange={onResolveDialogOpenChange}>
+      <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Resolve this room?</AlertDialogTitle>
@@ -105,7 +97,7 @@ export default function InboxHeader({
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isResolvingRoom}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onConfirmResolve} disabled={isResolvingRoom}>
+            <AlertDialogAction onClick={onConfirmResolveRoom} disabled={isResolvingRoom}>
               {isResolvingRoom ? "Resolving..." : "Resolve"}
             </AlertDialogAction>
           </AlertDialogFooter>

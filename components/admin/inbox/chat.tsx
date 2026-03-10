@@ -1,22 +1,12 @@
 "use client";
 
-import type { MessageApiItem } from "@/app/api/messages/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { RoomStatus, SenderType } from "@/generated/prisma/enums";
+import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
+import { SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import { useState } from "react";
-
-interface InboxChatProps {
-  isRoomDataOpen: boolean;
-  isLoadingRoomData: boolean;
-  messages: MessageApiItem[];
-  isRoomActive: boolean;
-  currentRoomStatus: RoomStatus | null;
-  isSendingMessage: boolean;
-  onSendMessage: (_content: string) => Promise<boolean>;
-}
 
 function formatLastMessageAt(value: Date | string | null) {
   if (!value) {
@@ -34,15 +24,17 @@ function messageBubbleClasses(senderType: SenderType) {
   }
 }
 
-export default function InboxChat({
-  isRoomDataOpen,
-  isLoadingRoomData,
-  messages,
-  isRoomActive,
-  currentRoomStatus,
-  isSendingMessage,
-  onSendMessage,
-}: InboxChatProps) {
+export default function InboxChat() {
+  const {
+    isRoomDataOpen,
+    isLoadingRoomData,
+    messages,
+    isRoomActive,
+    currentRoomStatus,
+    isSendingMessage,
+    onSendMessage,
+  } = useInbox();
+
   const [draftMessage, setDraftMessage] = useState("");
 
   async function handleSendMessage(event: React.SubmitEvent<HTMLFormElement>) {

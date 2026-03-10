@@ -4,13 +4,10 @@ import type { RoomDetailApiItem } from "@/app/api/rooms/[id]/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
 import { HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import dayjs from "@/lib/dayjs";
-
-interface InboxInfoProps {
-  roomDetail: RoomDetailApiItem | null;
-}
 
 function formatStatusLabel(status: RoomStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -58,7 +55,9 @@ function ticketStatusBadgeVariant(status: TicketStatus): "default" | "secondary"
   }
 }
 
-export default function InboxInfo({ roomDetail }: InboxInfoProps) {
+export default function InboxInfo() {
+  const { roomDetail } = useInbox();
+
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="space-y-4">

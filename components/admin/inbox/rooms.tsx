@@ -3,6 +3,7 @@
 import type { RoomApiItem } from "@/app/api/rooms/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoomStatus } from "@/generated/prisma/enums";
@@ -34,34 +35,20 @@ function formatLastMessageTime(value: Date | string | null) {
   return dayjs(value).format("HH:mm");
 }
 
-export interface InboxRoomsProps {
-  properties: {
-    id: number;
-    name: string;
-  }[];
-  rooms: RoomApiItem[];
-  isLoadingRooms: boolean;
-  roomsError: Error | undefined;
-  selectedPropertyId: string;
-  onSelectedPropertyIdChange: (_value: string) => void;
-  selectedRoomStatus: "all" | RoomStatus;
-  onSelectedRoomStatusChange: (_value: "all" | RoomStatus) => void;
-  selectedRoomId: number | null;
-  onSelectedRoomIdChange: (_roomId: number) => void;
-}
+export default function InboxRooms() {
+  const {
+    properties,
+    rooms,
+    isLoadingRooms,
+    roomsError,
+    selectedPropertyId,
+    setSelectedPropertyId,
+    selectedRoomStatus,
+    setSelectedRoomStatus,
+    selectedRoomId,
+    setSelectedRoomId,
+  } = useInbox();
 
-export default function InboxRooms({
-  properties,
-  rooms,
-  isLoadingRooms,
-  roomsError,
-  selectedPropertyId,
-  onSelectedPropertyIdChange,
-  selectedRoomStatus,
-  onSelectedRoomStatusChange,
-  selectedRoomId,
-  onSelectedRoomIdChange,
-}: InboxRoomsProps) {
   return (
     <div className="flex min-h-0 flex-col border-r">
       <div className="border-b p-3">
@@ -76,7 +63,7 @@ export default function InboxRooms({
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-64 space-y-3">
-                <Select value={selectedPropertyId} onValueChange={onSelectedPropertyIdChange}>
+                <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Filter by property" />
                   </SelectTrigger>
@@ -92,7 +79,7 @@ export default function InboxRooms({
 
                 <Select
                   value={selectedRoomStatus}
-                  onValueChange={(value: "all" | RoomStatus) => onSelectedRoomStatusChange(value)}
+                  onValueChange={(value: "all" | RoomStatus) => setSelectedRoomStatus(value)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Filter by status" />
@@ -118,7 +105,7 @@ export default function InboxRooms({
                 key={room.id}
                 room={room}
                 isSelected={selectedRoomId === room.id}
-                onSelect={() => onSelectedRoomIdChange(room.id)}
+                onSelect={() => setSelectedRoomId(room.id)}
               />
             ))}
           </div>
