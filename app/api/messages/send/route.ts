@@ -1,10 +1,10 @@
-import { SenderType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import type { MessageApiItem } from "@/app/api/messages/route";
+import { handleWhatsappMessageSend } from "@/lib/handlers/message/send";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { Prisma } from "@/generated/prisma/client";
+import { AxiosError } from "axios";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),
@@ -33,44 +33,44 @@ export async function POST(request: NextRequest): Promise<NextResponse<SendMessa
 
     const { roomId, propertyId, content } = parsed.data;
 
-    const message = await prisma.messages.create({
-      data: {
-        roomId,
-        propertyId,
-        senderType: SenderType.user,
-        content,
-      },
-      select: {
-        id: true,
-        senderType: true,
-        content: true,
-        createdAt: true,
-      },
+    const createdMessage = await prisma.$transaction(async (tx) => {
+      const message = await tx.messages.create({
+        data: {
+          roomId,
+          propertyId,
+          senderType: "user",
+          content,
+        },
+      });
+
+      await tx.rooms.update({
+        where: { id: roomId },
+        data: {
+          lastMessage: message.content,
+          lastMessageAt: message.createdAt,
+        },
+      });
+
+      return message;
     });
 
-    await prisma.rooms.update({
-      where: { id: roomId },
-      data: {
-        lastMessage: message.content,
-        lastMessageAt: message.createdAt,
-      },
+    await handleWhatsappMessageSend({
+      id: createdMessage.id,
+      roomId: createdMessage.roomId,
+      content: createdMessage.content,
+      messageType: createdMessage.messageType,
     });
 
     return NextResponse.json({
-      data: message,
+      data: createdMessage,
       success: true,
       message: "Message sent successfully",
     });
   } catch (error) {
-    console.error("Error sending message:", error);
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return NextResponse.json({ data: null, success: false, message: "Room not found" }, { status: 404 });
-      }
-      if (error.code === "P2002") {
-        return NextResponse.json({ data: null, success: false, message: "Property not found" }, { status: 404 });
-      }
+    if (error instanceof AxiosError) {
+      console.error("Error sending message:", error.response?.data);
+    } else {
+      console.error("Error sending message:", error);
     }
 
     return NextResponse.json(

@@ -53,12 +53,8 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
   const messages = body.messages;
   const metadata = body.metadata;
 
-  if (!messages?.length || !metadata?.phone_number_id) {
-    throw new Error("Missing messages or metadata");
-  }
-
   const phoneNumberId = metadata.phone_number_id;
-  const message = messages[0];
+  const message = messages![0];
   const fromWaId = message.from;
 
   const [whatsapp, tenant] = await Promise.all([

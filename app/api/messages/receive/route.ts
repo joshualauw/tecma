@@ -35,7 +35,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
       if (payload.field == "messages") {
         const value = payload.value as WebhookValue;
-        handleWhatsappMessageReceive(value);
+        if (value.messages) {
+          await handleWhatsappMessageReceive(value);
+        }
+        if (value.statuses) {
+          console.log(value.statuses[0].errors);
+        }
       }
     }
 
