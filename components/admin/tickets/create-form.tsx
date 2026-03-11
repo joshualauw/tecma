@@ -73,10 +73,18 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
   const selectedPropertyId = form.watch("propertyId");
   const selectedTenantId = form.watch("tenantId");
 
-  const { tenants, isLoading: isLoadingTenants, error: tenantsError } = useLeanTenants({
+  const {
+    tenants,
+    isLoading: isLoadingTenants,
+    error: tenantsError,
+  } = useLeanTenants({
     propertyId: selectedPropertyId,
   });
-  const { employees, isLoading: isLoadingEmployees, error: employeesError } = useLeanEmployees({
+  const {
+    employees,
+    isLoading: isLoadingEmployees,
+    error: employeesError,
+  } = useLeanEmployees({
     propertyId: selectedPropertyId,
   });
 
@@ -133,7 +141,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

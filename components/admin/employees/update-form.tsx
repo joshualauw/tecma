@@ -73,7 +73,7 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

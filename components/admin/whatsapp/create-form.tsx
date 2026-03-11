@@ -55,7 +55,7 @@ export default function WhatsappCreateForm() {
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

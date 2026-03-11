@@ -17,7 +17,7 @@ interface InboxContainerProps {
 
 export default function InboxContainer({ properties }: InboxContainerProps) {
   return (
-    <Card className="overflow-hidden rounded-sm p-0">
+    <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
         <InboxProvider properties={properties}>
           <div className="grid h-[calc(100vh-6rem)] min-h-[520px] md:grid-cols-[320px_1fr]">

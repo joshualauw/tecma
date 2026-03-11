@@ -65,7 +65,7 @@ export default function WhatsappUpdateForm({ data }: WhatsappUpdateFormProps) {
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

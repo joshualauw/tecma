@@ -57,7 +57,7 @@ export default function UnitUpdateForm({ data, properties }: UnitUpdateFormProps
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

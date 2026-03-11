@@ -194,7 +194,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
   });
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <div className="space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

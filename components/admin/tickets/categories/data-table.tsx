@@ -175,7 +175,7 @@ export default function TicketCategoriesDataTable() {
   });
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <div className="space-y-4">
           <Input

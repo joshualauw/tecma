@@ -50,7 +50,7 @@ export default function UnitCreateForm({ properties }: UnitCreateFormProps) {
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

@@ -87,10 +87,18 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   const selectedPropertyId = form.watch("propertyId");
   const selectedTenantId = form.watch("tenantId");
 
-  const { tenants, isLoading: isLoadingTenants, error: tenantsError } = useLeanTenants({
+  const {
+    tenants,
+    isLoading: isLoadingTenants,
+    error: tenantsError,
+  } = useLeanTenants({
     propertyId: selectedPropertyId,
   });
-  const { employees, isLoading: isLoadingEmployees, error: employeesError } = useLeanEmployees({
+  const {
+    employees,
+    isLoading: isLoadingEmployees,
+    error: employeesError,
+  } = useLeanEmployees({
     propertyId: selectedPropertyId,
   });
 
@@ -158,7 +166,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

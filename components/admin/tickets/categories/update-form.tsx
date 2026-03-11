@@ -55,7 +55,7 @@ export default function TicketCategoryUpdateForm({ data }: TicketCategoryUpdateF
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

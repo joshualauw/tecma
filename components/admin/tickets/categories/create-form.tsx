@@ -45,7 +45,7 @@ export default function TicketCategoryCreateForm() {
   }
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
