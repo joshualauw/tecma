@@ -22,7 +22,6 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
       id: true,
       propertyId: true,
       tenantId: true,
-      unitId: true,
       categoryId: true,
       employeeId: true,
       title: true,

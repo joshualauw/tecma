@@ -18,10 +18,10 @@ export type TicketApiItem = {
   tenant: {
     id: number;
     name: string;
-  };
-  unit: {
-    id: number;
-    code: string;
+    unit: {
+      id: number;
+      code: string;
+    };
   };
   category: {
     id: number;
@@ -117,12 +117,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
           select: {
             id: true,
             name: true,
-          },
-        },
-        unit: {
-          select: {
-            id: true,
-            code: true,
+            unit: {
+              select: {
+                id: true,
+                code: true,
+              },
+            },
           },
         },
         category: {

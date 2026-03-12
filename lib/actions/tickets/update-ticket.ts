@@ -16,7 +16,6 @@ const updateTicketSchema = z.object({
   description: z.string().trim().nullable(),
   status: z.enum(TicketStatus),
   priority: z.enum(TicketPriority),
-  unitId: z.coerce.number().int().positive(),
 });
 
 type UpdateTicketActionResponse = ApiResponse<null>;
@@ -32,7 +31,6 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
     description: formData.get("description"),
     status: formData.get("status"),
     priority: formData.get("priority"),
-    unitId: formData.get("unitId"),
   });
 
   if (!parsed.success) {
@@ -40,8 +38,7 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, propertyId, tenantId, categoryId, employeeId, title, description, status, priority, unitId } =
-    parsed.data;
+  const { id, propertyId, tenantId, categoryId, employeeId, title, description, status, priority } = parsed.data;
 
   try {
     await prisma.tickets.update({
@@ -51,7 +48,6 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
       data: {
         propertyId,
         tenantId,
-        unitId,
         categoryId,
         employeeId,
         title: title,

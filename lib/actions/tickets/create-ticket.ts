@@ -14,7 +14,6 @@ const createTicketSchema = z.object({
   description: z.string().trim().nullable(),
   status: z.enum(TicketStatus),
   priority: z.enum(TicketPriority),
-  unitId: z.coerce.number().int().positive(),
 });
 
 type CreateTicketActionResponse = ApiResponse<null>;
@@ -29,7 +28,6 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
     description: formData.get("description"),
     status: formData.get("status"),
     priority: formData.get("priority"),
-    unitId: formData.get("unitId"),
   });
 
   if (!parsed.success) {
@@ -37,14 +35,13 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
     return { success: false, message: "Invalid input" };
   }
 
-  const { propertyId, tenantId, categoryId, employeeId, title, description, status, priority, unitId } = parsed.data;
+  const { propertyId, tenantId, categoryId, employeeId, title, description, status, priority } = parsed.data;
 
   try {
     await prisma.tickets.create({
       data: {
         propertyId,
         tenantId,
-        unitId,
         categoryId,
         employeeId,
         title: title,

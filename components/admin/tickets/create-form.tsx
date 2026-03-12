@@ -20,7 +20,6 @@ import z from "zod";
 const formSchema = z.object({
   propertyId: z.string().trim().min(1, "Property is required"),
   tenantId: z.string().trim().min(1, "Tenant is required"),
-  unitId: z.string().trim().min(1, "Unit is required"),
   categoryId: z.string().trim().min(1, "Category is required"),
   employeeId: z.string().trim().min(1, "Employee is required"),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
@@ -60,7 +59,6 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     defaultValues: {
       propertyId: "",
       tenantId: "",
-      unitId: "",
       categoryId: "",
       employeeId: "",
       status: TicketStatus.open,
@@ -94,20 +92,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
   useEffect(() => {
     form.setValue("tenantId", "");
     form.setValue("employeeId", "");
-    form.setValue("unitId", "");
   }, [form, selectedPropertyId]);
-
-  useEffect(() => {
-    const tenantId = Number(selectedTenantId);
-
-    if (!Number.isInteger(tenantId) || tenantId <= 0) {
-      form.setValue("unitId", "");
-      return;
-    }
-
-    const selectedTenant = tenants.find((tenant) => tenant.id === tenantId);
-    form.setValue("unitId", selectedTenant ? String(selectedTenant.unit.id) : "");
-  }, [form, selectedTenantId, tenants]);
 
   useEffect(() => {
     if (tenantsError || employeesError) {
@@ -122,7 +107,6 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     const formData = new FormData();
     formData.append("propertyId", data.propertyId);
     formData.append("tenantId", data.tenantId);
-    formData.append("unitId", data.unitId);
     formData.append("categoryId", data.categoryId);
     formData.append("employeeId", data.employeeId);
     formData.append("status", data.status);
@@ -207,17 +191,10 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
                 )}
               />
 
-              <Controller
-                name="unitId"
-                control={form.control}
-                render={({ fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Unit</FieldLabel>
-                    <Input value={unitCode} placeholder="Auto-filled from tenant" disabled />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
+              <Field>
+                <FieldLabel>Unit</FieldLabel>
+                <Input value={unitCode} placeholder="From tenant" readOnly className="bg-muted" />
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

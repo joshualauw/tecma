@@ -20,7 +20,6 @@ import z from "zod";
 const formSchema = z.object({
   propertyId: z.string().trim().min(1, "Property is required"),
   tenantId: z.string().trim().min(1, "Tenant is required"),
-  unitId: z.string().trim().min(1, "Unit is required"),
   categoryId: z.string().trim().min(1, "Category is required"),
   employeeId: z.string().trim().min(1, "Employee is required"),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
@@ -34,7 +33,6 @@ interface TicketUpdateFormProps {
     id: number;
     propertyId: number;
     tenantId: number;
-    unitId: number;
     categoryId: number;
     employeeId: number;
     status: TicketStatus;
@@ -74,7 +72,6 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     defaultValues: {
       propertyId: initialPropertyId,
       tenantId: String(data.tenantId),
-      unitId: String(data.unitId),
       categoryId: String(data.categoryId),
       employeeId: String(data.employeeId),
       status: data.status,
@@ -110,27 +107,13 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     if (!Number.isInteger(propertyId) || propertyId <= 0) {
       form.setValue("tenantId", "");
       form.setValue("employeeId", "");
-      form.setValue("unitId", "");
       return;
     }
     if (selectedPropertyId !== initialPropertyId) {
       form.setValue("tenantId", "");
       form.setValue("employeeId", "");
-      form.setValue("unitId", "");
     }
   }, [form, initialPropertyId, selectedPropertyId]);
-
-  useEffect(() => {
-    const tenantId = Number(selectedTenantId);
-
-    if (!Number.isInteger(tenantId) || tenantId <= 0) {
-      form.setValue("unitId", "");
-      return;
-    }
-
-    const selectedTenant = tenants.find((tenant) => tenant.id === tenantId);
-    form.setValue("unitId", selectedTenant?.unit?.id ? String(selectedTenant.unit.id) : "");
-  }, [form, selectedTenantId, tenants]);
 
   useEffect(() => {
     if (tenantsError || employeesError) {
@@ -146,7 +129,6 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     formData.append("id", String(data.id));
     formData.append("propertyId", values.propertyId);
     formData.append("tenantId", values.tenantId);
-    formData.append("unitId", values.unitId);
     formData.append("categoryId", values.categoryId);
     formData.append("employeeId", values.employeeId);
     formData.append("status", values.status);
@@ -232,17 +214,10 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 )}
               />
 
-              <Controller
-                name="unitId"
-                control={form.control}
-                render={({ fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Unit</FieldLabel>
-                    <Input value={unitCode} placeholder="Auto-filled from tenant" disabled />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
+              <Field>
+                <FieldLabel>Unit</FieldLabel>
+                <Input value={unitCode} placeholder="From tenant" readOnly className="bg-muted" />
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

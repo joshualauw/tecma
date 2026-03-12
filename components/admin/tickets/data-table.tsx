@@ -170,7 +170,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
     {
       id: "unit",
       header: "Unit",
-      cell: ({ row }) => row.original.unit.code,
+      cell: ({ row }) => row.original.tenant.unit.code,
     },
     {
       id: "category",
