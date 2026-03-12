@@ -114,11 +114,6 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       header: "Phone Number",
     },
     {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => row.original.address ?? "-",
-    },
-    {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {

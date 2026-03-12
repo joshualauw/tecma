@@ -8,7 +8,6 @@ export type TenantApiItem = {
   id: number;
   name: string;
   phoneNumber: string;
-  address: string | null;
   property: {
     id: number;
     name: string;
@@ -66,7 +65,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
         { phoneNumber: { contains: search, mode: "insensitive" } },
-        { address: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -79,7 +77,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
         id: true,
         name: true,
         phoneNumber: true,
-        address: true,
         createdAt: true,
         updatedAt: true,
         property: {
