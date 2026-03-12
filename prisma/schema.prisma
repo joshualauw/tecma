@@ -152,7 +152,7 @@ model Tickets {
   propertyId  Int            @map("property_id")
   tenantId    Int            @map("tenant_id")
   categoryId  Int            @map("category_id")
-  employeeId  Int            @map("employee_id")
+  employeeId  Int?           @map("employee_id")
   title       String         @db.VarChar(255)
   description String?
   status      TicketStatus   @default(open)
@@ -164,7 +164,7 @@ model Tickets {
   tenant   Tenants          @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_tenant_id_tenants_id_fk")
   property Properties       @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
   category TicketCategories @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
-  employee Employees        @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
+  employee Employees?       @relation(fields: [employeeId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
 
   @@map("tickets")
 }

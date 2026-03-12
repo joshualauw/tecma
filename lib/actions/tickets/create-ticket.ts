@@ -9,7 +9,7 @@ const createTicketSchema = z.object({
   propertyId: z.coerce.number().int().positive(),
   tenantId: z.coerce.number().int().positive(),
   categoryId: z.coerce.number().int().positive(),
-  employeeId: z.coerce.number().int().positive(),
+  employeeId: z.coerce.number().int().positive().nullable(),
   title: z.string().trim().min(1),
   description: z.string().trim().nullable(),
   status: z.enum(TicketStatus),
@@ -44,10 +44,10 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
         tenantId,
         categoryId,
         employeeId,
-        title: title,
-        description: description,
-        status: status,
-        priority: priority,
+        title,
+        description,
+        status,
+        priority,
       },
     });
 

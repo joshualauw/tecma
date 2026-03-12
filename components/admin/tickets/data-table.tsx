@@ -186,7 +186,7 @@ export default function TicketsDataTable({ properties, categories }: TicketsData
     {
       id: "employee",
       header: "Employee",
-      cell: ({ row }) => row.original.employee.user.name,
+      cell: ({ row }) => row.original.employee?.user.name ?? "-",
     },
     {
       accessorKey: "status",

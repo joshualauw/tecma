@@ -11,6 +11,7 @@ import { createTicketAction } from "@/lib/actions/tickets/create-ticket";
 import { useLeanEmployees } from "@/lib/fetching/employees/use-lean-employees";
 import { useLeanTenants } from "@/lib/fetching/tenants/use-lean-tenants";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -21,7 +22,7 @@ const formSchema = z.object({
   propertyId: z.string().trim().min(1, "Property is required"),
   tenantId: z.string().trim().min(1, "Tenant is required"),
   categoryId: z.string().trim().min(1, "Category is required"),
-  employeeId: z.string().trim().min(1, "Employee is required"),
+  employeeId: z.string().trim().optional(),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
   priority: z.enum([TicketPriority.low, TicketPriority.medium, TicketPriority.high]),
   title: z.string().trim().min(1, "Title is required"),
@@ -108,7 +109,9 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     formData.append("propertyId", data.propertyId);
     formData.append("tenantId", data.tenantId);
     formData.append("categoryId", data.categoryId);
-    formData.append("employeeId", data.employeeId);
+    if (data.employeeId) {
+      formData.append("employeeId", data.employeeId);
+    }
     formData.append("status", data.status);
     formData.append("priority", data.priority);
     formData.append("title", data.title);
@@ -227,32 +230,44 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Employee</FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={!selectedPropertyId || isLoadingOptions || employees.length === 0}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={
-                            !selectedPropertyId
-                              ? "Select a property first"
-                              : isLoadingOptions
-                                ? "Loading employees..."
-                                : employees.length === 0
-                                  ? "No employees found"
-                                  : "Select an employee"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={String(employee.id)}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                        disabled={!selectedPropertyId || isLoadingOptions || employees.length === 0}
+                      >
+                        <SelectTrigger className="w-full flex-1">
+                          <SelectValue
+                            placeholder={
+                              !selectedPropertyId
+                                ? "Select a property first"
+                                : isLoadingOptions
+                                  ? "Loading employees..."
+                                  : employees.length === 0
+                                    ? "No employees found"
+                                    : "Select an employee"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={String(employee.id)}>
+                              {employee.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => field.onChange("")}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}

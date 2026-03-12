@@ -11,6 +11,7 @@ import { updateTicketAction } from "@/lib/actions/tickets/update-ticket";
 import { useLeanEmployees } from "@/lib/fetching/employees/use-lean-employees";
 import { useLeanTenants } from "@/lib/fetching/tenants/use-lean-tenants";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -21,7 +22,7 @@ const formSchema = z.object({
   propertyId: z.string().trim().optional(),
   tenantId: z.string().trim().optional(),
   categoryId: z.string().trim().min(1, "Category is required"),
-  employeeId: z.string().trim().min(1, "Employee is required"),
+  employeeId: z.string().trim().optional(),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
   priority: z.enum([TicketPriority.low, TicketPriority.medium, TicketPriority.high]),
   title: z.string().trim().min(1, "Title is required"),
@@ -34,7 +35,7 @@ interface TicketUpdateFormProps {
     propertyId: number;
     tenantId: number;
     categoryId: number;
-    employeeId: number;
+    employeeId: number | null;
     status: TicketStatus;
     priority: TicketPriority;
     title: string;
@@ -73,7 +74,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
       propertyId: initialPropertyId,
       tenantId: String(data.tenantId),
       categoryId: String(data.categoryId),
-      employeeId: String(data.employeeId),
+      employeeId: data.employeeId ? String(data.employeeId) : "",
       status: data.status,
       priority: data.priority,
       title: data.title,
@@ -128,7 +129,9 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     const formData = new FormData();
     formData.append("id", String(data.id));
     formData.append("categoryId", values.categoryId);
-    formData.append("employeeId", values.employeeId);
+    if (values.employeeId) {
+      formData.append("employeeId", values.employeeId);
+    }
     formData.append("status", values.status);
     formData.append("priority", values.priority);
     formData.append("title", values.title);
@@ -238,32 +241,44 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Employee</FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={!selectedPropertyId || isLoadingOptions || employees.length === 0}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={
-                            !selectedPropertyId
-                              ? "Select a property first"
-                              : isLoadingOptions
-                                ? "Loading employees..."
-                                : employees.length === 0
-                                  ? "No employees found"
-                                  : "Select an employee"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={String(employee.id)}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                        disabled={!selectedPropertyId || isLoadingOptions || employees.length === 0}
+                      >
+                        <SelectTrigger className="w-full flex-1">
+                          <SelectValue
+                            placeholder={
+                              !selectedPropertyId
+                                ? "Select a property first"
+                                : isLoadingOptions
+                                  ? "Loading employees..."
+                                  : employees.length === 0
+                                    ? "No employees found"
+                                    : "Select an employee"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={String(employee.id)}>
+                              {employee.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => field.onChange("")}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}

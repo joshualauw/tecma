@@ -32,7 +32,7 @@ export type TicketApiItem = {
     user: {
       name: string;
     };
-  };
+  } | null;
   createdAt: Date;
   updatedAt: Date;
 };
