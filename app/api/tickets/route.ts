@@ -47,6 +47,7 @@ const ticketQuery = z.object({
   size: z.coerce.number().int().positive().default(10),
   search: z.string().trim().nullable(),
   propertyId: z.coerce.number().int().positive().nullable(),
+  categoryId: z.coerce.number().int().positive().nullable(),
   status: z.enum(TicketStatus).nullable(),
   priority: z.enum(TicketPriority).nullable(),
 });
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       size: searchParams.get("size"),
       search: searchParams.get("search"),
       propertyId: searchParams.get("propertyId"),
+      categoryId: searchParams.get("categoryId"),
       status: searchParams.get("status"),
       priority: searchParams.get("priority"),
     });
@@ -78,16 +80,24 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       );
     }
 
-    const { page, size, search, propertyId, status, priority } = parsed.data;
+    const { page, size, search, propertyId, categoryId, status, priority } = parsed.data;
 
     const where: TicketsWhereInput = {};
 
     if (search) {
-      where.title = { contains: search, mode: "insensitive" };
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { tenant: { name: { contains: search, mode: "insensitive" } } },
+        { employee: { user: { name: { contains: search, mode: "insensitive" } } } },
+      ];
     }
 
     if (propertyId !== null) {
       where.propertyId = propertyId;
+    }
+
+    if (categoryId !== null) {
+      where.categoryId = categoryId;
     }
 
     if (status !== null) {

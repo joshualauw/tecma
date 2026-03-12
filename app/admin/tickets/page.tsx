@@ -5,15 +5,16 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
 export default async function TicketsPage() {
-  const properties = await prisma.properties.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
+  const [properties, categories] = await Promise.all([
+    prisma.properties.findMany({
+      select: { id: true, name: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.ticketCategories.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -28,7 +29,7 @@ export default async function TicketsPage() {
         </Link>
       </div>
 
-      <TicketsDataTable properties={properties} />
+      <TicketsDataTable properties={properties} categories={categories} />
     </div>
   );
 }

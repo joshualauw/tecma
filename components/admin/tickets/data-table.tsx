@@ -40,6 +40,10 @@ interface TicketsDataTableProps {
     id: number;
     name: string;
   }[];
+  categories: {
+    id: number;
+    name: string;
+  }[];
 }
 
 function formatStatusLabel(status: TicketStatus) {
@@ -94,11 +98,12 @@ function priorityBadgeVariant(priority: TicketPriority): "secondary" | "default"
   }
 }
 
-export default function TicketsDataTable({ properties }: TicketsDataTableProps) {
+export default function TicketsDataTable({ properties, categories }: TicketsDataTableProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
@@ -119,6 +124,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
     pageSize: pagination.pageSize,
     search: globalFilter,
     propertyId: selectedPropertyId,
+    categoryId: selectedCategoryId,
     status: selectedStatus,
     priority: selectedPriority,
   });
@@ -286,7 +292,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search by title..."
+              placeholder="Search by title, tenant, or employee..."
               className="sm:max-w-sm"
             />
             <Select
@@ -304,6 +310,25 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
                 {properties.map((property) => (
                   <SelectItem key={property.id} value={String(property.id)}>
                     {property.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedCategoryId}
+              onValueChange={(value) => {
+                setSelectedCategoryId(value);
+                setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="all">All categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>

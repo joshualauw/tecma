@@ -8,12 +8,13 @@ type UseTicketsParams = {
   pageSize: number;
   search: string;
   propertyId: string;
+  categoryId: string;
   status: string;
   priority: string;
 };
 
 export function useTickets(
-  { pageIndex, pageSize, search, propertyId, status, priority }: UseTicketsParams,
+  { pageIndex, pageSize, search, propertyId, categoryId, status, priority }: UseTicketsParams,
   options?: SWRConfiguration<TicketsApiData>,
 ) {
   const params = new URLSearchParams({
@@ -26,6 +27,9 @@ export function useTickets(
   }
   if (propertyId !== "all") {
     params.set("propertyId", propertyId);
+  }
+  if (categoryId !== "all") {
+    params.set("categoryId", categoryId);
   }
   if (status !== "all") {
     params.set("status", status);
