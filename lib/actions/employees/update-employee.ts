@@ -60,7 +60,9 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
         return { success: false, message: "Employee not found" };
       }
       if (error.code === "P2002") {
-        return { success: false, message: "A user with this email already exists" };
+        const match = error.message.match(/fields: \((.*?)\)/);
+        const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
+        return { success: false, message: `Employee with this ${fieldName} already exists` };
       }
     }
     return { success: false, message: "An unexpected error occurred" };

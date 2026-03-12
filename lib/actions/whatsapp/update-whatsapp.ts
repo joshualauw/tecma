@@ -11,11 +11,7 @@ const updateWhatsappSchema = z.object({
   displayName: z.string().trim().min(1),
   wabaId: z.string().trim().min(1),
   phoneId: z.string().trim().min(1),
-  phoneNumber: z
-    .string()
-    .regex(PHONE_NUMBER_REGEX)
-    .trim()
-    .min(1),
+  phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
 });
 
 type UpdateWhatsappActionResponse = ApiResponse<null>;
@@ -49,7 +45,9 @@ export async function updateWhatsappAction(formData: FormData): Promise<UpdateWh
       if (error.code === "P2025") {
         return { success: false, message: "WhatsApp entry not found" };
       } else if (error.code === "P2002") {
-        return { success: false, message: "A WhatsApp with this phone number already exists" };
+        const match = error.message.match(/fields: \((.*?)\)/);
+        const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
+        return { success: false, message: `WhatsApp with this ${fieldName} already exists` };
       }
     }
     return { success: false, message: "An unexpected error occurred" };

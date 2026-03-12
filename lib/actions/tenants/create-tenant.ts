@@ -8,11 +8,7 @@ import z from "zod";
 
 const createTenantSchema = z.object({
   name: z.string().trim().min(1),
-  phoneNumber: z
-    .string()
-    .regex(PHONE_NUMBER_REGEX)
-    .trim()
-    .min(1),
+  phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().trim().min(1).nullable(),
   propertyId: z.coerce.number().int().positive(),
   unitId: z.coerce.number().int().positive(),
@@ -67,10 +63,10 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
     return { success: true, message: "Tenant created successfully" };
   } catch (error) {
     console.error("Error creating tenant:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return { success: false, message: "Tenant with this phone number already exists" };
-      }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const match = error.message.match(/fields: \((.*?)\)/);
+      const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
+      return { success: false, message: `Tenant with this ${fieldName} already exists` };
     }
     return { success: false, message: "An unexpected error occurred" };
   }

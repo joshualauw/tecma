@@ -10,11 +10,7 @@ const createWhatsappSchema = z.object({
   displayName: z.string().trim().min(1),
   wabaId: z.string().trim().min(1),
   phoneId: z.string().trim().min(1),
-  phoneNumber: z
-    .string()
-    .regex(PHONE_NUMBER_REGEX)
-    .trim()
-    .min(1),
+  phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
 });
 
 type CreateWhatsappActionResponse = ApiResponse<null>;
@@ -47,10 +43,10 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
     return { success: true, message: "WhatsApp created successfully" };
   } catch (error) {
     console.error("Error creating WhatsApp:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return { success: false, message: "A WhatsApp with this phone number already exists" };
-      }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const match = error.message.match(/fields: \((.*?)\)/);
+      const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
+      return { success: false, message: `WhatsApp with this ${fieldName} already exists` };
     }
     return { success: false, message: "An unexpected error occurred" };
   }

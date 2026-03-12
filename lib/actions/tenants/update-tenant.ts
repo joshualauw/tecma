@@ -9,11 +9,7 @@ import z from "zod";
 const updateTenantSchema = z.object({
   id: z.coerce.number().int().positive(),
   name: z.string().trim().min(1),
-  phoneNumber: z
-    .string()
-    .regex(PHONE_NUMBER_REGEX)
-    .trim()
-    .min(1),
+  phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().trim().min(1).nullable(),
   propertyId: z.coerce.number().int().positive(),
   unitId: z.coerce.number().int().positive(),
@@ -83,7 +79,9 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
       if (error.code === "P2025") {
         return { success: false, message: "Tenant not found" };
       } else if (error.code === "P2002") {
-        return { success: false, message: "Tenant with this phone number already exists" };
+        const match = error.message.match(/fields: \((.*?)\)/);
+        const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
+        return { success: false, message: `Tenant with this ${fieldName} already exists` };
       }
     }
     return { success: false, message: "An unexpected error occurred" };

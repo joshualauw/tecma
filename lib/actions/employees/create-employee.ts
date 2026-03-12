@@ -63,7 +63,9 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
   } catch (error) {
     console.error("Error creating employee:", error);
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return { success: false, message: "A user with this email already exists" };
+      const match = error.message.match(/fields: \((.*?)\)/);
+      const fieldName = match ? match[1].replace(/[`"]/g, "") : "field";
+      return { success: false, message: `Employee with this ${fieldName} already exists` };
     }
     return { success: false, message: "An unexpected error occurred" };
   }
