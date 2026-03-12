@@ -36,6 +36,23 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
 
   const { id, name, email, role, phoneNumber, address, propertyId } = parsed.data;
 
+  const employee = await prisma.employees.findUniqueOrThrow({
+    where: { id },
+    select: { id: true, user: { select: { role: true } } },
+  });
+
+  if (employee.user.role == UserRole.worker && role == UserRole.dispatcher) {
+    const ticketsCount = await prisma.tickets.count({
+      where: { employeeId: employee.id },
+    });
+    if (ticketsCount > 0) {
+      return {
+        success: false,
+        message: "Worker cannot be updated to dispatcher because they have tickets assigned to them",
+      };
+    }
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       const employee = await tx.employees.update({
@@ -46,6 +63,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
           address,
         },
       });
+
       await tx.users.update({
         where: { id: employee.userId },
         data: { name, email, role },

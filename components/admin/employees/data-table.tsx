@@ -44,9 +44,9 @@ interface EmployeesDataTableProps {
 
 function roleBadgeVariant(role: UserRole): "default" | "secondary" {
   switch (role) {
-    case "dispatcher":
+    case UserRole.dispatcher:
       return "secondary";
-    case "worker":
+    case UserRole.worker:
       return "default";
     default:
       return "default";
@@ -55,9 +55,9 @@ function roleBadgeVariant(role: UserRole): "default" | "secondary" {
 
 function formatRoleLabel(role: UserRole) {
   switch (role) {
-    case "dispatcher":
+    case UserRole.dispatcher:
       return "Dispatcher";
-    case "worker":
+    case UserRole.worker:
       return "Worker";
     default:
       return "Unknown";

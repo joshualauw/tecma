@@ -27,7 +27,7 @@ export function AdminHeader() {
 
   function getUserRole(role: UserRole) {
     switch (role) {
-      case "super_admin":
+      case UserRole.super_admin:
         return "Super Admin";
       default:
         return "Unknown";

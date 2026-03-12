@@ -130,7 +130,7 @@ export async function GET(
     const tickets = await prisma.tickets.findMany({
       where: {
         tenantId: room.tenant.id,
-        status: { not: "closed" },
+        status: { not: TicketStatus.closed },
       },
       select: {
         id: true,

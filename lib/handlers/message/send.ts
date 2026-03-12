@@ -1,4 +1,5 @@
 import type { CloudAPIMessageRequestBase, CloudAPISendTextMessageRequest } from "@whatsapp-cloudapi/types/cloudapi";
+import { MessageType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import axios from "axios";
 
@@ -6,7 +7,7 @@ type MessageToSend = {
   id: number;
   roomId: number;
   content: string;
-  messageType: string;
+  messageType: MessageType;
 };
 
 function enrichMessageToCloudApi(message: MessageToSend, to: string): CloudAPIMessageRequestBase {
@@ -19,8 +20,8 @@ function enrichMessageToCloudApi(message: MessageToSend, to: string): CloudAPIMe
   };
 
   switch (message.messageType) {
-    case "text": {
-      (payload as CloudAPISendTextMessageRequest).type = "text";
+    case MessageType.text: {
+      (payload as CloudAPISendTextMessageRequest).type = MessageType.text;
       (payload as CloudAPISendTextMessageRequest).text = {
         body: message.content.slice(0, 4096),
       };

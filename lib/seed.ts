@@ -1,3 +1,4 @@
+import { UserRole } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -5,7 +6,7 @@ async function main() {
   const admin = await prisma.users.findFirst({
     where: {
       email: process.env.ADMIN_EMAIL,
-      role: "super_admin",
+      role: UserRole.super_admin,
     },
   });
 
@@ -16,7 +17,7 @@ async function main() {
         name: "Admin",
         email: process.env.ADMIN_EMAIL as string,
         password: hashedPassword,
-        role: "super_admin",
+        role: UserRole.super_admin,
       },
     });
   }

@@ -20,7 +20,7 @@ export interface UseInboxStateProps {
 
 export function useInboxState({ properties }: UseInboxStateProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
-  const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomStatus>("active");
+  const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomStatus>(RoomStatus.active);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [isRoomDataOpen, setIsRoomDataOpen] = useState(false);
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
@@ -85,7 +85,7 @@ export function useInboxState({ properties }: UseInboxStateProps) {
   const selectedRoom: RoomApiItem | null =
     selectedRoomId === null ? null : (rooms.find((room) => room.id === selectedRoomId) ?? null);
   const currentRoomStatus: RoomStatus | null = roomDetail?.status ?? selectedRoom?.status ?? null;
-  const isRoomActive = currentRoomStatus === "active";
+  const isRoomActive = currentRoomStatus === RoomStatus.active;
 
   async function onConfirmResolveRoom() {
     if (selectedRoomId === null) return;

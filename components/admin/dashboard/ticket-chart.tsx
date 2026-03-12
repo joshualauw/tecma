@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { TicketStatus } from "@/generated/prisma/enums";
 import * as React from "react";
 import { Pie, PieChart } from "recharts";
 
@@ -27,9 +28,9 @@ const chartConfig = {
 export default function DashboardTicketChart({ openNow, closedNow, inProgressThisMonth }: DashboardTicketChartProps) {
   const data = React.useMemo(
     () => [
-      { status: "open", value: openNow, fill: "var(--color-open)" },
-      { status: "in_progress", value: inProgressThisMonth, fill: "var(--color-in_progress)" },
-      { status: "closed", value: closedNow, fill: "var(--color-closed)" },
+      { status: TicketStatus.open, value: openNow, fill: "var(--color-open)" },
+      { status: TicketStatus.in_progress, value: inProgressThisMonth, fill: "var(--color-in_progress)" },
+      { status: TicketStatus.closed, value: closedNow, fill: "var(--color-closed)" },
     ],
     [openNow, closedNow, inProgressThisMonth],
   );

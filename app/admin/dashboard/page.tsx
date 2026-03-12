@@ -1,3 +1,4 @@
+import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import { prisma } from "@/lib/prisma";
 import DashboardStats from "@/components/admin/dashboard/stats";
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
     employeesAllTime,
     employeesThisMonth,
   ] = await Promise.all([
-    prisma.rooms.count({ where: { status: "active" } }),
+    prisma.rooms.count({ where: { status: RoomStatus.active } }),
     prisma.properties.count(),
     prisma.properties.count({ where: { createdAt: { gte: startOfMonth } } }),
     prisma.tenants.count(),
@@ -27,9 +28,9 @@ export default async function DashboardPage() {
   ]);
 
   const [ticketsOpenNow, ticketsClosedNow, ticketsInProgressThisMonth] = await Promise.all([
-    prisma.tickets.count({ where: { status: "open", createdAt: { gte: startOfMonth } } }),
-    prisma.tickets.count({ where: { status: "closed", createdAt: { gte: startOfMonth } } }),
-    prisma.tickets.count({ where: { status: "in_progress", createdAt: { gte: startOfMonth } } }),
+    prisma.tickets.count({ where: { status: TicketStatus.open, createdAt: { gte: startOfMonth } } }),
+    prisma.tickets.count({ where: { status: TicketStatus.closed, createdAt: { gte: startOfMonth } } }),
+    prisma.tickets.count({ where: { status: TicketStatus.in_progress, createdAt: { gte: startOfMonth } } }),
   ]);
 
   const messagesLast14Days = await prisma.messages.findMany({

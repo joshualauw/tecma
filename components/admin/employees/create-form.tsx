@@ -50,7 +50,7 @@ export default function EmployeeCreateForm({ properties }: EmployeeCreateFormPro
       name: "",
       email: "",
       password: "",
-      role: "worker",
+      role: UserRole.worker,
       phoneNumber: "",
       address: "",
       propertyId: "",

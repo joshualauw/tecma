@@ -16,11 +16,11 @@ function formatStatusLabel(status: RoomStatus) {
 
 function statusBadgeVariant(status: RoomStatus): "default" | "secondary" | "destructive" {
   switch (status) {
-    case "active":
+    case RoomStatus.active:
       return "secondary";
-    case "closed":
+    case RoomStatus.closed:
       return "default";
-    case "expired":
+    case RoomStatus.expired:
       return "destructive";
   }
 }
@@ -86,9 +86,9 @@ export default function InboxRooms() {
                   </SelectTrigger>
                   <SelectContent position="popper">
                     <SelectItem value="all">All status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value={RoomStatus.active}>Active</SelectItem>
+                    <SelectItem value={RoomStatus.closed}>Closed</SelectItem>
+                    <SelectItem value={RoomStatus.expired}>Expired</SelectItem>
                   </SelectContent>
                 </Select>
               </PopoverContent>

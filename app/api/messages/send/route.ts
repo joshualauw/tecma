@@ -1,3 +1,4 @@
+import { SenderType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import type { MessageApiItem } from "@/app/api/messages/route";
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SendMessa
         data: {
           roomId,
           propertyId,
-          senderType: "user",
+          senderType: SenderType.user,
           content,
         },
       });

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
-import { SenderType } from "@/generated/prisma/enums";
+import { RoomStatus, SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import { useState } from "react";
 
@@ -17,7 +17,7 @@ function formatLastMessageAt(value: Date | string | null) {
 
 function messageBubbleClasses(senderType: SenderType) {
   const classes = "max-w-[80%] rounded-lg px-3 py-2 text-sm";
-  if (senderType === "tenant") {
+  if (senderType === SenderType.tenant) {
     return `${classes} bg-muted text-foreground`;
   } else {
     return `${classes} bg-secondary text-secondary-foreground`;
@@ -61,7 +61,7 @@ export default function InboxChat() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.senderType === "tenant" ? "justify-start" : "justify-end"}`}
+                className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
               >
                 <div className={messageBubbleClasses(message.senderType)}>
                   <p>{message.content}</p>
@@ -91,7 +91,7 @@ export default function InboxChat() {
         </form>
       ) : (
         <div className="px-4 py-3 text-sm text-muted-foreground">
-          Room is {currentRoomStatus === "expired" ? "expired" : "closed"}. Messaging is disabled.
+          Room is {currentRoomStatus === RoomStatus.expired ? "expired" : "closed"}. Messaging is disabled.
         </div>
       )}
     </div>

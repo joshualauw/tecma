@@ -28,7 +28,7 @@ export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActi
       select: { status: true },
     });
 
-    if (room.status != "active") {
+    if (room.status != RoomStatus.active) {
       return { success: false, message: "Room already closed" };
     }
 

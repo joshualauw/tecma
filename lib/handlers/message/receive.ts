@@ -1,5 +1,5 @@
 import type { WebhookValue } from "@whatsapp-cloudapi/types/webhook";
-import { MessageType, RoomStatus } from "@/generated/prisma/enums";
+import { MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import dayjs from "@/lib/dayjs";
 
@@ -15,32 +15,32 @@ function flattenWebhookMessage(msg: WebhookMessage): FlattenedMessage {
   const waId = msg.id;
   const type = msg.type;
 
-  let messageType: MessageType = "text";
+  let messageType: MessageType = MessageType.text;
   let content: string = "";
 
   switch (type) {
     case "text": {
-      messageType = "text";
+      messageType = MessageType.text;
       content = msg.text.body;
       break;
     }
     case "image": {
-      messageType = "image";
+      messageType = MessageType.image;
       content = "[image]";
       break;
     }
     case "document": {
-      messageType = "document";
+      messageType = MessageType.document;
       content = "[document]";
       break;
     }
     case "audio": {
-      messageType = "audio";
+      messageType = MessageType.audio;
       content = "[audio]";
       break;
     }
     case "video": {
-      messageType = "video";
+      messageType = MessageType.video;
       content = "[video]";
       break;
     }
@@ -120,7 +120,7 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         propertyId: tenant.propertyId,
         roomId: room.id,
         waId: message.id,
-        senderType: "tenant",
+        senderType: SenderType.tenant,
         content: flattenedMessage.content,
         messageType: flattenedMessage.messageType,
       },

@@ -15,11 +15,11 @@ function formatStatusLabel(status: RoomStatus) {
 
 function statusBadgeVariant(status: RoomStatus): "default" | "secondary" | "destructive" {
   switch (status) {
-    case "active":
+    case RoomStatus.active:
       return "secondary";
-    case "closed":
+    case RoomStatus.closed:
       return "default";
-    case "expired":
+    case RoomStatus.expired:
       return "destructive";
   }
 }
@@ -33,7 +33,7 @@ function formatTimestamp(value: Date | string | null) {
 }
 
 function formatTicketStatusLabel(status: TicketStatus) {
-  if (status === "in_progress") {
+  if (status === TicketStatus.in_progress) {
     return "In Progress";
   }
 
@@ -46,11 +46,11 @@ function formatTicketPriorityLabel(priority: RoomDetailApiItem["tickets"][number
 
 function ticketStatusBadgeVariant(status: TicketStatus): "default" | "secondary" | "destructive" {
   switch (status) {
-    case "open":
+    case TicketStatus.open:
       return "secondary";
-    case "in_progress":
+    case TicketStatus.in_progress:
       return "default";
-    case "closed":
+    case TicketStatus.closed:
       return "destructive";
   }
 }

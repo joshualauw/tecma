@@ -206,7 +206,7 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search by name, phone number, address..."
+              placeholder="Search by name, phone number..."
               className="sm:max-w-sm"
             />
             <Select

@@ -44,11 +44,11 @@ interface TicketsDataTableProps {
 
 function formatStatusLabel(status: TicketStatus) {
   switch (status) {
-    case "open":
+    case TicketStatus.open:
       return "Open";
-    case "in_progress":
+    case TicketStatus.in_progress:
       return "In Progress";
-    case "closed":
+    case TicketStatus.closed:
       return "Closed";
     default:
       return "Unknown";
@@ -57,11 +57,11 @@ function formatStatusLabel(status: TicketStatus) {
 
 function formatPriorityLabel(priority: TicketPriority) {
   switch (priority) {
-    case "low":
+    case TicketPriority.low:
       return "Low";
-    case "medium":
+    case TicketPriority.medium:
       return "Medium";
-    case "high":
+    case TicketPriority.high:
       return "High";
     default:
       return "Unknown";
@@ -70,11 +70,11 @@ function formatPriorityLabel(priority: TicketPriority) {
 
 function statusBadgeVariant(status: TicketStatus): "default" | "secondary" | "destructive" {
   switch (status) {
-    case "open":
+    case TicketStatus.open:
       return "secondary";
-    case "in_progress":
+    case TicketStatus.in_progress:
       return "default";
-    case "closed":
+    case TicketStatus.closed:
       return "destructive";
     default:
       return "default";
@@ -83,11 +83,11 @@ function statusBadgeVariant(status: TicketStatus): "default" | "secondary" | "de
 
 function priorityBadgeVariant(priority: TicketPriority): "secondary" | "default" | "destructive" {
   switch (priority) {
-    case "low":
+    case TicketPriority.low:
       return "secondary";
-    case "medium":
+    case TicketPriority.medium:
       return "default";
-    case "high":
+    case TicketPriority.high:
       return "destructive";
     default:
       return "default";
@@ -320,9 +320,9 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectItem value="all">All status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value={TicketStatus.open}>Open</SelectItem>
+                <SelectItem value={TicketStatus.in_progress}>In Progress</SelectItem>
+                <SelectItem value={TicketStatus.closed}>Closed</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -337,9 +337,9 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectItem value="all">All priorities</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
+                <SelectItem value={TicketPriority.low}>Low</SelectItem>
+                <SelectItem value={TicketPriority.medium}>Medium</SelectItem>
+                <SelectItem value={TicketPriority.high}>High</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
@@ -16,7 +17,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 export type DashboardMessageChartProps = {
   messages: Array<{
     createdAt: Date | string;
-    senderType: "tenant" | "user" | "bot";
+    senderType: SenderType;
   }>;
 };
 
@@ -40,7 +41,7 @@ export default function DashboardMessageChart({ messages }: DashboardMessageChar
       const bucket = initial.get(key);
       if (!bucket) continue;
 
-      if (m.senderType === "user") bucket.employee += 1;
+      if (m.senderType === SenderType.user) bucket.employee += 1;
       else bucket[m.senderType] += 1;
     }
 

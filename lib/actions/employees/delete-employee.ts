@@ -16,7 +16,7 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
 
   if (!parsed.success) {
     console.error("Delete Employee validation failed:", parsed.error);
-    return { success: false, message: "Invalid employee ID" };
+    return { success: false, message: "Invalid input" };
   }
 
   const { id } = parsed.data;
