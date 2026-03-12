@@ -69,6 +69,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
+  const [selectedRole, setSelectedRole] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: DATA_TABLE_PAGE_SIZE,
@@ -87,6 +88,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
     pageSize: pagination.pageSize,
     search: globalFilter,
     propertyId: selectedPropertyId,
+    role: selectedRole,
   });
 
   const data = apiData?.employees ?? [];
@@ -253,6 +255,22 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
                     {property.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => {
+                setSelectedRole(value);
+                setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value={UserRole.dispatcher}>Dispatcher</SelectItem>
+                <SelectItem value={UserRole.worker}>Worker</SelectItem>
               </SelectContent>
             </Select>
           </div>

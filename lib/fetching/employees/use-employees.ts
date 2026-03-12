@@ -8,10 +8,11 @@ type UseEmployeesParams = {
   pageSize: number;
   search: string;
   propertyId: string;
+  role: string;
 };
 
 export function useEmployees(
-  { pageIndex, pageSize, search, propertyId }: UseEmployeesParams,
+  { pageIndex, pageSize, search, propertyId, role }: UseEmployeesParams,
   options?: SWRConfiguration<EmployeesApiData>,
 ) {
   const params = new URLSearchParams({
@@ -24,6 +25,9 @@ export function useEmployees(
   }
   if (propertyId !== "all") {
     params.set("propertyId", propertyId);
+  }
+  if (role !== "all") {
+    params.set("role", role);
   }
   const key = `/api/employees?${params.toString()}`;
 

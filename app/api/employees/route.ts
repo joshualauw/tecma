@@ -31,6 +31,7 @@ const employeeQuery = z.object({
   size: z.coerce.number().int().positive().default(10),
   search: z.string().trim().nullable(),
   propertyId: z.coerce.number().int().positive().nullable(),
+  role: z.nativeEnum(UserRole).nullable(),
 });
 
 export type EmployeesApiResponse = ApiResponse<EmployeesApiData>;
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       size: searchParams.get("size"),
       search: searchParams.get("search"),
       propertyId: searchParams.get("propertyId"),
+      role: searchParams.get("role"),
     });
 
     if (!parsed.success) {
@@ -58,7 +60,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       );
     }
 
-    const { page, size, search, propertyId } = parsed.data;
+    const { page, size, search, propertyId, role } = parsed.data;
 
     const where: EmployeesWhereInput = {};
 
@@ -72,6 +74,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
 
     if (propertyId !== null) {
       where.propertyId = propertyId;
+    }
+
+    if (role !== null) {
+      where.user = { role };
     }
 
     const employees = await prisma.employees.findMany({
