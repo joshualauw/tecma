@@ -22,8 +22,13 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
   const { id } = parsed.data;
 
   try {
-    await prisma.employees.delete({
-      where: { id },
+    await prisma.$transaction(async (tx) => {
+      const employee = await tx.employees.delete({
+        where: { id },
+      });
+      await tx.users.delete({
+        where: { id: employee.userId },
+      });
     });
 
     return { success: true, message: "Employee deleted successfully" };
