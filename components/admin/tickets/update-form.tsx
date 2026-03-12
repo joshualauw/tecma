@@ -18,8 +18,8 @@ import { toast } from "sonner";
 import z from "zod";
 
 const formSchema = z.object({
-  propertyId: z.string().trim().min(1, "Property is required"),
-  tenantId: z.string().trim().min(1, "Tenant is required"),
+  propertyId: z.string().trim().optional(),
+  tenantId: z.string().trim().optional(),
   categoryId: z.string().trim().min(1, "Category is required"),
   employeeId: z.string().trim().min(1, "Employee is required"),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
@@ -89,14 +89,14 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     isLoading: isLoadingTenants,
     error: tenantsError,
   } = useLeanTenants({
-    propertyId: selectedPropertyId,
+    propertyId: selectedPropertyId ?? "",
   });
   const {
     employees,
     isLoading: isLoadingEmployees,
     error: employeesError,
   } = useLeanEmployees({
-    propertyId: selectedPropertyId,
+    propertyId: selectedPropertyId ?? "",
     role: UserRole.worker,
   });
 
@@ -127,8 +127,6 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("id", String(data.id));
-    formData.append("propertyId", values.propertyId);
-    formData.append("tenantId", values.tenantId);
     formData.append("categoryId", values.categoryId);
     formData.append("employeeId", values.employeeId);
     formData.append("status", values.status);
@@ -159,8 +157,8 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
+                  <Select value={field.value} onValueChange={field.onChange} disabled>
+                    <SelectTrigger className="w-full" disabled>
                       <SelectValue placeholder="Select a property" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -183,21 +181,11 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Tenant</FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={!selectedPropertyId || isLoadingOptions || tenants.length === 0}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange} disabled>
                       <SelectTrigger className="w-full">
                         <SelectValue
                           placeholder={
-                            !selectedPropertyId
-                              ? "Select a property first"
-                              : isLoadingOptions
-                                ? "Loading tenants..."
-                                : tenants.length === 0
-                                  ? "No tenants found"
-                                  : "Select a tenant"
+                            isLoadingOptions ? "Loading tenant..." : tenants.length === 0 ? "No tenant found" : "Tenant"
                           }
                         />
                       </SelectTrigger>
@@ -216,7 +204,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
 
               <Field>
                 <FieldLabel>Unit</FieldLabel>
-                <Input value={unitCode} placeholder="From tenant" readOnly className="bg-muted" />
+                <Input value={unitCode} placeholder="From tenant" readOnly />
               </Field>
             </div>
 

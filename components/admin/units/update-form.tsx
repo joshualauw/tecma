@@ -14,7 +14,7 @@ import z from "zod";
 
 const formSchema = z.object({
   code: z.string().trim().min(1, "Unit code is required"),
-  propertyId: z.string().trim().min(1, "Property is required"),
+  propertyId: z.string().trim().optional(),
 });
 
 interface UnitUpdateFormProps {
@@ -45,7 +45,6 @@ export default function UnitUpdateForm({ data, properties }: UnitUpdateFormProps
     const formData = new FormData();
     formData.append("id", String(id));
     formData.append("code", data.code);
-    formData.append("propertyId", data.propertyId);
 
     const result = await updateUnitAction(formData);
     if (result.success) {
@@ -67,8 +66,8 @@ export default function UnitUpdateForm({ data, properties }: UnitUpdateFormProps
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
+                  <Select value={field.value} onValueChange={field.onChange} disabled>
+                    <SelectTrigger className="w-full" disabled>
                       <SelectValue placeholder="Select a property" />
                     </SelectTrigger>
                     <SelectContent position="popper">

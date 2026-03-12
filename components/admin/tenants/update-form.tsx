@@ -24,7 +24,7 @@ const formSchema = z.object({
     .trim()
     .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
-  propertyId: z.string().trim().min(1, "Property is required"),
+  propertyId: z.string().trim().optional(),
   unitId: z.string().trim().min(1, "Unit is required"),
 });
 
@@ -65,7 +65,7 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
     isLoading: isLoadingUnits,
     error: unitsError,
   } = useAvailableUnits({
-    propertyId: selectedPropertyId,
+    propertyId: selectedPropertyId ?? "",
     unitIdToInclude: unitId ?? undefined,
   });
 
@@ -92,7 +92,6 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
     if (data.address) {
       formData.append("address", data.address);
     }
-    formData.append("propertyId", data.propertyId);
     formData.append("unitId", data.unitId);
 
     const result = await updateTenantAction(formData);
@@ -116,8 +115,8 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Property</FieldLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
+                    <Select value={field.value} onValueChange={field.onChange} disabled>
+                      <SelectTrigger className="w-full" disabled>
                         <SelectValue placeholder="Select a property" />
                       </SelectTrigger>
                       <SelectContent position="popper">

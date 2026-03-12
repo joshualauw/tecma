@@ -8,7 +8,6 @@ import z from "zod";
 const updateUnitSchema = z.object({
   id: z.coerce.number().int().positive(),
   code: z.string().trim().min(1),
-  propertyId: z.coerce.number().int().positive(),
 });
 
 type UpdateUnitActionResponse = ApiResponse<null>;
@@ -17,7 +16,6 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
   const parsed = updateUnitSchema.safeParse({
     id: formData.get("id"),
     code: formData.get("code"),
-    propertyId: formData.get("propertyId"),
   });
 
   if (!parsed.success) {
@@ -25,12 +23,12 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, code, propertyId } = parsed.data;
+  const { id, code } = parsed.data;
 
   try {
     await prisma.units.update({
       where: { id },
-      data: { code, propertyId },
+      data: { code },
     });
 
     return { success: true, message: "Unit updated successfully" };

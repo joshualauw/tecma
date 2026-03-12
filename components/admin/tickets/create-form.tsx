@@ -193,7 +193,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
 
               <Field>
                 <FieldLabel>Unit</FieldLabel>
-                <Input value={unitCode} placeholder="From tenant" readOnly className="bg-muted" />
+                <Input value={unitCode} placeholder="From tenant" readOnly />
               </Field>
             </div>
 

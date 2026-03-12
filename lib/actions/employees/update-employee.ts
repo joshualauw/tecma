@@ -13,7 +13,6 @@ const updateEmployeeSchema = z.object({
   role: z.enum([UserRole.dispatcher, UserRole.worker]),
   phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().nullable(),
-  propertyId: z.coerce.number().int().positive(),
 });
 
 type UpdateEmployeeActionResponse = ApiResponse<null>;
@@ -26,7 +25,6 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     role: formData.get("role"),
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
-    propertyId: formData.get("propertyId"),
   });
 
   if (!parsed.success) {
@@ -34,7 +32,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, name, email, role, phoneNumber, address, propertyId } = parsed.data;
+  const { id, name, email, role, phoneNumber, address } = parsed.data;
 
   const employee = await prisma.employees.findUniqueOrThrow({
     where: { id },
@@ -59,7 +57,6 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
         where: { id },
         data: {
           phoneNumber,
-          propertyId,
           address,
         },
       });

@@ -30,7 +30,7 @@ const formSchema = z.object({
     .trim()
     .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
-  propertyId: z.string().trim().min(1, "Property is required"),
+  propertyId: z.string().trim().optional(),
 });
 
 interface EmployeeUpdateFormProps {
@@ -75,7 +75,6 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
     if (data.address) {
       formData.append("address", data.address);
     }
-    formData.append("propertyId", data.propertyId);
 
     const result = await updateEmployeeAction(formData);
     if (result.success) {
@@ -97,8 +96,8 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
+                  <Select value={field.value} onValueChange={field.onChange} disabled>
+                    <SelectTrigger className="w-full" disabled>
                       <SelectValue placeholder="Select a property" />
                     </SelectTrigger>
                     <SelectContent position="popper">
