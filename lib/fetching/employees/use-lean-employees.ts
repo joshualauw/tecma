@@ -5,10 +5,11 @@ import useSWR, { type SWRConfiguration } from "swr";
 
 type UseLeanEmployeesParams = {
   propertyId: string;
+  role?: string | null;
 };
 
 export function useLeanEmployees(
-  { propertyId }: UseLeanEmployeesParams,
+  { propertyId, role }: UseLeanEmployeesParams,
   options?: SWRConfiguration<LeanEmployeesApiData>,
 ) {
   const propertyIdNum = Number(propertyId);
@@ -17,6 +18,9 @@ export function useLeanEmployees(
   const params = new URLSearchParams();
   if (isEnabled) {
     params.set("propertyId", String(propertyIdNum));
+  }
+  if (role != null && role !== "") {
+    params.set("role", role);
   }
 
   const key = isEnabled ? `/api/employees/lean?${params.toString()}` : null;

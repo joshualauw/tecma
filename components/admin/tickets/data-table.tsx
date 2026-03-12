@@ -180,7 +180,7 @@ export default function TicketsDataTable({ properties }: TicketsDataTableProps) 
     {
       id: "employee",
       header: "Employee",
-      cell: ({ row }) => row.original.employee.name,
+      cell: ({ row }) => row.original.employee.user.name,
     },
     {
       accessorKey: "status",

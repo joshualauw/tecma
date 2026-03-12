@@ -32,12 +32,36 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
+import { UserRole } from "@/generated/prisma/enums";
+import { Badge } from "@/components/ui/badge";
 
 interface EmployeesDataTableProps {
   properties: {
     id: number;
     name: string;
   }[];
+}
+
+function roleBadgeVariant(role: UserRole): "default" | "secondary" {
+  switch (role) {
+    case "dispatcher":
+      return "secondary";
+    case "worker":
+      return "default";
+    default:
+      return "default";
+  }
+}
+
+function formatRoleLabel(role: UserRole) {
+  switch (role) {
+    case "dispatcher":
+      return "Dispatcher";
+    case "worker":
+      return "Worker";
+    default:
+      return "Unknown";
+  }
 }
 
 export default function EmployeesDataTable({ properties }: EmployeesDataTableProps) {
@@ -96,8 +120,21 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       cell: ({ row }) => row.index + 1,
     },
     {
-      accessorKey: "name",
+      id: "name",
       header: "Name",
+      cell: ({ row }) => row.original.user.name,
+    },
+    {
+      id: "email",
+      header: "Email",
+      cell: ({ row }) => row.original.user.email,
+    },
+    {
+      id: "role",
+      header: "Role",
+      cell: ({ row }) => (
+        <Badge variant={roleBadgeVariant(row.original.user.role)}>{formatRoleLabel(row.original.user.role)}</Badge>
+      ),
     },
     {
       id: "property",
@@ -107,11 +144,6 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
     {
       accessorKey: "phoneNumber",
       header: "Phone Number",
-    },
-    {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => row.original.address ?? "-",
     },
     {
       accessorKey: "createdAt",
@@ -201,7 +233,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search by name, phone number, address..."
+              placeholder="Search by name, email, phone number..."
               className="sm:max-w-sm"
             />
             <Select
@@ -290,8 +322,8 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Deleting <strong>{employeeToDelete?.phoneNumber ?? "this employee"}</strong>{" "}
-              will permanently remove it and everything related to it.
+              This action cannot be undone. Deleting <strong>{employeeToDelete?.user.name ?? "this employee"}</strong>{" "}
+              will permanently remove the employee record. The linked user account will remain.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

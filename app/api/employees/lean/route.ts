@@ -1,3 +1,4 @@
+import { UserRole } from "@/generated/prisma/enums";
 import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -15,6 +16,7 @@ export type LeanEmployeesApiData = {
 
 const leanEmployeeQuery = z.object({
   propertyId: z.coerce.number().int().positive().nullable(),
+  role: z.enum([UserRole.dispatcher, UserRole.worker]).nullable(),
 });
 
 export type LeanEmployeesApiResponse = ApiResponse<LeanEmployeesApiData>;
@@ -25,6 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanEmploy
 
     const parsed = leanEmployeeQuery.safeParse({
       propertyId: searchParams.get("propertyId"),
+      role: searchParams.get("role"),
     });
 
     if (!parsed.success) {
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanEmploy
       );
     }
 
-    const { propertyId } = parsed.data;
+    const { propertyId, role } = parsed.data;
 
     const where: EmployeesWhereInput = {};
 
@@ -47,16 +50,31 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanEmploy
       where.propertyId = propertyId;
     }
 
-    const employees = await prisma.employees.findMany({
+    if (role !== null) {
+      where.user = { role };
+    }
+
+    const rows = await prisma.employees.findMany({
       select: {
         id: true,
-        name: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
       },
       where,
       orderBy: {
-        name: "asc",
+        user: {
+          name: "asc",
+        },
       },
     });
+
+    const employees = rows.map((row) => ({
+      id: row.id,
+      name: row.user.name,
+    }));
 
     return NextResponse.json({
       data: {

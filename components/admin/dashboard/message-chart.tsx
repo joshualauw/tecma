@@ -26,9 +26,7 @@ const chartConfig = {
   bot: { label: "Bot", color: "var(--chart-3)" },
 } satisfies ChartConfig;
 
-export default function DashboardMessageChart({
-  messages,
-}: DashboardMessageChartProps) {
+export default function DashboardMessageChart({ messages }: DashboardMessageChartProps) {
   const data = React.useMemo(() => {
     const start = dayjs().subtract(13, "day").startOf("day");
     const days = Array.from({ length: 14 }, (_, i) => start.add(i, "day"));

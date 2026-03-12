@@ -16,7 +16,8 @@ model Users {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  role UserRole
+  role      UserRole
+  employees Employees[]
 
   @@map("users")
 }
@@ -93,8 +94,8 @@ model Tenants {
 
 model Employees {
   id          Int     @id @default(autoincrement())
+  userId      Int     @map("user_id")
   propertyId  Int     @map("property_id")
-  name        String  @db.VarChar(255)
   address     String?
   phoneNumber String  @unique(map: "employees_phone_number_unique") @map("phone_number") @db.VarChar(20)
 
@@ -102,6 +103,7 @@ model Employees {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
+  user     Users      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
   tickets  Tickets[]
 
   @@map("employees")
@@ -279,6 +281,8 @@ enum MessageStatus {
 
 enum UserRole {
   super_admin
+  dispatcher
+  worker
 
   @@map("user_role")
 }

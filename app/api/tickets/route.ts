@@ -29,7 +29,9 @@ export type TicketApiItem = {
   };
   employee: {
     id: number;
-    name: string;
+    user: {
+      name: string;
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -132,7 +134,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
         employee: {
           select: {
             id: true,
-            name: true,
+            user: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },

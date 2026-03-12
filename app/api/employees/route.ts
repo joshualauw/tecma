@@ -1,3 +1,4 @@
+import { UserRole } from "@/generated/prisma/enums";
 import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -6,9 +7,12 @@ import z from "zod";
 
 export type EmployeeApiItem = {
   id: number;
-  name: string;
   phoneNumber: string;
-  address: string | null;
+  user: {
+    name: string;
+    email: string;
+    role: UserRole;
+  };
   property: {
     id: number;
     name: string;
@@ -60,9 +64,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
+        { user: { name: { contains: search, mode: "insensitive" } } },
+        { user: { email: { contains: search, mode: "insensitive" } } },
         { phoneNumber: { contains: search, mode: "insensitive" } },
-        { address: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -73,11 +77,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
     const employees = await prisma.employees.findMany({
       select: {
         id: true,
-        name: true,
         phoneNumber: true,
-        address: true,
         createdAt: true,
         updatedAt: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
         property: {
           select: {
             id: true,

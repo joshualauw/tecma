@@ -39,7 +39,9 @@ export type RoomDetailApiItem = {
     };
     employee: {
       id: number;
-      name: string;
+      user: {
+        name: string;
+      };
     };
     createdAt: Date;
   }[];
@@ -144,7 +146,11 @@ export async function GET(
         employee: {
           select: {
             id: true,
-            name: true,
+            user: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         createdAt: true,

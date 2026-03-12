@@ -6,6 +6,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { UserRole } from "@/generated/prisma/enums";
 import { createEmployeeAction } from "@/lib/actions/employees/create-employee";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,8 +15,16 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
+const userRoleOptions: { value: string; label: string }[] = [
+  { value: UserRole.dispatcher, label: "Dispatcher" },
+  { value: UserRole.worker, label: "Worker" },
+];
+
 const formSchema = z.object({
   name: z.string().trim().min(1, "Employee name is required"),
+  email: z.email("Invalid email format").trim().min(1, "Email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum([UserRole.dispatcher, UserRole.worker]),
   phoneNumber: z
     .string()
     .regex(PHONE_NUMBER_REGEX, "Invalid phone number format")
@@ -39,6 +48,9 @@ export default function EmployeeCreateForm({ properties }: EmployeeCreateFormPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      email: "",
+      password: "",
+      role: "worker",
       phoneNumber: "",
       address: "",
       propertyId: "",
@@ -48,6 +60,9 @@ export default function EmployeeCreateForm({ properties }: EmployeeCreateFormPro
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("role", data.role);
     formData.append("phoneNumber", data.phoneNumber);
     if (data.address) {
       formData.append("address", data.address);
@@ -103,17 +118,63 @@ export default function EmployeeCreateForm({ properties }: EmployeeCreateFormPro
                 )}
               />
               <Controller
-                name="phoneNumber"
+                name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Phone Number</FieldLabel>
-                    <Input {...field} placeholder="09171234567" />
+                    <FieldLabel>Email</FieldLabel>
+                    <Input {...field} type="email" placeholder="juan@example.com" />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
             </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Controller
+                name="password"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Password</FieldLabel>
+                    <Input {...field} type="password" placeholder="••••••••" autoComplete="new-password" />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="role"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Role</FieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {userRoleOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+            <Controller
+              name="phoneNumber"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Phone Number</FieldLabel>
+                  <Input {...field} placeholder="09171234567" />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <Controller
               name="address"
               control={form.control}

@@ -6,7 +6,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import { TicketPriority, TicketStatus, UserRole } from "@/generated/prisma/enums";
 import { updateTicketAction } from "@/lib/actions/tickets/update-ticket";
 import { useLeanEmployees } from "@/lib/fetching/employees/use-lean-employees";
 import { useLeanTenants } from "@/lib/fetching/tenants/use-lean-tenants";
@@ -100,6 +100,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     error: employeesError,
   } = useLeanEmployees({
     propertyId: selectedPropertyId,
+    role: UserRole.worker,
   });
 
   const isLoadingOptions = isLoadingTenants || isLoadingEmployees;

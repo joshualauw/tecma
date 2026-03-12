@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma, UserRole } from "@/generated/prisma/client";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -9,12 +9,10 @@ import z from "zod";
 const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
   name: z.string().trim().min(1),
-  phoneNumber: z
-    .string()
-    .regex(PHONE_NUMBER_REGEX)
-    .trim()
-    .min(1),
-  address: z.string().optional(),
+  email: z.email().trim().min(1),
+  role: z.enum([UserRole.dispatcher, UserRole.worker]),
+  phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
+  address: z.string().nullable(),
   propertyId: z.coerce.number().int().positive(),
 });
 
@@ -24,6 +22,8 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
   const parsed = updateEmployeeSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
+    email: formData.get("email"),
+    role: formData.get("role"),
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
     propertyId: formData.get("propertyId"),
@@ -34,12 +34,22 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, name, phoneNumber, address, propertyId } = parsed.data;
+  const { id, name, email, role, phoneNumber, address, propertyId } = parsed.data;
 
   try {
-    await prisma.employees.update({
-      where: { id },
-      data: { name, phoneNumber, address, propertyId },
+    await prisma.$transaction(async (tx) => {
+      const employee = await tx.employees.update({
+        where: { id },
+        data: {
+          phoneNumber,
+          propertyId,
+          address,
+        },
+      });
+      await tx.users.update({
+        where: { id: employee.userId },
+        data: { name, email, role },
+      });
     });
 
     return { success: true, message: "Employee updated successfully" };
@@ -48,8 +58,9 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
         return { success: false, message: "Employee not found" };
-      } else if (error.code === "P2002") {
-        return { success: false, message: "Employee with this phone number already exists" };
+      }
+      if (error.code === "P2002") {
+        return { success: false, message: "A user with this email already exists" };
       }
     }
     return { success: false, message: "An unexpected error occurred" };

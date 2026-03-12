@@ -68,23 +68,23 @@ export default function InboxInfo() {
             <p className="text-sm font-medium mb-1">{roomDetail?.tenant.name}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <PhoneIcon className="size-3" />
-              {roomDetail?.tenant.phoneNumber}
+              {roomDetail?.tenant.phoneNumber ?? "-"}
             </p>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPinIcon className="size-3" />
-              {roomDetail?.tenant.property.name}
+              {roomDetail?.tenant.property.name ?? "-"}
             </p>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <HouseHeartIcon className="size-3" />
-              {roomDetail?.tenant.unit.code}
+              {roomDetail?.tenant.unit.code ?? "-"}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">WhatsApp</p>
-            <p className="text-sm font-medium mb-1">{roomDetail?.whatsapp?.displayName ?? "-"}</p>
+            <p className="text-sm font-medium mb-1">{roomDetail?.whatsapp.displayName ?? "-"}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <PhoneIcon className="size-3" />
-              {roomDetail?.whatsapp?.phoneNumber ?? "-"}
+              {roomDetail?.whatsapp.phoneNumber ?? "-"}
             </p>
           </div>
         </div>
@@ -134,9 +134,9 @@ export default function InboxInfo() {
                 >
                   <p className="font-medium">{ticket.title}</p>
                   <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <p>Category: {ticket.category?.name ?? "-"}</p>
+                    <p>Category: {ticket.category.name}</p>
                     <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
-                    <p>Employee: {ticket.employee?.name ?? "-"}</p>
+                    <p>Employee: {ticket.employee.user.name}</p>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
