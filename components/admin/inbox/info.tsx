@@ -76,7 +76,7 @@ export default function InboxInfo() {
             </p>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <HouseHeartIcon className="size-3" />
-              {roomDetail?.tenant.unit.code ?? "-"}
+              {roomDetail?.tenant.leases.map((lease) => lease.unit.code).join(", ") ?? "-"}
             </p>
           </div>
           <div>
@@ -134,9 +134,9 @@ export default function InboxInfo() {
                 >
                   <p className="font-medium">{ticket.title}</p>
                   <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <p>Category: {ticket.category.name}</p>
+                    <p>Category: {ticket.category?.name ?? "-"}</p>
                     <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
-                    <p>Employee: {ticket.employee.user.name}</p>
+                    <p>Employee: {ticket.employee?.user.name ?? "-"}</p>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <Badge variant={ticketStatusBadgeVariant(ticket.status)}>

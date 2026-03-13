@@ -1,7 +1,7 @@
 import type { ApiResponse } from "@/types/ApiResponse";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { RoomStatus, TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import { LeaseStatus, RoomStatus, TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import z from "zod";
 
 export type RoomDetailApiItem = {
@@ -15,10 +15,13 @@ export type RoomDetailApiItem = {
       id: number;
       name: string;
     };
-    unit: {
+    leases: {
       id: number;
-      code: string;
-    };
+      unit: {
+        id: number;
+        code: string;
+      };
+    }[];
   };
   whatsapp: {
     id: number;
@@ -36,13 +39,14 @@ export type RoomDetailApiItem = {
     category: {
       id: number;
       name: string;
-    };
+    } | null;
     employee: {
       id: number;
       user: {
+        id: number;
         name: string;
       };
-    };
+    } | null;
     createdAt: Date;
   }[];
 };
@@ -98,10 +102,18 @@ export async function GET(
                 name: true,
               },
             },
-            unit: {
+            leases: {
+              where: {
+                status: LeaseStatus.active,
+              },
               select: {
                 id: true,
-                code: true,
+                unit: {
+                  select: {
+                    id: true,
+                    code: true,
+                  },
+                },
               },
             },
           },
@@ -129,7 +141,9 @@ export async function GET(
 
     const tickets = await prisma.tickets.findMany({
       where: {
-        tenantId: room.tenant.id,
+        lease: {
+          tenantId: room.tenant.id,
+        },
         status: { not: TicketStatus.closed },
       },
       select: {
@@ -148,6 +162,7 @@ export async function GET(
             id: true,
             user: {
               select: {
+                id: true,
                 name: true,
               },
             },

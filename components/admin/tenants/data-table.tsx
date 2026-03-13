@@ -141,11 +141,11 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/lease/${row.original.id}`)}>
-              Leases
-            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/update/${row.original.id}`)}>
               Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/lease/${row.original.id}`)}>
+              Leases
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
