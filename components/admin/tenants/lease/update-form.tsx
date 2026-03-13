@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui2/date-picker";
-import type { TenantLeaseApiItem } from "@/app/api/tenants/leases/[id]/route";
+import type { TenantLeaseApiItem } from "@/app/api/tenants/[id]/leases/route";
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { updateLeaseAction } from "@/lib/actions/leases/update-lease";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,7 +65,7 @@ export default function UpdateLeaseForm({ lease, open, onOpenChange, tenantId }:
     if (result.success) {
       toast.success(result.message);
       onOpenChange(false);
-      void mutate(`/api/tenants/leases/${tenantId}`);
+      void mutate(`/api/tenants/${tenantId}/leases`);
       void mutate(`/api/units/available?propertyId=${lease.property.id}`);
     } else {
       toast.error(result.message ?? "Failed to update lease");

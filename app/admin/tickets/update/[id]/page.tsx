@@ -21,7 +21,22 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
     select: {
       id: true,
       propertyId: true,
-      tenantId: true,
+      lease: {
+        select: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          unit: {
+            select: {
+              id: true,
+              code: true,
+            },
+          },
+        },
+      },
       categoryId: true,
       employeeId: true,
       title: true,

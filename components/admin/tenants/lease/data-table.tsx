@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { TenantLeaseApiItem } from "@/app/api/tenants/leases/[id]/route";
+import type { TenantLeaseApiItem } from "@/app/api/tenants/[id]/leases/route";
 import { useTenantLeases } from "@/lib/fetching/leases/use-tenant-leases";
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { LeaseStatus } from "@/generated/prisma/enums";

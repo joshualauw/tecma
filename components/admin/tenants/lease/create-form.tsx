@@ -66,7 +66,7 @@ export default function CreateLeaseForm({ tenantId, propertyId }: CreateLeaseFor
       toast.success(result.message);
       setOpen(false);
       form.reset({ unitId: "", startDate: dayjs().toDate(), endDate: dayjs().add(1, "year").toDate() });
-      void mutate(`/api/tenants/leases/${tenantId}`);
+      void mutate(`/api/tenants/${tenantId}/leases`);
       void mutate(`/api/units/available?propertyId=${propertyId}`);
     } else {
       toast.error(result.message ?? "Failed to create lease");

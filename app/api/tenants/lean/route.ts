@@ -1,3 +1,4 @@
+import { LeaseStatus } from "@/generated/prisma/enums";
 import { TenantsWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -7,6 +8,13 @@ import z from "zod";
 export type LeanTenantApiItem = {
   id: number;
   name: string;
+  leases: {
+    id: number;
+    unit: {
+      id: number;
+      code: string;
+    };
+  }[];
 };
 
 export type LeanTenantsApiData = {
@@ -51,6 +59,20 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanTenant
       select: {
         id: true,
         name: true,
+        leases: {
+          where: {
+            status: LeaseStatus.active,
+          },
+          select: {
+            id: true,
+            unit: {
+              select: {
+                id: true,
+                code: true,
+              },
+            },
+          },
+        },
       },
       where,
       orderBy: {

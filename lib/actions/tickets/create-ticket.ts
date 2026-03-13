@@ -7,7 +7,7 @@ import z from "zod";
 
 const createTicketSchema = z.object({
   propertyId: z.coerce.number().int().positive(),
-  tenantId: z.coerce.number().int().positive(),
+  leaseId: z.coerce.number().int().positive(),
   categoryId: z.coerce.number().int().positive(),
   employeeId: z.coerce.number().int().positive().nullable(),
   title: z.string().trim().min(1),
@@ -21,7 +21,7 @@ type CreateTicketActionResponse = ApiResponse<null>;
 export async function createTicketAction(formData: FormData): Promise<CreateTicketActionResponse> {
   const parsed = createTicketSchema.safeParse({
     propertyId: formData.get("propertyId"),
-    tenantId: formData.get("tenantId"),
+    leaseId: formData.get("leaseId"),
     categoryId: formData.get("categoryId"),
     employeeId: formData.get("employeeId"),
     title: formData.get("title"),
@@ -35,13 +35,13 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
     return { success: false, message: "Invalid input" };
   }
 
-  const { propertyId, tenantId, categoryId, employeeId, title, description, status, priority } = parsed.data;
+  const { propertyId, leaseId, categoryId, employeeId, title, description, status, priority } = parsed.data;
 
   try {
     await prisma.tickets.create({
       data: {
         propertyId,
-        tenantId,
+        leaseId,
         categoryId,
         employeeId,
         title,

@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { TicketPriority, TicketStatus, UserRole } from "@/generated/prisma/enums";
 import { updateTicketAction } from "@/lib/actions/tickets/update-ticket";
 import { useLeanEmployees } from "@/lib/fetching/employees/use-lean-employees";
-import { useLeanTenants } from "@/lib/fetching/tenants/use-lean-tenants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,8 +18,6 @@ import { toast } from "sonner";
 import z from "zod";
 
 const formSchema = z.object({
-  propertyId: z.string().trim().optional(),
-  tenantId: z.string().trim().optional(),
   categoryId: z.string().trim().min(1, "Category is required"),
   employeeId: z.string().trim().optional(),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
@@ -33,7 +30,16 @@ interface TicketUpdateFormProps {
   data: {
     id: number;
     propertyId: number;
-    tenantId: number;
+    lease: {
+      tenant: {
+        id: number;
+        name: string;
+      };
+      unit: {
+        id: number;
+        code: string;
+      };
+    };
     categoryId: number;
     employeeId: number | null;
     status: TicketStatus;
@@ -67,12 +73,11 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   const router = useRouter();
 
   const initialPropertyId = String(data.propertyId);
+  const propertyName = properties.find((p) => p.id === data.propertyId)?.name ?? String(data.propertyId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      propertyId: initialPropertyId,
-      tenantId: String(data.tenantId),
       categoryId: String(data.categoryId),
       employeeId: data.employeeId ? String(data.employeeId) : "",
       status: data.status,
@@ -82,48 +87,22 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     },
   });
 
-  const selectedPropertyId = form.watch("propertyId");
-  const selectedTenantId = form.watch("tenantId");
-
-  const {
-    tenants,
-    isLoading: isLoadingTenants,
-    error: tenantsError,
-  } = useLeanTenants({
-    propertyId: selectedPropertyId ?? "",
-  });
   const {
     employees,
     isLoading: isLoadingEmployees,
     error: employeesError,
   } = useLeanEmployees({
-    propertyId: selectedPropertyId ?? "",
+    propertyId: initialPropertyId,
     role: UserRole.worker,
   });
 
-  const isLoadingOptions = isLoadingTenants || isLoadingEmployees;
+  const isLoadingOptions = isLoadingEmployees;
 
   useEffect(() => {
-    const propertyId = Number(selectedPropertyId);
-    if (!Number.isInteger(propertyId) || propertyId <= 0) {
-      form.setValue("tenantId", "");
-      form.setValue("employeeId", "");
-      return;
+    if (employeesError) {
+      toast.error("Failed to load employees");
     }
-    if (selectedPropertyId !== initialPropertyId) {
-      form.setValue("tenantId", "");
-      form.setValue("employeeId", "");
-    }
-  }, [form, initialPropertyId, selectedPropertyId]);
-
-  useEffect(() => {
-    if (tenantsError || employeesError) {
-      toast.error("Failed to load tenants and employees");
-    }
-  }, [tenantsError, employeesError]);
-
-  const selectedTenant = tenants.find((tenant) => tenant.id === Number(selectedTenantId));
-  const unitCode = selectedTenant?.unit?.code ?? "";
+  }, [employeesError]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const formData = new FormData();
@@ -154,60 +133,20 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="propertyId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled>
-                    <SelectTrigger className="w-full" disabled>
-                      <SelectValue placeholder="Select a property" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={String(property.id)}>
-                          {property.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+            <Field>
+              <FieldLabel>Property</FieldLabel>
+              <Input value={propertyName} disabled />
+            </Field>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Controller
-                name="tenantId"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Tenant</FieldLabel>
-                    <Select value={field.value} onValueChange={field.onChange} disabled>
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={
-                            isLoadingOptions ? "Loading tenant..." : tenants.length === 0 ? "No tenant found" : "Tenant"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {tenants.map((tenant) => (
-                          <SelectItem key={tenant.id} value={String(tenant.id)}>
-                            {tenant.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
+              <Field>
+                <FieldLabel>Tenant</FieldLabel>
+                <Input value={data.lease.tenant.name} disabled />
+              </Field>
 
               <Field>
                 <FieldLabel>Unit</FieldLabel>
-                <Input value={unitCode} placeholder="From tenant" readOnly />
+                <Input value={data.lease.unit.code} disabled />
               </Field>
             </div>
 
@@ -245,18 +184,16 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                       <Select
                         value={field.value ?? ""}
                         onValueChange={field.onChange}
-                        disabled={!selectedPropertyId || isLoadingOptions || employees.length === 0}
+                        disabled={isLoadingOptions || employees.length === 0}
                       >
                         <SelectTrigger className="w-full flex-1">
                           <SelectValue
                             placeholder={
-                              !selectedPropertyId
-                                ? "Select a property first"
-                                : isLoadingOptions
-                                  ? "Loading employees..."
-                                  : employees.length === 0
-                                    ? "No employees found"
-                                    : "Select an employee"
+                              isLoadingOptions
+                                ? "Loading employees..."
+                                : employees.length === 0
+                                  ? "No employees found"
+                                  : "Select an employee"
                             }
                           />
                         </SelectTrigger>
@@ -269,12 +206,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                         </SelectContent>
                       </Select>
                       {field.value && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => field.onChange("")}
-                        >
+                        <Button type="button" variant="ghost" size="icon" onClick={() => field.onChange("")}>
                           <X className="h-4 w-4" />
                         </Button>
                       )}

@@ -21,6 +21,7 @@ import z from "zod";
 const formSchema = z.object({
   propertyId: z.string().trim().min(1, "Property is required"),
   tenantId: z.string().trim().min(1, "Tenant is required"),
+  leaseId: z.string().trim().min(1, "Unit is required"),
   categoryId: z.string().trim().min(1, "Category is required"),
   employeeId: z.string().trim().optional(),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
@@ -60,6 +61,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
     defaultValues: {
       propertyId: "",
       tenantId: "",
+      leaseId: "",
       categoryId: "",
       employeeId: "",
       status: TicketStatus.open,
@@ -71,6 +73,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
 
   const selectedPropertyId = form.watch("propertyId");
   const selectedTenantId = form.watch("tenantId");
+  const selectedLeaseId = form.watch("leaseId");
 
   const {
     tenants,
@@ -92,8 +95,13 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
 
   useEffect(() => {
     form.setValue("tenantId", "");
+    form.setValue("leaseId", "");
     form.setValue("employeeId", "");
   }, [form, selectedPropertyId]);
+
+  useEffect(() => {
+    form.setValue("leaseId", "");
+  }, [form, selectedTenantId]);
 
   useEffect(() => {
     if (tenantsError || employeesError) {
@@ -102,12 +110,12 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
   }, [tenantsError, employeesError]);
 
   const selectedTenant = tenants.find((tenant) => tenant.id === Number(selectedTenantId));
-  const unitCode = selectedTenant ? selectedTenant.unit.code : "";
+  void selectedLeaseId;
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("propertyId", data.propertyId);
-    formData.append("tenantId", data.tenantId);
+    formData.append("leaseId", data.leaseId);
     formData.append("categoryId", data.categoryId);
     if (data.employeeId) {
       formData.append("employeeId", data.employeeId);
@@ -194,10 +202,45 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
                 )}
               />
 
-              <Field>
-                <FieldLabel>Unit</FieldLabel>
-                <Input value={unitCode} placeholder="From tenant" readOnly />
-              </Field>
+              <Controller
+                name="leaseId"
+                control={form.control}
+                render={({ field, fieldState }) => {
+                  const leaseCount = selectedTenant?.leases.length ?? 0;
+                  return (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Unit</FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={!selectedTenantId || isLoadingTenants || leaseCount === 0}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={
+                              !selectedTenantId
+                                ? "Select a tenant first"
+                                : isLoadingTenants
+                                  ? "Loading units..."
+                                  : leaseCount === 0
+                                    ? "No active leases found"
+                                    : "Select a unit"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {(selectedTenant?.leases ?? []).map((lease) => (
+                            <SelectItem key={lease.id} value={String(lease.id)}>
+                              {lease.unit.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  );
+                }}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -258,12 +301,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
                         </SelectContent>
                       </Select>
                       {field.value && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => field.onChange("")}
-                        >
+                        <Button type="button" variant="ghost" size="icon" onClick={() => field.onChange("")}>
                           <X className="h-4 w-4" />
                         </Button>
                       )}
