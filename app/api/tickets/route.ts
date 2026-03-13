@@ -28,7 +28,7 @@ export type TicketApiItem = {
   category: {
     id: number;
     name: string;
-  };
+  } | null;
   employee: {
     id: number;
     user: {

@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import z from "zod";
 
 const formSchema = z.object({
-  categoryId: z.string().trim().min(1, "Category is required"),
+  categoryId: z.string().trim().optional(),
   employeeId: z.string().trim().optional(),
   status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
   priority: z.enum([TicketPriority.low, TicketPriority.medium, TicketPriority.high]),
@@ -40,7 +40,7 @@ interface TicketUpdateFormProps {
         code: string;
       };
     };
-    categoryId: number;
+    categoryId: number | null;
     employeeId: number | null;
     status: TicketStatus;
     priority: TicketPriority;
@@ -78,7 +78,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      categoryId: String(data.categoryId),
+      categoryId: data.categoryId ? String(data.categoryId) : "",
       employeeId: data.employeeId ? String(data.employeeId) : "",
       status: data.status,
       priority: data.priority,
@@ -107,7 +107,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("id", String(data.id));
-    formData.append("categoryId", values.categoryId);
+    formData.append("categoryId", values.categoryId ?? "");
     if (values.employeeId) {
       formData.append("employeeId", values.employeeId);
     }
@@ -157,18 +157,29 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Category</FieldLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={String(category.id)}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                        disabled={categories.length === 0}
+                      >
+                        <SelectTrigger className="w-full flex-1">
+                          <SelectValue placeholder={categories.length === 0 ? "No categories" : "Select a category"} />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={String(category.id)}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {field.value && (
+                        <Button type="button" variant="ghost" size="icon" onClick={() => field.onChange("")}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}

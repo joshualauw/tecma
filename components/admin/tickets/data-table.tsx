@@ -181,7 +181,7 @@ export default function TicketsDataTable({ properties, categories }: TicketsData
     {
       id: "category",
       header: "Category",
-      cell: ({ row }) => row.original.category.name,
+      cell: ({ row }) => row.original.category?.name ?? "-",
     },
     {
       id: "employee",

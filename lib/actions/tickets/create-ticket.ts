@@ -8,7 +8,7 @@ import z from "zod";
 const createTicketSchema = z.object({
   propertyId: z.coerce.number().int().positive(),
   leaseId: z.coerce.number().int().positive(),
-  categoryId: z.coerce.number().int().positive(),
+  categoryId: z.coerce.number().int().positive().nullable(),
   employeeId: z.coerce.number().int().positive().nullable(),
   title: z.string().trim().min(1),
   description: z.string().trim().nullable(),

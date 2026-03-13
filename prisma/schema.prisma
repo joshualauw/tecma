@@ -170,7 +170,7 @@ model Tickets {
   id          Int            @id @default(autoincrement())
   propertyId  Int            @map("property_id")
   leaseId     Int            @map("lease_id")
-  categoryId  Int            @map("category_id")
+  categoryId  Int?           @map("category_id")
   employeeId  Int?           @map("employee_id")
   title       String         @db.VarChar(255)
   description String?
@@ -180,10 +180,10 @@ model Tickets {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties       @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
-  category TicketCategories @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
-  employee Employees?       @relation(fields: [employeeId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
-  lease    Leases           @relation(fields: [leaseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_lease_id_leases_id_fk")
+  property Properties        @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
+  category TicketCategories? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
+  employee Employees?        @relation(fields: [employeeId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
+  lease    Leases            @relation(fields: [leaseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_lease_id_leases_id_fk")
 
   @@map("tickets")
 }
