@@ -11,7 +11,6 @@ const createTenantSchema = z.object({
   phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().trim().min(1).nullable(),
   propertyId: z.coerce.number().int().positive(),
-  unitId: z.coerce.number().int().positive(),
 });
 
 type CreateTenantActionResponse = ApiResponse<null>;
@@ -22,7 +21,6 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
     propertyId: formData.get("propertyId"),
-    unitId: formData.get("unitId"),
   });
 
   if (!parsed.success) {
@@ -30,33 +28,15 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
     return { success: false, message: "Invalid input" };
   }
 
-  const { name, phoneNumber, address, propertyId, unitId } = parsed.data;
+  const { name, phoneNumber, address, propertyId } = parsed.data;
 
   try {
-    const availableUnit = await prisma.units.findFirst({
-      where: {
-        id: unitId,
-        propertyId,
-        tenants: {
-          none: {},
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!availableUnit) {
-      return { success: false, message: "Selected unit is not available" };
-    }
-
     await prisma.tenants.create({
       data: {
         name: name,
         phoneNumber,
         address: address,
         propertyId,
-        unitId,
       },
     });
 

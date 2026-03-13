@@ -7,10 +7,6 @@ import z from "zod";
 export type LeanTenantApiItem = {
   id: number;
   name: string;
-  unit: {
-    id: number;
-    code: string;
-  };
 };
 
 export type LeanTenantsApiData = {
@@ -55,12 +51,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanTenant
       select: {
         id: true,
         name: true,
-        unit: {
-          select: {
-            id: true,
-            code: true,
-          },
-        },
       },
       where,
       orderBy: {

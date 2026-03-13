@@ -1,5 +1,6 @@
+import { LeaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
-import { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 
@@ -14,7 +15,6 @@ export type AvailableUnitsApiData = {
 
 const availableUnitsQuery = z.object({
   propertyId: z.coerce.number().int().positive(),
-  tenantId: z.coerce.number().int().positive().nullable(),
 });
 
 export type AvailableUnitsApiResponse = ApiResponse<AvailableUnitsApiData>;
@@ -25,7 +25,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
 
     const parsed = availableUnitsQuery.safeParse({
       propertyId: searchParams.get("propertyId"),
-      tenantId: searchParams.get("tenantId"),
     });
 
     if (!parsed.success) {
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
       );
     }
 
-    const { propertyId, tenantId } = parsed.data;
+    const { propertyId } = parsed.data;
 
     const units = await prisma.units.findMany({
       select: {
@@ -49,20 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
       },
       where: {
         propertyId,
-        OR: [
-          {
-            tenants: {
-              none: {},
-            },
-          },
-          ...(tenantId !== null
-            ? [
-                {
-                  id: tenantId,
-                },
-              ]
-            : []),
-        ],
+        leases: { none: { status: LeaseStatus.active } },
       },
       orderBy: {
         createdAt: "asc",

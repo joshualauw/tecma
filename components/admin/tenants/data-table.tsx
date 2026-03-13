@@ -105,9 +105,10 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
       cell: ({ row }) => row.original.property.name,
     },
     {
-      id: "unit",
-      header: "Unit",
-      cell: ({ row }) => row.original.unit.code,
+      id: "leases",
+      header: "Leases",
+      cell: ({ row }) =>
+        row.original.leases.length > 0 ? row.original.leases.map((lease) => lease.unit.code).join(", ") : "-",
     },
     {
       accessorKey: "phoneNumber",
@@ -140,6 +141,9 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/lease/${row.original.id}`)}>
+              Leases
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/update/${row.original.id}`)}>
               Edit
             </DropdownMenuItem>

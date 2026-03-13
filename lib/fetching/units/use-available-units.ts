@@ -5,24 +5,18 @@ import useSWR, { type SWRConfiguration } from "swr";
 
 type UseAvailableUnitsParams = {
   propertyId: string;
-  /** When editing a tenant, pass their current unit id so that unit is included in the list. */
-  unitIdToInclude?: number | null;
 };
 
 export function useAvailableUnits(
-  { propertyId, unitIdToInclude }: UseAvailableUnitsParams,
+  { propertyId }: UseAvailableUnitsParams,
   options?: SWRConfiguration<AvailableUnitsApiData>,
 ) {
   const propertyIdNum = Number(propertyId);
-  const isEnabled =
-    Number.isInteger(propertyIdNum) && propertyIdNum > 0;
+  const isEnabled = Number.isInteger(propertyIdNum) && propertyIdNum > 0;
 
   const params = new URLSearchParams();
   if (isEnabled) {
     params.set("propertyId", String(propertyIdNum));
-    if (unitIdToInclude != null && Number.isInteger(unitIdToInclude) && unitIdToInclude > 0) {
-      params.set("tenantId", String(unitIdToInclude));
-    }
   }
 
   const key = isEnabled ? `/api/units/available?${params.toString()}` : null;

@@ -54,6 +54,7 @@ model Properties {
   units     Units[]
   tickets   Tickets[]
   sources   Sources[]
+  leases    Leases[]
 
   @@map("properties")
 }
@@ -84,15 +85,34 @@ model Units {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
-  tenants  Tenants[]
+  leases   Leases[]
 
   @@map("units")
+}
+
+model Leases {
+  id         Int         @id @default(autoincrement())
+  propertyId Int         @map("property_id")
+  unitId     Int         @map("unit_id")
+  tenantId   Int         @map("tenant_id")
+  startDate  DateTime    @map("start_date")
+  endDate    DateTime    @map("end_date")
+  status     LeaseStatus @default(active)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "leases_property_id_properties_id_fk")
+  unit     Units      @relation(fields: [unitId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "leases_unit_id_units_id_fk")
+  tenant   Tenants    @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "leases_tenant_id_tenants_id_fk")
+  tickets  Tickets[]
+
+  @@map("leases")
 }
 
 model Tenants {
   id          Int     @id @default(autoincrement())
   propertyId  Int     @map("property_id")
-  unitId      Int     @map("unit_id")
   name        String  @db.VarChar(255)
   address     String?
   phoneNumber String  @unique(map: "tenants_phone_number_unique") @map("phone_number") @db.VarChar(20)
@@ -101,9 +121,8 @@ model Tenants {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
-  unit     Units      @relation(fields: [unitId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_unit_id_units_id_fk")
   rooms    Rooms[]
-  tickets  Tickets[]
+  leases   Leases[]
 
   @@map("tenants")
 }
@@ -150,7 +169,7 @@ model Messages {
 model Tickets {
   id          Int            @id @default(autoincrement())
   propertyId  Int            @map("property_id")
-  tenantId    Int            @map("tenant_id")
+  leaseId     Int            @map("lease_id")
   categoryId  Int            @map("category_id")
   employeeId  Int?           @map("employee_id")
   title       String         @db.VarChar(255)
@@ -161,10 +180,10 @@ model Tickets {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  tenant   Tenants          @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_tenant_id_tenants_id_fk")
   property Properties       @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
   category TicketCategories @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
   employee Employees?       @relation(fields: [employeeId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
+  lease    Leases           @relation(fields: [leaseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_lease_id_leases_id_fk")
 
   @@map("tickets")
 }
@@ -223,6 +242,14 @@ enum SenderType {
   user
 
   @@map("sender_type")
+}
+
+enum LeaseStatus {
+  active
+  expired
+  terminated
+
+  @@map("lease_status")
 }
 
 enum SourceType {

@@ -1,3 +1,4 @@
+import { LeaseStatus } from "@/generated/prisma/enums";
 import { TenantsWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -12,10 +13,13 @@ export type TenantApiItem = {
     id: number;
     name: string;
   };
-  unit: {
+  leases: {
     id: number;
-    code: string;
-  };
+    unit: {
+      id: number;
+      code: string;
+    };
+  }[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -85,10 +89,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
             name: true,
           },
         },
-        unit: {
+        leases: {
+          where: {
+            status: LeaseStatus.active,
+          },
           select: {
             id: true,
-            code: true,
+            unit: {
+              select: {
+                id: true,
+                code: true,
+              },
+            },
           },
         },
       },

@@ -15,9 +15,11 @@ export type TicketApiItem = {
     id: number;
     name: string;
   };
-  tenant: {
-    id: number;
-    name: string;
+  lease: {
+    tenant: {
+      id: number;
+      name: string;
+    };
     unit: {
       id: number;
       code: string;
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
-        { tenant: { name: { contains: search, mode: "insensitive" } } },
+        { lease: { tenant: { name: { contains: search, mode: "insensitive" } } } },
         { employee: { user: { name: { contains: search, mode: "insensitive" } } } },
       ];
     }
@@ -123,10 +125,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
             name: true,
           },
         },
-        tenant: {
+        lease: {
           select: {
-            id: true,
-            name: true,
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
             unit: {
               select: {
                 id: true,

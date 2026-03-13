@@ -171,12 +171,12 @@ export default function TicketsDataTable({ properties, categories }: TicketsData
     {
       id: "tenant",
       header: "Tenant",
-      cell: ({ row }) => row.original.tenant.name,
+      cell: ({ row }) => row.original.lease.tenant.name,
     },
     {
       id: "unit",
       header: "Unit",
-      cell: ({ row }) => row.original.tenant.unit.code,
+      cell: ({ row }) => row.original.lease.unit.code,
     },
     {
       id: "category",

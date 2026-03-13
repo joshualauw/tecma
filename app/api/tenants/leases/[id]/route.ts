@@ -1,0 +1,103 @@
+import { prisma } from "@/lib/prisma";
+import type { ApiResponse } from "@/types/ApiResponse";
+import { LeaseStatus } from "@/generated/prisma/enums";
+import { NextResponse } from "next/server";
+import z from "zod";
+
+export type TenantLeaseApiItem = {
+  id: number;
+  startDate: Date;
+  endDate: Date;
+  status: LeaseStatus;
+  property: {
+    id: number;
+    name: string;
+  };
+  unit: {
+    id: number;
+    code: string;
+  };
+  tenant: {
+    id: number;
+    name: string;
+  };
+};
+
+export type TenantLeasesApiData = {
+  leases: TenantLeaseApiItem[];
+};
+
+const tenantLeasesQuery = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+export type TenantLeasesApiResponse = ApiResponse<TenantLeasesApiData>;
+
+export async function GET(
+  _request: Request,
+  context: { params: Promise<{ id: string }> },
+): Promise<NextResponse<TenantLeasesApiResponse>> {
+  try {
+    const contextParams = await context.params;
+    const parsed = tenantLeasesQuery.safeParse({ id: contextParams.id });
+
+    if (!parsed.success) {
+      console.error("Tenant leases query validation failed:", parsed.error);
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Invalid query parameters",
+          success: false,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { id } = parsed.data;
+
+    const leases = await prisma.leases.findMany({
+      where: { tenantId: id },
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        property: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        unit: {
+          select: {
+            id: true,
+            code: true,
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { startDate: "desc" },
+    });
+
+    return NextResponse.json({
+      data: { leases },
+      message: "Tenant leases fetched successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error fetching tenant leases:", error);
+    return NextResponse.json(
+      {
+        data: null,
+        message: "An error occurred while fetching tenant leases",
+        success: false,
+      },
+      { status: 500 },
+    );
+  }
+}

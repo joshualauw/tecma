@@ -11,7 +11,7 @@ const updateTenantSchema = z.object({
   name: z.string().trim().min(1),
   phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().trim().min(1).nullable(),
-  unitId: z.coerce.number().int().positive(),
+  propertyId: z.coerce.number().int().positive(),
 });
 
 type UpdateTenantActionResponse = ApiResponse<null>;
@@ -22,7 +22,7 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
     name: formData.get("name"),
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
-    unitId: formData.get("unitId"),
+    propertyId: formData.get("propertyId"),
   });
 
   if (!parsed.success) {
@@ -30,44 +30,16 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, name, phoneNumber, address, unitId } = parsed.data;
+  const { id, name, phoneNumber, address, propertyId } = parsed.data;
 
   try {
     const tenant = await prisma.tenants.findUnique({
       where: { id },
-      select: { id: true, propertyId: true },
+      select: { id: true },
     });
 
     if (!tenant) {
       return { success: false, message: "Tenant not found" };
-    }
-
-    const availableUnit = await prisma.units.findFirst({
-      where: {
-        id: unitId,
-        propertyId: tenant.propertyId ?? -1,
-        OR: [
-          {
-            tenants: {
-              none: {},
-            },
-          },
-          {
-            tenants: {
-              some: {
-                id,
-              },
-            },
-          },
-        ],
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!availableUnit) {
-      return { success: false, message: "Selected unit is not available" };
     }
 
     await prisma.tenants.update({
@@ -78,7 +50,7 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
         name: name,
         phoneNumber: phoneNumber as string,
         address: address,
-        unitId,
+        propertyId,
       },
     });
 
