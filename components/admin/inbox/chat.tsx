@@ -8,7 +8,7 @@ import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/
 import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import { Check, CheckCheck, CircleStop, FileText, ImageIcon, Loader2, MapPin, Music, Video } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function formatLastMessageAt(value: Date | string | null) {
   if (!value) {
@@ -254,6 +254,12 @@ export default function InboxChat() {
   } = useInbox();
 
   const [draftMessage, setDraftMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isLoadingRoomData || messages.length === 0) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+  }, [messages, isLoadingRoomData]);
 
   async function handleSendMessage(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -295,6 +301,7 @@ export default function InboxChat() {
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} aria-hidden />
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No messages yet.</div>
