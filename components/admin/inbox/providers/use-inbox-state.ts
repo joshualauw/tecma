@@ -4,11 +4,12 @@
 import type { RoomApiItem } from "@/app/api/rooms/route";
 import { resolveRoomAction } from "@/lib/actions/rooms/resolve-room";
 import { sendMessageAction } from "@/lib/actions/messages/send-message";
+import { validateMessageAttachment, type MessageAttachmentType } from "@/lib/constants";
 import { MessageType, RoomStatus } from "@/generated/prisma/enums";
 import { useMessages } from "@/lib/fetching/messages/use-messages";
 import { useRoomDetail } from "@/lib/fetching/rooms/use-room-detail";
 import { useRooms } from "@/lib/fetching/rooms/use-rooms";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export interface UseInboxStateProps {
@@ -26,6 +27,45 @@ export function useInboxState({ properties }: UseInboxStateProps) {
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
   const [isResolvingRoom, setIsResolvingRoom] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [draftMessage, setDraftMessage] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentType, setAttachmentType] = useState<MessageAttachmentType | null>(null);
+
+  const previewUrl = useMemo(() => {
+    if (attachmentFile && (attachmentType === "image" || attachmentType === "video")) {
+      return URL.createObjectURL(attachmentFile);
+    }
+    return null;
+  }, [attachmentFile, attachmentType]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const clearAttachment = useCallback(() => {
+    setAttachmentFile(null);
+    setAttachmentType(null);
+  }, []);
+
+  const setAttachmentFromFile = useCallback((type: MessageAttachmentType, file: File) => {
+    const result = validateMessageAttachment({ type: file.type, size: file.size, name: file.name }, type);
+    if (!result.valid) {
+      toast.error(result.error);
+      return;
+    }
+    setAttachmentFile(file);
+    setAttachmentType(type);
+    if (type === "audio") {
+      setDraftMessage("");
+    }
+  }, []);
+
+  useEffect(() => {
+    setDraftMessage("");
+    clearAttachment();
+  }, [selectedRoomId, clearAttachment]);
 
   const {
     data: roomsData,
@@ -204,5 +244,12 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     onConfirmResolveRoom,
     onSendMessage,
     hasRoomDetail: roomDetail != null,
+    draftMessage,
+    setDraftMessage,
+    attachmentFile,
+    attachmentType,
+    previewUrl,
+    clearAttachment,
+    setAttachmentFromFile,
   };
 }

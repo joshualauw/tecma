@@ -1,22 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
-import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
-import {
-  getAcceptString,
-  MESSAGE_ATTACHMENT,
-  validateMessageAttachment,
-  type MessageAttachmentType,
-} from "@/lib/constants";
+import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import {
@@ -28,17 +14,12 @@ import {
   Loader2Icon,
   MapPinIcon,
   MusicIcon,
-  PaperclipIcon,
-  SmileIcon,
   VideoIcon,
   XIcon,
 } from "lucide-react";
-import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
-import Image from "next/image";
-
-const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
+import { useEffect, useRef } from "react";
+import InboxFooter from "@/components/admin/inbox/footer";
+import { Separator } from "@/components/ui/separator";
 
 function formatLastMessageAt(value: Date | string | null) {
   if (!value) {
@@ -79,11 +60,11 @@ function MessageStatusIcon({ status }: { status: MessageStatus | null }) {
 
 type MessageBubbleProps = {
   content: string;
-  messageType?: MessageType | null;
+  messageType: MessageType;
   extras: MessageExtras | null;
   senderType: SenderType;
-  status: MessageStatus | null;
-  createdAt: Date | string;
+  status: MessageStatus;
+  createdAt: Date;
 };
 
 function TextBubble({ content, senderType, status, createdAt }: MessageBubbleProps) {
@@ -105,7 +86,6 @@ function ImageBubble({ content, extras, senderType, status, createdAt }: Message
     <>
       {url ? (
         <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={url} alt={content || "Image"} className="max-h-48 max-w-full object-contain" />
         </a>
       ) : (
@@ -211,6 +191,7 @@ function LocationBubble({ extras, senderType, status, createdAt }: MessageBubble
   const name = loc?.name?.trim();
   const address = loc?.address?.trim();
   const hasNameOrAddress = !!name || !!address;
+
   return (
     <>
       <div className="flex flex-col gap-1">
@@ -240,22 +221,9 @@ function LocationBubble({ extras, senderType, status, createdAt }: MessageBubble
 }
 
 function getMessageBubble(props: MessageBubbleProps): React.ReactNode {
-  const { messageType, extras } = props;
-  const effectiveType: MessageType =
-    messageType ??
-    (extras?.image
-      ? MessageType.image
-      : extras?.document
-        ? MessageType.document
-        : extras?.audio
-          ? MessageType.audio
-          : extras?.video
-            ? MessageType.video
-            : extras?.location
-              ? MessageType.location
-              : MessageType.text);
+  const { messageType } = props;
 
-  switch (effectiveType) {
+  switch (messageType) {
     case MessageType.image:
       return <ImageBubble {...props} />;
     case MessageType.document:
@@ -272,123 +240,80 @@ function getMessageBubble(props: MessageBubbleProps): React.ReactNode {
   }
 }
 
-const ATTACHMENT_TYPE_TO_MESSAGE_TYPE: Record<MessageAttachmentType, MessageType> = {
-  image: MessageType.image,
-  video: MessageType.video,
-  audio: MessageType.audio,
-  document: MessageType.document,
-};
+function AttachmentPreview() {
+  const { attachmentFile, attachmentType, previewUrl, clearAttachment } = useInbox();
+  if (!attachmentFile) return null;
 
-export default function InboxChat() {
-  const {
-    isRoomDataOpen,
-    isLoadingRoomData,
-    messages,
-    isRoomActive,
-    currentRoomStatus,
-    isSendingMessage,
-    onSendMessage,
-  } = useInbox();
+  return (
+    <div className="flex flex-col min-h-full items-center justify-center text-sm text-muted-foreground py-4 px-8">
+      <div className="flex w-full items-center justify-between gap-2 mb-2">
+        <span className="text-sm font-medium text-muted-foreground">Preview</span>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={clearAttachment} aria-label="Remove attachment">
+          <XIcon size={18} />
+        </Button>
+      </div>
+      <div className="flex min-h-[120px] w-full flex-1 flex-col items-center justify-center">
+        {attachmentType === "image" && previewUrl && (
+          <img src={previewUrl} alt="Attachment preview" className="max-h-72 max-w-full object-contain" />
+        )}
+        {attachmentType === "video" && previewUrl && (
+          <video src={previewUrl} controls className="max-h-72 max-w-full rounded-md">
+            Your browser does not support video.
+          </video>
+        )}
+        {(attachmentType === "document" || attachmentType === "audio") && (
+          <div className="flex flex-col items-center gap-2">
+            {attachmentType === "audio" ? (
+              <MusicIcon size={48} className="text-muted-foreground" />
+            ) : (
+              <FileTextIcon size={48} className="text-muted-foreground" />
+            )}
+            <span className="max-w-full truncate text-center text-sm">{attachmentFile.name}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-  const [draftMessage, setDraftMessage] = useState("");
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [attachmentType, setAttachmentType] = useState<MessageAttachmentType | null>(null);
+function MessagesList() {
+  const { messages, isLoadingRoomData, attachmentFile } = useInbox();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const fileInputRefs = useRef<Record<MessageAttachmentType, HTMLInputElement | null>>({
-    image: null,
-    video: null,
-    audio: null,
-    document: null,
-  });
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
-        setEmojiPickerOpen(false);
-      }
-    }
-    if (emojiPickerOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [emojiPickerOpen]);
 
   useEffect(() => {
     if (isLoadingRoomData || messages.length === 0 || attachmentFile) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
   }, [messages, isLoadingRoomData, attachmentFile]);
 
-  const handleAttachmentSelect = useCallback((type: MessageAttachmentType) => {
-    const input = fileInputRefs.current[type];
-    if (input) {
-      input.value = "";
-      input.click();
-    }
-  }, []);
-
-  const handleFileInputChange = useCallback(
-    (type: MessageAttachmentType) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const result = validateMessageAttachment({ type: file.type, size: file.size, name: file.name }, type);
-      if (!result.valid) {
-        toast.error(result.error);
-        event.target.value = "";
-        return;
-      }
-
-      setAttachmentFile(file);
-      setAttachmentType(type);
-      if (type === "audio") {
-        setDraftMessage("");
-      }
-      event.target.value = "";
-    },
-    [],
+  return (
+    <div className="space-y-3">
+      {messages.map((message) => (
+        <div
+          key={message.id}
+          className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
+        >
+          <div
+            className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
+          >
+            {getMessageBubble({
+              content: message.content,
+              messageType: message.messageType,
+              extras: message.extras,
+              senderType: message.senderType,
+              status: message.status,
+              createdAt: message.createdAt,
+            })}
+          </div>
+        </div>
+      ))}
+      <div ref={messagesEndRef} aria-hidden />
+    </div>
   );
+}
 
-  const clearAttachment = useCallback(() => {
-    setAttachmentFile(null);
-    setAttachmentType(null);
-  }, []);
-
-  const previewUrl = useMemo(() => {
-    if (attachmentFile && (attachmentType === "image" || attachmentType === "video")) {
-      return URL.createObjectURL(attachmentFile);
-    }
-    return null;
-  }, [attachmentFile, attachmentType]);
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
-
-  async function handleSendMessage(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (isSendingMessage) return;
-
-    const content = draftMessage.trim();
-
-    if (attachmentFile && attachmentType) {
-      const messageType = ATTACHMENT_TYPE_TO_MESSAGE_TYPE[attachmentType];
-      const isSent = await onSendMessage(content, messageType, attachmentFile);
-      if (isSent) {
-        setDraftMessage("");
-        clearAttachment();
-      }
-    } else {
-      const isSent = await onSendMessage(content, MessageType.text);
-      if (isSent) {
-        setDraftMessage("");
-      }
-    }
-  }
+export default function InboxChat() {
+  const { isRoomDataOpen, isLoadingRoomData, messages, attachmentFile } = useInbox();
 
   return (
     <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
@@ -396,161 +321,15 @@ export default function InboxChat() {
         {isLoadingRoomData ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading chat...</div>
         ) : attachmentFile ? (
-          <div className="flex flex-col min-h-full items-center justify-center text-sm text-muted-foreground py-4 px-8">
-            <div className="flex w-full items-center justify-between gap-2 mb-2">
-              <span className="text-sm font-medium text-muted-foreground">Preview</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={clearAttachment}
-                aria-label="Remove attachment"
-              >
-                <XIcon size={18} />
-              </Button>
-            </div>
-            <div className="flex min-h-[120px] w-full flex-1 flex-col items-center justify-center rounded-lg border bg-muted/50 p-4">
-              {attachmentType === "image" && previewUrl && (
-                <Image
-                  src={previewUrl}
-                  width={100}
-                  height={100}
-                  alt="Attachment preview"
-                  className="max-h-64 max-w-full object-contain"
-                />
-              )}
-              {attachmentType === "video" && previewUrl && (
-                <video src={previewUrl} controls className="max-h-64 max-w-full rounded-md">
-                  Your browser does not support video.
-                </video>
-              )}
-              {(attachmentType === "document" || attachmentType === "audio") && (
-                <div className="flex flex-col items-center gap-2">
-                  {attachmentType === "audio" ? (
-                    <MusicIcon size={48} className="text-muted-foreground" />
-                  ) : (
-                    <FileTextIcon size={48} className="text-muted-foreground" />
-                  )}
-                  <span className="max-w-full truncate text-center text-sm">{attachmentFile.name}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          <AttachmentPreview />
         ) : messages.length ? (
-          <div className="space-y-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
-              >
-                <div
-                  className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
-                >
-                  {getMessageBubble({
-                    content: message.content,
-                    messageType: message.messageType,
-                    extras: message.extras,
-                    senderType: message.senderType,
-                    status: message.status,
-                    createdAt: message.createdAt,
-                  })}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} aria-hidden />
-          </div>
+          <MessagesList />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No messages yet.</div>
         )}
       </div>
-
       <Separator />
-
-      {isRoomActive ? (
-        <div className="relative p-4" ref={emojiPickerRef}>
-          {emojiPickerOpen && (
-            <div className="absolute bottom-full left-4 z-10 mb-2">
-              <EmojiPicker
-                onEmojiClick={(emojiData) => {
-                  setDraftMessage((prev) => prev + emojiData.emoji);
-                }}
-              />
-            </div>
-          )}
-
-          {(["image", "video", "audio", "document"] as const).map((type) => (
-            <input
-              key={type}
-              ref={(el) => {
-                fileInputRefs.current[type] = el;
-              }}
-              type="file"
-              accept={getAcceptString(type)}
-              className="hidden"
-              onChange={handleFileInputChange(type)}
-            />
-          ))}
-
-          <form className="flex items-center gap-2" onSubmit={handleSendMessage}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="shrink-0"
-                  disabled={isSendingMessage}
-                  aria-label="Attach file"
-                >
-                  <PaperclipIcon size={20} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="top">
-                <DropdownMenuItem onClick={() => handleAttachmentSelect("image")}>
-                  <ImageIcon size={16} />
-                  Image (PNG, JPG max {MESSAGE_ATTACHMENT.image.maxBytesLabel})
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleAttachmentSelect("video")}>
-                  <VideoIcon size={16} />
-                  Video (3GP, MP4 max {MESSAGE_ATTACHMENT.video.maxBytesLabel})
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleAttachmentSelect("audio")}>
-                  <MusicIcon size={16} />
-                  Audio (AAC, AMR, MP3, M4A max {MESSAGE_ATTACHMENT.audio.maxBytesLabel})
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleAttachmentSelect("document")}>
-                  <FileTextIcon size={16} />
-                  Document (TXT, XLS, DOC, PPT, PDF max {MESSAGE_ATTACHMENT.document.maxBytesLabel})
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="shrink-0"
-              onClick={() => setEmojiPickerOpen((open) => !open)}
-              disabled={isSendingMessage}
-              aria-label="Insert emoji"
-            >
-              <SmileIcon size={20} />
-            </Button>
-            <Input
-              value={draftMessage}
-              onChange={(event) => setDraftMessage(event.target.value)}
-              placeholder={attachmentType === "audio" ? "Audio attached" : "Type a message..."}
-              disabled={isSendingMessage || attachmentType === "audio"}
-            />
-            <Button type="submit" disabled={isSendingMessage || (!attachmentFile && !draftMessage.trim())}>
-              {isSendingMessage ? "Sending..." : "Send"}
-            </Button>
-          </form>
-        </div>
-      ) : (
-        <div className="px-4 py-3 text-sm text-muted-foreground">
-          Room is {currentRoomStatus === RoomStatus.expired ? "expired" : "closed"}. Messaging is disabled.
-        </div>
-      )}
+      <InboxFooter />
     </div>
   );
 }
