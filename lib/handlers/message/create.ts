@@ -3,6 +3,7 @@ import { MessageType, SenderType } from "@/generated/prisma/enums";
 import { MessagesCreateInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import dayjs from "@/lib/dayjs";
+import { MessageExtras } from "@/types/MessageExtras";
 
 type MessageToCreate = {
   roomId: number;
@@ -25,6 +26,7 @@ function enrichMessageToDatabase(message: MessageToCreate): MessagesCreateInput 
     },
     senderType: SenderType.user,
     content: message.content,
+    messageType: message.messageType,
   };
 
   switch (message.messageType) {
@@ -52,7 +54,9 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
         senderType: true,
         content: true,
         status: true,
+        messageType: true,
         createdAt: true,
+        extras: true,
       },
     });
 
@@ -64,6 +68,9 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
       },
     });
 
-    return createdMessage;
+    return {
+      ...createdMessage,
+      extras: createdMessage.extras as MessageExtras | null,
+    };
   });
 }

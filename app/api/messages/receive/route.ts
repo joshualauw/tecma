@@ -48,6 +48,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     return new NextResponse("Message received successfully", { status: 200 });
   } catch (error) {
     console.error("Error receiving message:", error);
-    return new NextResponse("Error receiving message", { status: 500 });
+    return new NextResponse("Error receiving message", { status: 200 });
   }
 }

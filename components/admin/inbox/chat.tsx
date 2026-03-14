@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
-import { MessageStatus, RoomStatus, SenderType } from "@/generated/prisma/enums";
+import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
-import { Check, CheckCheck, CircleStop, Loader2 } from "lucide-react";
+import type { MessageExtras } from "@/types/MessageExtras";
+import { Check, CheckCheck, CircleStop, FileText, ImageIcon, Loader2, MapPin, Music, Video } from "lucide-react";
 import { useState } from "react";
 
 function formatLastMessageAt(value: Date | string | null) {
@@ -44,6 +45,189 @@ function MessageStatusIcon({ status }: { status: MessageStatus | null }) {
     return <CircleStop size={size} className="shrink-0 text-destructive" />;
   }
   return null;
+}
+
+type MessageBubbleProps = {
+  content: string;
+  messageType?: MessageType | null;
+  extras: MessageExtras | null;
+  senderType: SenderType;
+  status: MessageStatus | null;
+  createdAt: Date | string;
+};
+
+function TextBubble({ content, senderType, status, createdAt }: MessageBubbleProps) {
+  return (
+    <>
+      <p>{content}</p>
+      <div className="mt-1 flex items-center justify-between gap-1.5">
+        <span className="text-[10px] opacity-80">{formatLastMessageAt(createdAt)}</span>
+        {senderType !== SenderType.tenant && <MessageStatusIcon status={status} />}
+      </div>
+    </>
+  );
+}
+
+function ImageBubble({ content, extras, senderType, status, createdAt }: MessageBubbleProps) {
+  const url = extras?.image?.mediaUrl;
+  const type = extras?.image?.type;
+  return (
+    <>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt={content || "Image"} className="max-h-48 max-w-full object-contain" />
+        </a>
+      ) : (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <ImageIcon size={16} />
+          <span className="text-xs">Image unavailable</span>
+        </div>
+      )}
+      {content && type !== "sticker" ? <p className="mt-1">{content}</p> : null}
+      <div className="mt-1 flex items-center justify-between gap-1.5">
+        <span className="text-[10px] opacity-80">{formatLastMessageAt(createdAt)}</span>
+        {senderType !== SenderType.tenant && <MessageStatusIcon status={status} />}
+      </div>
+    </>
+  );
+}
+
+function DocumentBubble({ content, extras, senderType, status, createdAt }: MessageBubbleProps) {
+  const url = extras?.document?.mediaUrl;
+  const filename = extras?.document?.filename;
+  const label = filename ?? content ?? "Document";
+  return (
+    <>
+      {url ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-md py-1 hover:underline"
+        >
+          <FileText size={18} className="shrink-0" />
+          <span className="break-all text-sm">{label}</span>
+        </a>
+      ) : (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <FileText size={16} />
+          <span className="text-xs">{label}</span>
+        </div>
+      )}
+      {content ? <p className="mt-1">{content}</p> : null}
+      <div className="mt-1 flex items-center justify-between gap-1.5">
+        <span className="text-[10px] opacity-80">{formatLastMessageAt(createdAt)}</span>
+        {senderType !== SenderType.tenant && <MessageStatusIcon status={status} />}
+      </div>
+    </>
+  );
+}
+
+function AudioBubble({ extras, senderType, status, createdAt }: MessageBubbleProps) {
+  const url = extras?.audio?.mediaUrl;
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <Music size={18} className="shrink-0 opacity-80" />
+        {url ? (
+          <audio controls className="max-w-full" src={url}>
+            Your browser does not support audio.
+          </audio>
+        ) : (
+          <span className="text-xs text-muted-foreground">Audio unavailable</span>
+        )}
+      </div>
+
+      <div className="mt-1 flex items-center justify-between gap-1.5">
+        <span className="text-[10px] opacity-80">{formatLastMessageAt(createdAt)}</span>
+        {senderType !== SenderType.tenant && <MessageStatusIcon status={status} />}
+      </div>
+    </>
+  );
+}
+
+function VideoBubble({ content, extras, senderType, status, createdAt }: MessageBubbleProps) {
+  const url = extras?.video?.mediaUrl;
+  return (
+    <>
+      {url ? (
+        <div className="space-y-1">
+          <video controls className="max-h-48 max-w-full rounded-md" src={url}>
+            Your browser does not support video.
+          </video>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Video size={16} />
+          <span className="text-xs">Video unavailable</span>
+        </div>
+      )}
+      {content ? <p className="mt-1">{content}</p> : null}
+      <div className="mt-1 flex items-center justify-between gap-1.5">
+        <span className="text-[10px] opacity-80">{formatLastMessageAt(createdAt)}</span>
+        {senderType !== SenderType.tenant && <MessageStatusIcon status={status} />}
+      </div>
+    </>
+  );
+}
+
+function LocationBubble({ extras, senderType, status, createdAt }: MessageBubbleProps) {
+  const lat = extras?.location?.latitude;
+  const lng = extras?.location?.longitude;
+  const hasCoords = typeof lat === "number" && typeof lng === "number";
+  const mapsUrl = hasCoords ? `https://www.google.com/maps?q=${lat},${lng}` : null;
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <MapPin size={18} className="shrink-0 opacity-80" />
+        {mapsUrl ? (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
+            View on map
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground">Location unavailable</span>
+        )}
+      </div>
+      <div className="mt-1 flex items-center justify-between gap-1.5">
+        <span className="text-[10px] opacity-80">{formatLastMessageAt(createdAt)}</span>
+        {senderType !== SenderType.tenant && <MessageStatusIcon status={status} />}
+      </div>
+    </>
+  );
+}
+
+function getMessageBubble(props: MessageBubbleProps): React.ReactNode {
+  const { messageType, extras } = props;
+  const effectiveType: MessageType =
+    messageType ??
+    (extras?.image
+      ? MessageType.image
+      : extras?.document
+        ? MessageType.document
+        : extras?.audio
+          ? MessageType.audio
+          : extras?.video
+            ? MessageType.video
+            : extras?.location
+              ? MessageType.location
+              : MessageType.text);
+
+  switch (effectiveType) {
+    case MessageType.image:
+      return <ImageBubble {...props} />;
+    case MessageType.document:
+      return <DocumentBubble {...props} />;
+    case MessageType.audio:
+      return <AudioBubble {...props} />;
+    case MessageType.video:
+      return <VideoBubble {...props} />;
+    case MessageType.location:
+      return <LocationBubble {...props} />;
+    case MessageType.text:
+    default:
+      return <TextBubble {...props} />;
+  }
 }
 
 export default function InboxChat() {
@@ -88,11 +272,14 @@ export default function InboxChat() {
                 <div
                   className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
                 >
-                  <p>{message.content}</p>
-                  <div className="mt-1 flex items-center justify-between gap-1.5">
-                    <span className="text-[10px] opacity-80">{formatLastMessageAt(message.createdAt)}</span>
-                    {message.senderType !== SenderType.tenant && <MessageStatusIcon status={message.status} />}
-                  </div>
+                  {getMessageBubble({
+                    content: message.content,
+                    messageType: message.messageType,
+                    extras: message.extras,
+                    senderType: message.senderType,
+                    status: message.status,
+                    createdAt: message.createdAt,
+                  })}
                 </div>
               </div>
             ))}

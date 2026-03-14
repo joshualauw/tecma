@@ -1,8 +1,9 @@
-import { MessageStatus, SenderType } from "@/generated/prisma/enums";
+import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
 import { MessagesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
+import type { MessageExtras } from "@/types/MessageExtras";
 import z from "zod";
 
 export type MessageApiItem = {
@@ -10,6 +11,8 @@ export type MessageApiItem = {
   senderType: SenderType;
   status: MessageStatus;
   content: string;
+  messageType: MessageType;
+  extras: MessageExtras | null;
   createdAt: Date;
 };
 
@@ -59,7 +62,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
         senderType: true,
         content: true,
         status: true,
+        messageType: true,
         createdAt: true,
+        extras: true,
       },
       where,
       orderBy: {
@@ -69,7 +74,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
 
     return NextResponse.json({
       data: {
-        messages,
+        messages: messages.map((message) => ({
+          ...message,
+          extras: message.extras as MessageExtras | null,
+        })),
         count: messages.length,
       },
       message: "Messages fetched successfully",

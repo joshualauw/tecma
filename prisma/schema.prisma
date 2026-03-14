@@ -157,6 +157,7 @@ model Messages {
   content     String
   messageType MessageType   @default(text) @map("message_type")
   status      MessageStatus @default(pending)
+  extras      Json?         @map("extras")
 
   createdAt DateTime @default(now()) @map("created_at")
 

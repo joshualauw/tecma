@@ -1,47 +1,140 @@
-import type { WebhookValue } from "@whatsapp-cloudapi/types/webhook";
+import type {
+  WebhookImageMessage,
+  WebhookStickerMessage,
+  WebhookTextMessage,
+  WebhookDocumentMessage,
+  WebhookValue,
+  WebhookAudioMessage,
+  WebhookVideoMessage,
+  WebhookMessageBase,
+} from "@whatsapp-cloudapi/types/webhook";
 import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import dayjs from "@/lib/dayjs";
+import type { MessageExtras } from "@/types/MessageExtras";
+import { InputJsonValue } from "@prisma/client/runtime/client";
+import { uploadFileToR2 } from "@/lib/upload";
 
 type WebhookMessage = NonNullable<WebhookValue["messages"]>[number];
+type ExtendedWebhookMessageType = WebhookMessage["type"] | "location";
+type WebhookLocationMessage = WebhookMessageBase & {
+  type: ExtendedWebhookMessageType;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+};
 
 type FlattenedMessage = {
   waId: string;
   content: string;
   messageType: MessageType;
+  extras: MessageExtras | null;
 };
 
-function flattenWebhookMessage(msg: WebhookMessage): FlattenedMessage {
+async function resolveMediaUrl(mediaId: string): Promise<string> {
+  const token = process.env.WHATSAPP_SYSTEM_USER_ACCESS_TOKEN;
+
+  const metadataResponse = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const metadata = await metadataResponse.json();
+
+  if (!metadata.url) {
+    throw new Error("Failed to retrieve media URL from Meta");
+  }
+
+  const fileResponse = await fetch(metadata.url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const arrayBuffer = await fileResponse.arrayBuffer();
+  const contentType = metadata.mime_type || fileResponse.headers.get("content-type") || "application/octet-stream";
+
+  return await uploadFileToR2(Buffer.from(arrayBuffer), contentType);
+}
+
+async function flattenWebhookMessage(msg: WebhookMessage): Promise<FlattenedMessage> {
   const waId = msg.id;
-  const type = msg.type;
+  const type = msg.type as ExtendedWebhookMessageType;
 
   let messageType: MessageType = MessageType.text;
   let content: string = "";
+  let extras: MessageExtras | null = null;
 
   switch (type) {
     case "text": {
       messageType = MessageType.text;
-      content = msg.text.body;
+      content = (msg as WebhookTextMessage).text.body;
       break;
     }
     case "image": {
       messageType = MessageType.image;
-      content = "[image]";
+      content = (msg as WebhookImageMessage).image.caption || "";
+      extras = {
+        image: {
+          mediaId: (msg as WebhookImageMessage).image.id,
+          mediaUrl: await resolveMediaUrl((msg as WebhookImageMessage).image.id),
+          type: "image",
+        },
+      };
+      break;
+    }
+    case "sticker": {
+      messageType = MessageType.image;
+      content = "";
+      extras = {
+        image: {
+          mediaId: (msg as WebhookStickerMessage).sticker.id,
+          mediaUrl: await resolveMediaUrl((msg as WebhookStickerMessage).sticker.id),
+          type: "sticker",
+        },
+      };
       break;
     }
     case "document": {
       messageType = MessageType.document;
-      content = "[document]";
+      content = (msg as WebhookDocumentMessage).document.caption || "";
+      extras = {
+        document: {
+          mediaId: (msg as WebhookDocumentMessage).document.id,
+          mediaUrl: await resolveMediaUrl((msg as WebhookDocumentMessage).document.id),
+          filename: (msg as WebhookDocumentMessage).document.filename,
+        },
+      };
       break;
     }
     case "audio": {
       messageType = MessageType.audio;
-      content = "[audio]";
+      content = "";
+      extras = {
+        audio: {
+          mediaId: (msg as WebhookAudioMessage).audio.id,
+          mediaUrl: await resolveMediaUrl((msg as WebhookAudioMessage).audio.id),
+        },
+      };
       break;
     }
     case "video": {
       messageType = MessageType.video;
-      content = "[video]";
+      content = (msg as WebhookVideoMessage).video.caption || "";
+      extras = {
+        video: {
+          mediaId: (msg as WebhookVideoMessage).video.id,
+          mediaUrl: await resolveMediaUrl((msg as WebhookVideoMessage).video.id),
+        },
+      };
+      break;
+    }
+    case "location": {
+      messageType = MessageType.location;
+      content = "";
+      extras = {
+        location: {
+          latitude: (msg as WebhookLocationMessage).location.latitude,
+          longitude: (msg as WebhookLocationMessage).location.longitude,
+        },
+      };
       break;
     }
     default: {
@@ -51,7 +144,7 @@ function flattenWebhookMessage(msg: WebhookMessage): FlattenedMessage {
     }
   }
 
-  return { waId, content, messageType: messageType as MessageType };
+  return { waId, content, extras, messageType: messageType as MessageType };
 }
 
 export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<void> {
@@ -82,10 +175,11 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
     throw new Error("Tenant not registered");
   }
 
-  const now = dayjs();
-  const expiredAt = now.add(1, "day");
+  const messageTimestamp = dayjs(Number(message.timestamp) * 1000);
+  const expiredAt = messageTimestamp.add(1, "day");
 
-  const flattenedMessage = flattenWebhookMessage(message);
+  const flattenedMessage = await flattenWebhookMessage(message);
+  const lastMessage = flattenedMessage.content !== "" ? flattenedMessage.content : `[${flattenedMessage.messageType}]`;
 
   await prisma.$transaction(async (tx) => {
     let room = await tx.rooms.findFirst({
@@ -104,9 +198,9 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
           tenantId: tenant.id,
           whatsappId: whatsapp.id,
           status: RoomStatus.active,
+          lastMessage: lastMessage,
+          lastMessageAt: messageTimestamp.toDate(),
           expiredAt: expiredAt.toDate(),
-          lastMessage: flattenedMessage.content,
-          lastMessageAt: now.toDate(),
         },
         select: { id: true },
       });
@@ -114,9 +208,9 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
       await tx.rooms.update({
         where: { id: room.id },
         data: {
-          lastMessage: flattenedMessage.content,
-          lastMessageAt: now.toDate(),
-          expiredAt: expiredAt.toDate(), //extend the room expiration date
+          lastMessage: lastMessage,
+          lastMessageAt: messageTimestamp.toDate(),
+          expiredAt: expiredAt.toDate(),
         },
       });
     }
@@ -129,7 +223,9 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         senderType: SenderType.tenant,
         content: flattenedMessage.content,
         messageType: flattenedMessage.messageType,
+        extras: flattenedMessage.extras as InputJsonValue,
         status: MessageStatus.delivered,
+        createdAt: messageTimestamp.toDate(),
       },
     });
   });
