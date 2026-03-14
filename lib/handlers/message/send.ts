@@ -2,15 +2,28 @@ import type {
   CloudAPIMessageRequestBase,
   CloudAPISendTextMessageRequest,
   CloudAPIResponse,
+  CloudAPISendImageMessageRequest,
+  CloudAPISendDocumentMessageRequest,
+  CloudAPISendVideoMessageRequest,
+  CloudAPISendAudioMessageRequest,
 } from "@whatsapp-cloudapi/types/cloudapi";
-import { MessageType } from "@/generated/prisma/enums";
+import { MessageStatus, MessageType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import axios from "axios";
+import { MessageExtras } from "@/types/MessageExtras";
 
 type MessageToSend = {
   id: number;
   tenantPhoneNumber: string;
   whatsappPhoneId: string;
+};
+
+type ExtendedCloudAPISendImageMessageRequest = Omit<CloudAPISendImageMessageRequest, "image"> & {
+  image: {
+    id?: string;
+    caption?: string;
+    link?: string;
+  };
 };
 
 async function enrichMessageToCloudApi(message: MessageToSend, to: string): Promise<CloudAPIMessageRequestBase> {
@@ -28,9 +41,41 @@ async function enrichMessageToCloudApi(message: MessageToSend, to: string): Prom
 
   switch (databaseMessage.messageType) {
     case MessageType.text: {
-      (payload as CloudAPISendTextMessageRequest).type = MessageType.text;
+      (payload as CloudAPISendTextMessageRequest).type = "text";
       (payload as CloudAPISendTextMessageRequest).text = {
         body: databaseMessage.content.slice(0, 4096),
+      };
+      break;
+    }
+    case MessageType.image: {
+      (payload as CloudAPISendImageMessageRequest).type = "image";
+      (payload as ExtendedCloudAPISendImageMessageRequest).image = {
+        caption: databaseMessage.content,
+        link: (databaseMessage.extras as MessageExtras).image?.mediaUrl as string,
+      };
+      break;
+    }
+    case MessageType.document: {
+      (payload as CloudAPISendDocumentMessageRequest).type = "document";
+      (payload as CloudAPISendDocumentMessageRequest).document = {
+        caption: databaseMessage.content,
+        link: (databaseMessage.extras as MessageExtras).document?.mediaUrl,
+        filename: (databaseMessage.extras as MessageExtras).document?.filename,
+      };
+      break;
+    }
+    case MessageType.video: {
+      (payload as CloudAPISendVideoMessageRequest).type = "video";
+      (payload as CloudAPISendVideoMessageRequest).video = {
+        caption: databaseMessage.content,
+        link: (databaseMessage.extras as MessageExtras).video?.mediaUrl as string,
+      };
+      break;
+    }
+    case MessageType.audio: {
+      (payload as CloudAPISendAudioMessageRequest).type = "audio";
+      (payload as CloudAPISendAudioMessageRequest).audio = {
+        link: (databaseMessage.extras as MessageExtras).audio?.mediaUrl as string,
       };
       break;
     }
@@ -57,13 +102,24 @@ async function sendMessageToCloudApi(payload: CloudAPIMessageRequestBase, whatsa
 }
 
 export async function handleWhatsappMessageSend(message: MessageToSend): Promise<void> {
-  const payload = await enrichMessageToCloudApi(message, message.tenantPhoneNumber);
-  const messageId = await sendMessageToCloudApi(payload, message.whatsappPhoneId);
+  try {
+    const payload = await enrichMessageToCloudApi(message, message.tenantPhoneNumber);
+    const messageId = await sendMessageToCloudApi(payload, message.whatsappPhoneId);
 
-  await prisma.messages.update({
-    where: { id: message.id },
-    data: {
-      waId: messageId,
-    },
-  });
+    await prisma.messages.update({
+      where: { id: message.id },
+      data: {
+        waId: messageId,
+      },
+    });
+  } catch (error) {
+    await prisma.messages.update({
+      where: { id: message.id },
+      data: {
+        status: MessageStatus.failed,
+      },
+    });
+
+    throw error;
+  }
 }

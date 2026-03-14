@@ -3,11 +3,11 @@
 
 import type { RoomApiItem } from "@/app/api/rooms/route";
 import { resolveRoomAction } from "@/lib/actions/rooms/resolve-room";
-import { RoomStatus } from "@/generated/prisma/enums";
+import { sendMessageAction } from "@/lib/actions/messages/send-message";
+import { MessageType, RoomStatus } from "@/generated/prisma/enums";
 import { useMessages } from "@/lib/fetching/messages/use-messages";
 import { useRoomDetail } from "@/lib/fetching/rooms/use-room-detail";
 import { useRooms } from "@/lib/fetching/rooms/use-rooms";
-import { useSendMessage } from "@/lib/mutations/messages/use-send-message";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -25,8 +25,7 @@ export function useInboxState({ properties }: UseInboxStateProps) {
   const [isRoomDataOpen, setIsRoomDataOpen] = useState(false);
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
   const [isResolvingRoom, setIsResolvingRoom] = useState(false);
-
-  const { trigger: sendMessage, isMutating: isSendingMessage } = useSendMessage();
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const {
     data: roomsData,
@@ -110,7 +109,7 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     }
   }
 
-  async function onSendMessage(content: string): Promise<boolean> {
+  async function onSendMessage(content: string, messageType: MessageType, file?: File): Promise<boolean> {
     if (!isRoomActive || selectedRoomId === null || isSendingMessage) {
       return false;
     }
@@ -122,11 +121,29 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     }
 
     try {
-      const createdMessage = await sendMessage({
-        content,
-        roomId: selectedRoomId,
-        propertyId,
-      });
+      setIsSendingMessage(true);
+
+      const formData = new FormData();
+      formData.set("content", content);
+      formData.set("roomId", String(selectedRoomId));
+      formData.set("propertyId", String(propertyId));
+      formData.set("messageType", messageType);
+
+      if (file) {
+        formData.set("file", file);
+        if (messageType === MessageType.document) {
+          formData.set("filename", file.name);
+        }
+      }
+
+      const result = await sendMessageAction(formData);
+
+      if (!result.success || !result.data) {
+        toast.error(result.message || "Failed to send message");
+        return false;
+      }
+
+      const createdMessage = result.data;
 
       await Promise.all([
         mutateMessages(
@@ -156,6 +173,8 @@ export function useInboxState({ properties }: UseInboxStateProps) {
       console.error(error);
       toast.error("Failed to send message");
       return false;
+    } finally {
+      setIsSendingMessage(false);
     }
   }
 

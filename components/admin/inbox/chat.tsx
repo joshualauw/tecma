@@ -1,14 +1,44 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
+import {
+  getAcceptString,
+  MESSAGE_ATTACHMENT,
+  validateMessageAttachment,
+  type MessageAttachmentType,
+} from "@/lib/constants";
 import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
-import { Check, CheckCheck, CircleStop, FileText, ImageIcon, Loader2, MapPin, Music, Video } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  CheckIcon,
+  CheckCheckIcon,
+  CircleStopIcon,
+  FileTextIcon,
+  ImageIcon,
+  Loader2Icon,
+  MapPinIcon,
+  MusicIcon,
+  PaperclipIcon,
+  SmileIcon,
+  VideoIcon,
+  XIcon,
+} from "lucide-react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import Image from "next/image";
+
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 function formatLastMessageAt(value: Date | string | null) {
   if (!value) {
@@ -30,19 +60,19 @@ function MessageStatusIcon({ status }: { status: MessageStatus | null }) {
   if (!status) return null;
   const size = 12;
   if (status === MessageStatus.pending) {
-    return <Loader2 size={size} className="shrink-0 animate-spin opacity-80" />;
+    return <Loader2Icon size={size} className="shrink-0 animate-spin opacity-80" />;
   }
   if (status === MessageStatus.sent) {
-    return <Check size={size} className="shrink-0 opacity-80" />;
+    return <CheckIcon size={size} className="shrink-0 opacity-80" />;
   }
   if (status === MessageStatus.delivered) {
-    return <CheckCheck size={size} className="shrink-0 opacity-80" />;
+    return <CheckCheckIcon size={size} className="shrink-0 opacity-80" />;
   }
   if (status === MessageStatus.read) {
-    return <CheckCheck size={size} className="shrink-0 text-green-500" />;
+    return <CheckCheckIcon size={size} className="shrink-0 text-green-500" />;
   }
   if (status === MessageStatus.failed) {
-    return <CircleStop size={size} className="shrink-0 text-destructive" />;
+    return <CircleStopIcon size={size} className="shrink-0 text-destructive" />;
   }
   return null;
 }
@@ -106,12 +136,12 @@ function DocumentBubble({ content, extras, senderType, status, createdAt }: Mess
           rel="noopener noreferrer"
           className="flex items-center gap-2 rounded-md py-1 hover:underline"
         >
-          <FileText size={18} className="shrink-0" />
+          <FileTextIcon size={18} className="shrink-0" />
           <span className="break-all text-sm">{label}</span>
         </a>
       ) : (
         <div className="flex items-center gap-2 text-muted-foreground">
-          <FileText size={16} />
+          <FileTextIcon size={16} />
           <span className="text-xs">{label}</span>
         </div>
       )}
@@ -129,7 +159,7 @@ function AudioBubble({ extras, senderType, status, createdAt }: MessageBubblePro
   return (
     <>
       <div className="flex items-center gap-2">
-        <Music size={18} className="shrink-0 opacity-80" />
+        <MusicIcon size={18} className="shrink-0 opacity-80" />
         {url ? (
           <audio controls className="max-w-full" src={url}>
             Your browser does not support audio.
@@ -159,7 +189,7 @@ function VideoBubble({ content, extras, senderType, status, createdAt }: Message
         </div>
       ) : (
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Video size={16} />
+          <VideoIcon size={16} />
           <span className="text-xs">Video unavailable</span>
         </div>
       )}
@@ -185,7 +215,7 @@ function LocationBubble({ extras, senderType, status, createdAt }: MessageBubble
     <>
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <MapPin size={18} className="shrink-0 opacity-80" />
+          <MapPinIcon size={18} className="shrink-0 opacity-80" />
           {mapsUrl ? (
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
               View on map
@@ -242,6 +272,13 @@ function getMessageBubble(props: MessageBubbleProps): React.ReactNode {
   }
 }
 
+const ATTACHMENT_TYPE_TO_MESSAGE_TYPE: Record<MessageAttachmentType, MessageType> = {
+  image: MessageType.image,
+  video: MessageType.video,
+  audio: MessageType.audio,
+  document: MessageType.document,
+};
+
 export default function InboxChat() {
   const {
     isRoomDataOpen,
@@ -254,32 +291,151 @@ export default function InboxChat() {
   } = useInbox();
 
   const [draftMessage, setDraftMessage] = useState("");
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentType, setAttachmentType] = useState<MessageAttachmentType | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const fileInputRefs = useRef<Record<MessageAttachmentType, HTMLInputElement | null>>({
+    image: null,
+    video: null,
+    audio: null,
+    document: null,
+  });
 
   useEffect(() => {
-    if (isLoadingRoomData || messages.length === 0) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setEmojiPickerOpen(false);
+      }
+    }
+    if (emojiPickerOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [emojiPickerOpen]);
+
+  useEffect(() => {
+    if (isLoadingRoomData || messages.length === 0 || attachmentFile) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-  }, [messages, isLoadingRoomData]);
+  }, [messages, isLoadingRoomData, attachmentFile]);
+
+  const handleAttachmentSelect = useCallback((type: MessageAttachmentType) => {
+    const input = fileInputRefs.current[type];
+    if (input) {
+      input.value = "";
+      input.click();
+    }
+  }, []);
+
+  const handleFileInputChange = useCallback(
+    (type: MessageAttachmentType) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const result = validateMessageAttachment({ type: file.type, size: file.size, name: file.name }, type);
+      if (!result.valid) {
+        toast.error(result.error);
+        event.target.value = "";
+        return;
+      }
+
+      setAttachmentFile(file);
+      setAttachmentType(type);
+      if (type === "audio") {
+        setDraftMessage("");
+      }
+      event.target.value = "";
+    },
+    [],
+  );
+
+  const clearAttachment = useCallback(() => {
+    setAttachmentFile(null);
+    setAttachmentType(null);
+  }, []);
+
+  const previewUrl = useMemo(() => {
+    if (attachmentFile && (attachmentType === "image" || attachmentType === "video")) {
+      return URL.createObjectURL(attachmentFile);
+    }
+    return null;
+  }, [attachmentFile, attachmentType]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   async function handleSendMessage(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const content = draftMessage.trim();
-    if (!content || isSendingMessage) {
-      return;
-    }
+    if (isSendingMessage) return;
 
-    const isSent = await onSendMessage(content);
-    if (isSent) {
-      setDraftMessage("");
+    const content = draftMessage.trim();
+
+    if (attachmentFile && attachmentType) {
+      const messageType = ATTACHMENT_TYPE_TO_MESSAGE_TYPE[attachmentType];
+      const isSent = await onSendMessage(content, messageType, attachmentFile);
+      if (isSent) {
+        setDraftMessage("");
+        clearAttachment();
+      }
+    } else {
+      const isSent = await onSendMessage(content, MessageType.text);
+      if (isSent) {
+        setDraftMessage("");
+      }
     }
   }
 
   return (
     <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      <div className="relative min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {isLoadingRoomData ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading chat...</div>
+        ) : attachmentFile ? (
+          <div className="flex flex-col min-h-full items-center justify-center text-sm text-muted-foreground py-4 px-8">
+            <div className="flex w-full items-center justify-between gap-2 mb-2">
+              <span className="text-sm font-medium text-muted-foreground">Preview</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={clearAttachment}
+                aria-label="Remove attachment"
+              >
+                <XIcon size={18} />
+              </Button>
+            </div>
+            <div className="flex min-h-[120px] w-full flex-1 flex-col items-center justify-center rounded-lg border bg-muted/50 p-4">
+              {attachmentType === "image" && previewUrl && (
+                <Image
+                  src={previewUrl}
+                  width={100}
+                  height={100}
+                  alt="Attachment preview"
+                  className="max-h-64 max-w-full object-contain"
+                />
+              )}
+              {attachmentType === "video" && previewUrl && (
+                <video src={previewUrl} controls className="max-h-64 max-w-full rounded-md">
+                  Your browser does not support video.
+                </video>
+              )}
+              {(attachmentType === "document" || attachmentType === "audio") && (
+                <div className="flex flex-col items-center gap-2">
+                  {attachmentType === "audio" ? (
+                    <MusicIcon size={48} className="text-muted-foreground" />
+                  ) : (
+                    <FileTextIcon size={48} className="text-muted-foreground" />
+                  )}
+                  <span className="max-w-full truncate text-center text-sm">{attachmentFile.name}</span>
+                </div>
+              )}
+            </div>
+          </div>
         ) : messages.length ? (
           <div className="space-y-3">
             {messages.map((message) => (
@@ -311,17 +467,85 @@ export default function InboxChat() {
       <Separator />
 
       {isRoomActive ? (
-        <form className="flex items-center gap-2 p-4" onSubmit={handleSendMessage}>
-          <Input
-            value={draftMessage}
-            onChange={(event) => setDraftMessage(event.target.value)}
-            placeholder="Type a message..."
-            disabled={isSendingMessage}
-          />
-          <Button type="submit" disabled={!draftMessage.trim() || isSendingMessage}>
-            {isSendingMessage ? "Sending..." : "Send"}
-          </Button>
-        </form>
+        <div className="relative p-4" ref={emojiPickerRef}>
+          {emojiPickerOpen && (
+            <div className="absolute bottom-full left-4 z-10 mb-2">
+              <EmojiPicker
+                onEmojiClick={(emojiData) => {
+                  setDraftMessage((prev) => prev + emojiData.emoji);
+                }}
+              />
+            </div>
+          )}
+
+          {(["image", "video", "audio", "document"] as const).map((type) => (
+            <input
+              key={type}
+              ref={(el) => {
+                fileInputRefs.current[type] = el;
+              }}
+              type="file"
+              accept={getAcceptString(type)}
+              className="hidden"
+              onChange={handleFileInputChange(type)}
+            />
+          ))}
+
+          <form className="flex items-center gap-2" onSubmit={handleSendMessage}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0"
+                  disabled={isSendingMessage}
+                  aria-label="Attach file"
+                >
+                  <PaperclipIcon size={20} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="top">
+                <DropdownMenuItem onClick={() => handleAttachmentSelect("image")}>
+                  <ImageIcon size={16} />
+                  Image (PNG, JPG max {MESSAGE_ATTACHMENT.image.maxBytesLabel})
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAttachmentSelect("video")}>
+                  <VideoIcon size={16} />
+                  Video (3GP, MP4 max {MESSAGE_ATTACHMENT.video.maxBytesLabel})
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAttachmentSelect("audio")}>
+                  <MusicIcon size={16} />
+                  Audio (AAC, AMR, MP3, M4A max {MESSAGE_ATTACHMENT.audio.maxBytesLabel})
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAttachmentSelect("document")}>
+                  <FileTextIcon size={16} />
+                  Document (TXT, XLS, DOC, PPT, PDF max {MESSAGE_ATTACHMENT.document.maxBytesLabel})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0"
+              onClick={() => setEmojiPickerOpen((open) => !open)}
+              disabled={isSendingMessage}
+              aria-label="Insert emoji"
+            >
+              <SmileIcon size={20} />
+            </Button>
+            <Input
+              value={draftMessage}
+              onChange={(event) => setDraftMessage(event.target.value)}
+              placeholder={attachmentType === "audio" ? "Audio attached" : "Type a message..."}
+              disabled={isSendingMessage || attachmentType === "audio"}
+            />
+            <Button type="submit" disabled={isSendingMessage || (!attachmentFile && !draftMessage.trim())}>
+              {isSendingMessage ? "Sending..." : "Send"}
+            </Button>
+          </form>
+        </div>
       ) : (
         <div className="px-4 py-3 text-sm text-muted-foreground">
           Room is {currentRoomStatus === RoomStatus.expired ? "expired" : "closed"}. Messaging is disabled.

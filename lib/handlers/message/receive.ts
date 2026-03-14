@@ -52,9 +52,10 @@ async function resolveMediaUrl(mediaId: string): Promise<string> {
   });
 
   const arrayBuffer = await fileResponse.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
   const contentType = metadata.mime_type || fileResponse.headers.get("content-type") || "application/octet-stream";
 
-  return await uploadFileToR2(Buffer.from(arrayBuffer), contentType);
+  return await uploadFileToR2(buffer, contentType);
 }
 
 async function flattenWebhookMessage(msg: WebhookMessage): Promise<FlattenedMessage> {
