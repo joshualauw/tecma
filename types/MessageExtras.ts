@@ -20,5 +20,8 @@ export interface MessageExtras {
   location?: {
     latitude?: number;
     longitude?: number;
+    address?: string;
+    name?: string;
+    url?: string;
   };
 }

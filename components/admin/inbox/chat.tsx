@@ -173,20 +173,32 @@ function VideoBubble({ content, extras, senderType, status, createdAt }: Message
 }
 
 function LocationBubble({ extras, senderType, status, createdAt }: MessageBubbleProps) {
-  const lat = extras?.location?.latitude;
-  const lng = extras?.location?.longitude;
+  const loc = extras?.location;
+  const lat = loc?.latitude;
+  const lng = loc?.longitude;
   const hasCoords = typeof lat === "number" && typeof lng === "number";
   const mapsUrl = hasCoords ? `https://www.google.com/maps?q=${lat},${lng}` : null;
+  const name = loc?.name?.trim();
+  const address = loc?.address?.trim();
+  const hasNameOrAddress = !!name || !!address;
   return (
     <>
-      <div className="flex items-center gap-2">
-        <MapPin size={18} className="shrink-0 opacity-80" />
-        {mapsUrl ? (
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
-            View on map
-          </a>
-        ) : (
-          <span className="text-xs text-muted-foreground">Location unavailable</span>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <MapPin size={18} className="shrink-0 opacity-80" />
+          {mapsUrl ? (
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
+              View on map
+            </a>
+          ) : !hasNameOrAddress ? (
+            <span className="text-xs text-muted-foreground">Location unavailable</span>
+          ) : null}
+        </div>
+        {hasNameOrAddress && (
+          <div className="flex flex-col gap-0.5 text-sm mb-1">
+            {name && <span className="font-medium">{name}</span>}
+            {address && <span className="text-muted-foreground">{address}</span>}
+          </div>
         )}
       </div>
       <div className="mt-1 flex items-center justify-between gap-1.5">

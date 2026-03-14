@@ -22,6 +22,9 @@ type WebhookLocationMessage = WebhookMessageBase & {
   location: {
     latitude: number;
     longitude: number;
+    address?: string;
+    name?: string;
+    url?: string;
   };
 };
 
@@ -133,6 +136,9 @@ async function flattenWebhookMessage(msg: WebhookMessage): Promise<FlattenedMess
         location: {
           latitude: (msg as WebhookLocationMessage).location.latitude,
           longitude: (msg as WebhookLocationMessage).location.longitude,
+          address: (msg as WebhookLocationMessage).location.address,
+          name: (msg as WebhookLocationMessage).location.name,
+          url: (msg as WebhookLocationMessage).location.url,
         },
       };
       break;
