@@ -1,5 +1,5 @@
 import type { WebhookValue } from "@whatsapp-cloudapi/types/webhook";
-import { MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
+import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import dayjs from "@/lib/dayjs";
 
@@ -42,6 +42,11 @@ function flattenWebhookMessage(msg: WebhookMessage): FlattenedMessage {
     case "video": {
       messageType = MessageType.video;
       content = "[video]";
+      break;
+    }
+    default: {
+      messageType = MessageType.text;
+      content = "[unsupported]";
       break;
     }
   }
@@ -111,6 +116,7 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         data: {
           lastMessage: flattenedMessage.content,
           lastMessageAt: now.toDate(),
+          expiredAt: expiredAt.toDate(), //extend the room expiration date
         },
       });
     }
@@ -123,6 +129,7 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         senderType: SenderType.tenant,
         content: flattenedMessage.content,
         messageType: flattenedMessage.messageType,
+        status: MessageStatus.delivered,
       },
     });
   });

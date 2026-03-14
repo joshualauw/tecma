@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
-import { RoomStatus, SenderType } from "@/generated/prisma/enums";
+import { MessageStatus, RoomStatus, SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
+import { Check, CheckCheck, CircleStop, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 function formatLastMessageAt(value: Date | string | null) {
@@ -22,6 +23,27 @@ function messageBubbleClasses(senderType: SenderType) {
   } else {
     return `${classes} bg-secondary text-secondary-foreground`;
   }
+}
+
+function MessageStatusIcon({ status }: { status: MessageStatus | null }) {
+  if (!status) return null;
+  const size = 12;
+  if (status === MessageStatus.pending) {
+    return <Loader2 size={size} className="shrink-0 animate-spin opacity-80" />;
+  }
+  if (status === MessageStatus.sent) {
+    return <Check size={size} className="shrink-0 opacity-80" />;
+  }
+  if (status === MessageStatus.delivered) {
+    return <CheckCheck size={size} className="shrink-0 opacity-80" />;
+  }
+  if (status === MessageStatus.read) {
+    return <CheckCheck size={size} className="shrink-0 text-green-500" />;
+  }
+  if (status === MessageStatus.failed) {
+    return <CircleStop size={size} className="shrink-0 text-destructive" />;
+  }
+  return null;
 }
 
 export default function InboxChat() {
@@ -63,9 +85,14 @@ export default function InboxChat() {
                 key={message.id}
                 className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
               >
-                <div className={messageBubbleClasses(message.senderType)}>
+                <div
+                  className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
+                >
                   <p>{message.content}</p>
-                  <p className="mt-1 text-[10px] opacity-80">{formatLastMessageAt(message.createdAt)}</p>
+                  <div className="mt-1 flex items-center justify-between gap-1.5">
+                    <span className="text-[10px] opacity-80">{formatLastMessageAt(message.createdAt)}</span>
+                    {message.senderType !== SenderType.tenant && <MessageStatusIcon status={message.status} />}
+                  </div>
                 </div>
               </div>
             ))}

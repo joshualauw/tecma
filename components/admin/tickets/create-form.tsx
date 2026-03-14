@@ -252,18 +252,14 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Category</FieldLabel>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Select
                         value={field.value ?? ""}
                         onValueChange={field.onChange}
                         disabled={categories.length === 0}
                       >
                         <SelectTrigger className="w-full flex-1">
-                          <SelectValue
-                            placeholder={
-                              categories.length === 0 ? "No categories" : "Select a category"
-                            }
-                          />
+                          <SelectValue placeholder={categories.length === 0 ? "No categories" : "Select a category"} />
                         </SelectTrigger>
                         <SelectContent position="popper">
                           {categories.map((category) => (
@@ -290,7 +286,7 @@ export default function TicketCreateForm({ properties, categories }: TicketCreat
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Employee</FieldLabel>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Select
                         value={field.value ?? ""}
                         onValueChange={field.onChange}

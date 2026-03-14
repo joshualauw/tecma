@@ -8,3 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function standardizePhoneNumber(phone: string): string {
   return phone.replace(/\D/g, "");
 }
+
+export function limitText(text: string, limit: number = 120): string {
+  return text.length > limit ? text.slice(0, limit) + "..." : text;
+}

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RoomStatus } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import { FilterIcon, PhoneIcon } from "lucide-react";
+import { limitText } from "@/lib/utils";
 
 function formatStatusLabel(status: RoomStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -140,7 +141,7 @@ function RoomItem({ room, isSelected, onSelect }: RoomItemProps) {
             <PhoneIcon className="size-3" />
             <span>{room.whatsapp.displayName ?? "-"}</span>
           </div>
-          <p className="line-clamp-1 text-sm text-muted-foreground">{room.lastMessage ?? "-"}</p>
+          <p className="line-clamp-1 text-sm text-muted-foreground">{limitText(room.lastMessage ?? "-", 100)}</p>
         </div>
         <div className="text-right text-xs text-muted-foreground">
           <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>

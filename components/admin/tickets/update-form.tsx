@@ -157,7 +157,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Category</FieldLabel>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Select
                         value={field.value ?? ""}
                         onValueChange={field.onChange}
@@ -191,7 +191,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Employee</FieldLabel>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Select
                         value={field.value ?? ""}
                         onValueChange={field.onChange}

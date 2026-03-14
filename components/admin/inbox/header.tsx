@@ -20,7 +20,7 @@ function formatExpiresIn(value: Date | string) {
   const diff = dayjs(value).diff(dayjs());
 
   if (diff <= 0) {
-    return "Expired";
+    return "0h 0m";
   }
 
   const d = dayjs.duration(diff);

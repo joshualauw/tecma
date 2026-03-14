@@ -1,4 +1,4 @@
-import { SenderType } from "@/generated/prisma/enums";
+import { MessageStatus, SenderType } from "@/generated/prisma/enums";
 import { MessagesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -8,6 +8,7 @@ import z from "zod";
 export type MessageApiItem = {
   id: number;
   senderType: SenderType;
+  status: MessageStatus;
   content: string;
   createdAt: Date;
 };
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
         id: true,
         senderType: true,
         content: true,
+        status: true,
         createdAt: true,
       },
       where,

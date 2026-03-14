@@ -156,7 +156,7 @@ model Messages {
   senderType  SenderType    @map("sender_type")
   content     String
   messageType MessageType   @default(text) @map("message_type")
-  status      MessageStatus @default(sent)
+  status      MessageStatus @default(pending)
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -295,6 +295,7 @@ enum MessageType {
 }
 
 enum MessageStatus {
+  pending
   sent
   delivered
   read

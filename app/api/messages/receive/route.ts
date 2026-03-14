@@ -2,6 +2,7 @@ import { WebhookPayload, WebhookValue } from "@whatsapp-cloudapi/types/webhook";
 import { handleWhatsappMessageReceive } from "@/lib/handlers/message/receive";
 import { ApiResponse } from "@/types/ApiResponse";
 import { NextResponse, NextRequest } from "next/server";
+import { handleWhatsappMessageStatus } from "@/lib/handlers/message/status";
 
 export async function GET(request: NextRequest): Promise<NextResponse<string | null>> {
   try {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
           await handleWhatsappMessageReceive(value);
         }
         if (value.statuses) {
-          console.log(value.statuses[0].errors);
+          await handleWhatsappMessageStatus(value);
         }
       }
     }
