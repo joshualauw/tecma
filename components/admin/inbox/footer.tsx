@@ -11,14 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { MessageType, RoomStatus } from "@/generated/prisma/enums";
 import { getAcceptString, MESSAGE_ATTACHMENT, type MessageAttachmentType } from "@/lib/constants";
-import {
-  FileTextIcon,
-  ImageIcon,
-  MusicIcon,
-  PaperclipIcon,
-  SmileIcon,
-  VideoIcon,
-} from "lucide-react";
+import { FileTextIcon, ImageIcon, MusicIcon, PaperclipIcon, SmileIcon, VideoIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -38,7 +31,6 @@ export default function InboxFooter() {
     attachmentFile,
     attachmentType,
     setAttachmentFromFile,
-    clearAttachment,
     onSendMessage,
     isRoomActive,
     currentRoomStatus,
@@ -92,16 +84,9 @@ export default function InboxFooter() {
 
     if (attachmentFile && attachmentType) {
       const messageType = ATTACHMENT_TYPE_TO_MESSAGE_TYPE[attachmentType];
-      const isSent = await onSendMessage(content, messageType, attachmentFile);
-      if (isSent) {
-        setDraftMessage("");
-        clearAttachment();
-      }
+      await onSendMessage(content, messageType, attachmentFile);
     } else {
-      const isSent = await onSendMessage(content, MessageType.text);
-      if (isSent) {
-        setDraftMessage("");
-      }
+      await onSendMessage(content, MessageType.text);
     }
   }
 

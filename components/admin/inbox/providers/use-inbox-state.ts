@@ -11,6 +11,8 @@ import { useRoomDetail } from "@/lib/fetching/rooms/use-room-detail";
 import { useRooms } from "@/lib/fetching/rooms/use-rooms";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { MessageApiItem } from "@/app/api/messages/route";
+import { MessageStatusUpdate } from "@/lib/handlers/message/status";
 
 export interface UseInboxStateProps {
   properties: {
@@ -49,6 +51,10 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     setAttachmentType(null);
   }, []);
 
+  const clearDraftMessage = useCallback(() => {
+    setDraftMessage("");
+  }, []);
+
   const setAttachmentFromFile = useCallback((type: MessageAttachmentType, file: File) => {
     const result = validateMessageAttachment({ type: file.type, size: file.size, name: file.name }, type);
     if (!result.valid) {
@@ -57,15 +63,16 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     }
     setAttachmentFile(file);
     setAttachmentType(type);
+
     if (type === "audio") {
-      setDraftMessage("");
+      clearDraftMessage();
     }
   }, []);
 
   useEffect(() => {
-    setDraftMessage("");
+    clearDraftMessage();
     clearAttachment();
-  }, [selectedRoomId, clearAttachment]);
+  }, [selectedRoomId, clearAttachment, clearDraftMessage]);
 
   const {
     data: roomsData,
@@ -149,15 +156,15 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     }
   }
 
-  async function onSendMessage(content: string, messageType: MessageType, file?: File): Promise<boolean> {
+  async function onSendMessage(content: string, messageType: MessageType, file?: File): Promise<void> {
     if (!isRoomActive || selectedRoomId === null || isSendingMessage) {
-      return false;
+      return;
     }
 
     const propertyId = roomDetail?.tenant?.property.id;
     if (!propertyId) {
       toast.error("Failed to send message");
-      return false;
+      return;
     }
 
     try {
@@ -178,45 +185,81 @@ export function useInboxState({ properties }: UseInboxStateProps) {
 
       const result = await sendMessageAction(formData);
 
-      if (!result.success || !result.data) {
+      if (!result.success) {
         toast.error(result.message || "Failed to send message");
-        return false;
+        return;
       }
 
-      const createdMessage = result.data;
+      clearDraftMessage();
+      clearAttachment();
 
-      await Promise.all([
-        mutateMessages(
-          (current) => {
-            if (!current) return current;
-            return { ...current, messages: [...current.messages, createdMessage] };
-          },
-          { revalidate: false },
-        ),
-        mutateRooms(
-          (current) => {
-            if (!current) return current;
-            const rooms = current.rooms.map((room) => {
-              if (room.id === selectedRoomId) {
-                return { ...room, lastMessage: createdMessage.content, lastMessageAt: createdMessage.createdAt };
-              }
-              return room;
-            });
-            return { ...current, rooms };
-          },
-          { revalidate: false },
-        ),
-      ]);
-
-      return true;
+      return;
     } catch (error) {
       console.error(error);
       toast.error("Failed to send message");
-      return false;
+      return;
     } finally {
       setIsSendingMessage(false);
     }
   }
+
+  const appendNewMessage = useCallback((message: MessageApiItem) => {
+    mutateMessages(
+      (current) => {
+        if (!current) return current;
+        return { ...current, messages: [...current.messages, message] };
+      },
+      { revalidate: false },
+    );
+  }, []);
+
+  const appendNewRoom = useCallback((room: RoomApiItem) => {
+    mutateRooms(
+      (current) => {
+        if (!current) return current;
+        return { ...current, rooms: [...current.rooms, room] };
+      },
+      { revalidate: false },
+    );
+  }, []);
+
+  const updateMessageStatus = useCallback((messageStatus: MessageStatusUpdate) => {
+    mutateMessages(
+      (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          messages: current.messages.map((message) =>
+            message.id === messageStatus.messageId ? { ...message, status: messageStatus.messageStatus } : message,
+          ),
+        };
+      },
+      { revalidate: false },
+    );
+  }, []);
+
+  const updateRoomList = useCallback((createdMessage: MessageApiItem) => {
+    mutateRooms(
+      (current) => {
+        if (!current) return current;
+        const updatedRooms = current.rooms.map((room) => {
+          if (room.id === createdMessage.roomId) {
+            return {
+              ...room,
+              lastMessage: createdMessage.content,
+              lastMessageAt: createdMessage.createdAt,
+            };
+          }
+          return room;
+        });
+        const sortedRooms = updatedRooms.sort((a, b) => {
+          return new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime();
+        });
+        return { ...current, rooms: sortedRooms };
+      },
+      { revalidate: false },
+    );
+  }, []);
 
   return {
     properties,
@@ -251,5 +294,9 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     previewUrl,
     clearAttachment,
     setAttachmentFromFile,
+    appendNewMessage,
+    appendNewRoom,
+    updateRoomList,
+    updateMessageStatus,
   };
 }

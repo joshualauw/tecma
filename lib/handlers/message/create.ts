@@ -113,6 +113,7 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
       data: databaseMessage,
       select: {
         id: true,
+        roomId: true,
         senderType: true,
         content: true,
         status: true,

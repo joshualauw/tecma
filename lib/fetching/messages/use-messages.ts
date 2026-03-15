@@ -9,6 +9,7 @@ export function useMessages(roomId: number | null, options?: SWRConfiguration<Me
   return useSWR<MessagesApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
+    revalidateOnFocus: false,
     ...options,
   });
 }

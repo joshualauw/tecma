@@ -14,6 +14,7 @@ import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import { InputJsonValue } from "@prisma/client/runtime/client";
 import { uploadFileToR2 } from "@/lib/upload";
+import pusher from "@/lib/pusher";
 
 type WebhookMessage = NonNullable<WebhookValue["messages"]>[number];
 type ExtendedWebhookMessageType = WebhookMessage["type"] | "location";
@@ -187,8 +188,9 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
 
   const flattenedMessage = await flattenWebhookMessage(message);
   const lastMessage = flattenedMessage.content !== "" ? flattenedMessage.content : `[${flattenedMessage.messageType}]`;
+  let isNewRoom = false;
 
-  await prisma.$transaction(async (tx) => {
+  const { createdRoom, createdMessage } = await prisma.$transaction(async (tx) => {
     let room = await tx.rooms.findFirst({
       where: {
         tenantId: tenant.id,
@@ -209,20 +211,56 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
           lastMessageAt: messageTimestamp.toDate(),
           expiredAt: expiredAt.toDate(),
         },
-        select: { id: true },
+        select: {
+          id: true,
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          whatsapp: {
+            select: {
+              id: true,
+              displayName: true,
+            },
+          },
+          status: true,
+          lastMessage: true,
+          lastMessageAt: true,
+        },
       });
+      isNewRoom = true;
     } else {
-      await tx.rooms.update({
+      room = await tx.rooms.update({
         where: { id: room.id },
         data: {
           lastMessage: lastMessage,
           lastMessageAt: messageTimestamp.toDate(),
           expiredAt: expiredAt.toDate(),
         },
+        select: {
+          id: true,
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          whatsapp: {
+            select: {
+              id: true,
+              displayName: true,
+            },
+          },
+          status: true,
+          lastMessage: true,
+          lastMessageAt: true,
+        },
       });
     }
 
-    await tx.messages.create({
+    const createdMessage = await tx.messages.create({
       data: {
         propertyId: tenant.propertyId,
         roomId: room.id,
@@ -234,6 +272,28 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         status: MessageStatus.delivered,
         createdAt: messageTimestamp.toDate(),
       },
+      select: {
+        id: true,
+        roomId: true,
+        senderType: true,
+        content: true,
+        messageType: true,
+        extras: true,
+        status: true,
+        createdAt: true,
+      },
     });
+
+    return { createdRoom: room, createdMessage };
   });
+
+  const users = await prisma.users.findMany();
+  for (const user of users) {
+    if (isNewRoom) {
+      await pusher.trigger(`user-${user.id}`, "new-room", createdRoom);
+    } else {
+      await pusher.trigger(`user-${user.id}`, "update-room", createdMessage);
+    }
+  }
+  await pusher.trigger(`room-${createdRoom.id}`, "new-message", createdMessage);
 }

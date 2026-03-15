@@ -161,3 +161,9 @@
     background-color: color-mix(in oklch, var(--primary), transparent 40%);
   }
 }
+
+@layer utilities {
+  .animate-list {
+    transition: transform 0.3s ease;
+  }
+}

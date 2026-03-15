@@ -1,6 +1,5 @@
 "use server";
 
-import type { MessageApiItem } from "@/app/api/messages/route";
 import { MessageType } from "@/generated/prisma/enums";
 import { Prisma } from "@/generated/prisma/client";
 import { handleWhatsappMessageCreate } from "@/lib/handlers/message/create";
@@ -9,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { AxiosError } from "axios";
 import z from "zod";
+import pusher from "@/lib/pusher";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),
@@ -19,7 +19,7 @@ const sendMessageSchema = z.object({
   filename: z.string().trim().nullable(),
 });
 
-type SendMessageActionResponse = ApiResponse<MessageApiItem>;
+type SendMessageActionResponse = ApiResponse<null>;
 
 export async function sendMessageAction(formData: FormData): Promise<SendMessageActionResponse> {
   const parsed = sendMessageSchema.safeParse({
@@ -62,8 +62,14 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       whatsappPhoneId: room.whatsapp.phoneId,
     });
 
+    const users = await prisma.users.findMany();
+    for (const user of users) {
+      await pusher.trigger(`user-${user.id}`, "update-room", createdMessage);
+    }
+    await pusher.trigger(`room-${roomId}`, "new-message", createdMessage);
+
     return {
-      data: createdMessage,
+      data: null,
       success: true,
       message: "Message sent successfully",
     };

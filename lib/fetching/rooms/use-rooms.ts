@@ -26,6 +26,7 @@ export function useRooms({ propertyId, status }: UseRoomsParams, options?: SWRCo
   return useSWR<RoomsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
+    revalidateOnFocus: false,
     ...options,
   });
 }

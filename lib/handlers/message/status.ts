@@ -1,6 +1,12 @@
 import { MessageStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
+import pusher from "@/lib/pusher";
 import { WebhookStatus, WebhookValue } from "@whatsapp-cloudapi/types/webhook";
+
+export type MessageStatusUpdate = {
+  messageId: number;
+  messageStatus: MessageStatus;
+};
 
 function mapStatusToMessageStatus(status: WebhookStatus["status"] | "failed"): MessageStatus {
   switch (status) {
@@ -20,13 +26,23 @@ function mapStatusToMessageStatus(status: WebhookStatus["status"] | "failed"): M
 export async function handleWhatsappMessageStatus(body: WebhookValue): Promise<void> {
   const statuses = body.statuses;
   const status = statuses![0];
+  const messageStatus = mapStatusToMessageStatus(status.status);
 
-  await prisma.messages.update({
+  const updatedMessage = await prisma.messages.update({
     where: {
       waId: status.id,
     },
+    select: {
+      id: true,
+      roomId: true,
+    },
     data: {
-      status: mapStatusToMessageStatus(status.status),
+      status: messageStatus,
     },
   });
+
+  await pusher.trigger(`room-${updatedMessage.roomId}`, "new-message-status", {
+    messageId: updatedMessage.id,
+    messageStatus,
+  } as MessageStatusUpdate);
 }

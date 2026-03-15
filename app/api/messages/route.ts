@@ -1,5 +1,4 @@
 import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
-import { MessagesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,6 +7,7 @@ import z from "zod";
 
 export type MessageApiItem = {
   id: number;
+  roomId: number;
   senderType: SenderType;
   status: MessageStatus;
   content: string;
@@ -23,7 +23,6 @@ export type MessagesApiData = {
 
 const messagesQuery = z.object({
   roomId: z.coerce.number().int().positive(),
-  senderType: z.enum(SenderType).nullable(),
 });
 
 export type MessagesApiResponse = ApiResponse<MessagesApiData>;
@@ -33,7 +32,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
     const { searchParams } = new URL(request.url);
     const parsed = messagesQuery.safeParse({
       roomId: searchParams.get("roomId"),
-      senderType: searchParams.get("senderType"),
     });
 
     if (!parsed.success) {
@@ -48,17 +46,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
       );
     }
 
-    const { roomId, senderType } = parsed.data;
-
-    const where: MessagesWhereInput = { roomId };
-
-    if (senderType !== null) {
-      where.senderType = senderType;
-    }
+    const { roomId } = parsed.data;
 
     const messages = await prisma.messages.findMany({
       select: {
         id: true,
+        roomId: true,
         senderType: true,
         content: true,
         status: true,
@@ -66,7 +59,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
         createdAt: true,
         extras: true,
       },
-      where,
+      where: {
+        roomId,
+      },
       orderBy: {
         createdAt: "asc",
       },

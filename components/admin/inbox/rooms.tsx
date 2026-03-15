@@ -1,6 +1,5 @@
 "use client";
 
-import type { RoomApiItem } from "@/app/api/rooms/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
@@ -102,12 +101,33 @@ export default function InboxRooms() {
         {rooms.length ? (
           <div className="p-0">
             {rooms.map((room) => (
-              <RoomItem
+              <div
                 key={room.id}
-                room={room}
-                isSelected={selectedRoomId === room.id}
-                onSelect={() => setSelectedRoomId(room.id)}
-              />
+                onClick={() => setSelectedRoomId(room.id)}
+                className={`w-full cursor-pointer border-b px-4 py-2 text-left transition-colors hover:bg-muted animate-list ${
+                  selectedRoomId === room.id ? "bg-muted" : ""
+                }`}
+              >
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium">{room.tenant.name}</p>
+                    <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+                      <PhoneIcon className="size-3" />
+                      <span>{room.whatsapp.displayName ?? "-"}</span>
+                    </div>
+                    <p className="line-clamp-1 text-sm text-muted-foreground">
+                      {limitText(room.lastMessage ?? "-", 100)}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-muted-foreground">
+                    <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>
+                      {formatStatusLabel(room.status)}
+                    </Badge>
+                    <p>{formatLastMessageDate(room.lastMessageAt)}</p>
+                    <p>{formatLastMessageTime(room.lastMessageAt)}</p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -115,41 +135,6 @@ export default function InboxRooms() {
             {isLoadingRooms ? "Loading..." : roomsError ? "Failed to load rooms." : "No rooms found."}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-interface RoomItemProps {
-  room: RoomApiItem;
-  isSelected: boolean;
-  onSelect: () => void;
-}
-
-function RoomItem({ room, isSelected, onSelect }: RoomItemProps) {
-  return (
-    <div
-      onClick={onSelect}
-      className={`w-full cursor-pointer border-b px-4 py-2 text-left transition-colors hover:bg-muted ${
-        isSelected ? "bg-muted" : ""
-      }`}
-    >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-medium">{room.tenant.name}</p>
-          <div className="mt-1 mb-2 flex items-center gap-1 text-xs text-muted-foreground">
-            <PhoneIcon className="size-3" />
-            <span>{room.whatsapp.displayName ?? "-"}</span>
-          </div>
-          <p className="line-clamp-1 text-sm text-muted-foreground">{limitText(room.lastMessage ?? "-", 100)}</p>
-        </div>
-        <div className="text-right text-xs text-muted-foreground">
-          <Badge className="mb-3" variant={statusBadgeVariant(room.status)}>
-            {formatStatusLabel(room.status)}
-          </Badge>
-          <p>{formatLastMessageDate(room.lastMessageAt)}</p>
-          <p>{formatLastMessageTime(room.lastMessageAt)}</p>
-        </div>
       </div>
     </div>
   );
