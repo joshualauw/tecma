@@ -2,24 +2,36 @@
 
 import { Button } from "@/components/ui/button";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
+import type { MessageApiItem } from "@/app/api/messages/route";
 import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import {
   CheckIcon,
   CheckCheckIcon,
+  ChevronDownIcon,
   CircleStopIcon,
+  CopyIcon,
   FileTextIcon,
   ImageIcon,
   Loader2Icon,
   MapPinIcon,
   MusicIcon,
+  ReplyIcon,
   VideoIcon,
   XIcon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import InboxFooter from "@/components/admin/inbox/footer";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { REPLY_PREVIEW_MAX_LENGTH } from "@/lib/constants";
 
 function formatLastMessageAt(value: Date | string | null) {
   if (!value) {
@@ -29,7 +41,7 @@ function formatLastMessageAt(value: Date | string | null) {
 }
 
 function messageBubbleClasses(senderType: SenderType) {
-  const classes = "max-w-[80%] rounded-lg px-3 py-2 text-sm";
+  const classes = "w-full rounded-lg px-3 py-2 text-sm";
   if (senderType === SenderType.tenant) {
     return `${classes} bg-muted text-foreground`;
   } else {
@@ -240,6 +252,29 @@ function getMessageBubble(props: MessageBubbleProps): React.ReactNode {
   }
 }
 
+interface ReplyReferenceProps {
+  replyTo: NonNullable<MessageApiItem["replyTo"]>;
+  senderType: SenderType;
+  onScrollToMessage: (_messageId: number) => void;
+}
+
+function ReplyReference({ replyTo, senderType, onScrollToMessage }: ReplyReferenceProps) {
+  const preview =
+    replyTo.content.length > REPLY_PREVIEW_MAX_LENGTH
+      ? `${replyTo.content.slice(0, REPLY_PREVIEW_MAX_LENGTH)}…`
+      : replyTo.content;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onScrollToMessage(replyTo.id)}
+      className={`mb-1 flex w-full flex-col gap-0.5 rounded cursor-pointer border-l-2 ${senderType === SenderType.tenant ? "border-primary bg-muted" : "border-primary bg-secondary"} px-2 py-1.5 text-left text-xs`}
+    >
+      <span className="line-clamp-2 break-words text-foreground">{preview || `[${replyTo.messageType}]`}</span>
+    </button>
+  );
+}
+
 function AttachmentPreview() {
   const { attachmentFile, attachmentType, previewUrl, clearAttachment } = useInbox();
   if (!attachmentFile) return null;
@@ -277,33 +312,92 @@ function AttachmentPreview() {
 }
 
 function MessagesList() {
-  const { messages, isLoadingRoomData, attachmentFile } = useInbox();
+  const { messages, isLoadingRoomData, attachmentFile, setReplyToMessage } = useInbox();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefsMap = useRef<Map<number, HTMLDivElement | null>>(new Map());
 
   useEffect(() => {
     if (isLoadingRoomData || messages.length === 0 || attachmentFile) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
   }, [messages, isLoadingRoomData, attachmentFile]);
 
+  const scrollToMessage = (messageId: number) => {
+    messageRefsMap.current.get(messageId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
+  const handleCopy = (content: string) => {
+    void navigator.clipboard.writeText(content).then(() => {
+      toast.success("Copied to clipboard");
+    });
+  };
+
   return (
     <div className="space-y-3">
       {messages.map((message) => (
         <div
           key={message.id}
-          className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
+          ref={(el) => {
+            if (el) messageRefsMap.current.set(message.id, el);
+            else messageRefsMap.current.delete(message.id);
+          }}
+          className={`group flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
         >
-          <div
-            className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
-          >
-            {getMessageBubble({
-              content: message.content,
-              messageType: message.messageType,
-              extras: message.extras,
-              senderType: message.senderType,
-              status: message.status,
-              createdAt: message.createdAt,
-            })}
+          <div className={`flex flex-col ${message.senderType === SenderType.tenant ? "items-start" : "items-end"}`}>
+            <div className="flex items-end gap-1">
+              <div
+                className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
+              >
+                {message.replyTo ? (
+                  <ReplyReference
+                    replyTo={message.replyTo}
+                    senderType={message.senderType}
+                    onScrollToMessage={scrollToMessage}
+                  />
+                ) : null}
+                {getMessageBubble({
+                  content: message.content,
+                  messageType: message.messageType,
+                  extras: message.extras,
+                  senderType: message.senderType,
+                  status: message.status,
+                  createdAt: message.createdAt,
+                })}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-label="Message actions"
+                  >
+                    <ChevronDownIcon size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align={message.senderType === SenderType.tenant ? "start" : "end"}>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      setReplyToMessage(
+                        message.waId,
+                        message.content === "" ? `[${message.messageType}]` : message.content,
+                      )
+                    }
+                  >
+                    <ReplyIcon size={14} />
+                    Reply
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleCopy(message.content)}>
+                    <CopyIcon size={14} />
+                    Copy
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       ))}

@@ -32,6 +32,8 @@ export function useInboxState({ properties }: UseInboxStateProps) {
   const [draftMessage, setDraftMessage] = useState("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentType, setAttachmentType] = useState<MessageAttachmentType | null>(null);
+  const [replyWaId, setReplyWaId] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
 
   const previewUrl = useMemo(() => {
     if (attachmentFile && (attachmentType === "image" || attachmentType === "video")) {
@@ -69,10 +71,21 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     }
   }, []);
 
+  const clearReply = useCallback(() => {
+    setReplyWaId(null);
+    setReplyContent("");
+  }, []);
+
+  const setReplyToMessage = useCallback((waId: string | null, content: string) => {
+    setReplyWaId(waId);
+    setReplyContent(content);
+  }, []);
+
   useEffect(() => {
     clearDraftMessage();
     clearAttachment();
-  }, [selectedRoomId, clearAttachment, clearDraftMessage]);
+    clearReply();
+  }, [selectedRoomId, clearAttachment, clearDraftMessage, clearReply]);
 
   const {
     data: roomsData,
@@ -175,6 +188,9 @@ export function useInboxState({ properties }: UseInboxStateProps) {
       formData.set("roomId", String(selectedRoomId));
       formData.set("propertyId", String(propertyId));
       formData.set("messageType", messageType);
+      if (replyWaId) {
+        formData.set("replyWaId", replyWaId);
+      }
 
       if (file) {
         formData.set("file", file);
@@ -192,6 +208,7 @@ export function useInboxState({ properties }: UseInboxStateProps) {
 
       clearDraftMessage();
       clearAttachment();
+      clearReply();
 
       return;
     } catch (error) {
@@ -294,6 +311,10 @@ export function useInboxState({ properties }: UseInboxStateProps) {
     previewUrl,
     clearAttachment,
     setAttachmentFromFile,
+    replyWaId,
+    replyContent,
+    setReplyToMessage,
+    clearReply,
     appendNewMessage,
     appendNewRoom,
     updateRoomList,

@@ -12,6 +12,7 @@ import pusher from "@/lib/pusher";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),
+  replyWaId: z.string().trim().nullable(),
   propertyId: z.coerce.number().int().positive(),
   content: z.string().trim(),
   messageType: z.enum(MessageType).default(MessageType.text),
@@ -24,6 +25,7 @@ type SendMessageActionResponse = ApiResponse<null>;
 export async function sendMessageAction(formData: FormData): Promise<SendMessageActionResponse> {
   const parsed = sendMessageSchema.safeParse({
     roomId: formData.get("roomId"),
+    replyWaId: formData.get("replyWaId"),
     propertyId: formData.get("propertyId"),
     content: formData.get("content"),
     messageType: formData.get("messageType"),
@@ -36,7 +38,7 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
     return { success: false, message: "Invalid input" };
   }
 
-  const { roomId, propertyId, content, messageType, file, filename } = parsed.data;
+  const { roomId, propertyId, content, messageType, file, filename, replyWaId } = parsed.data;
 
   try {
     const room = await prisma.rooms.findFirstOrThrow({
@@ -52,6 +54,7 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       propertyId,
       content,
       messageType,
+      replyWaId,
       file,
       filename,
     });

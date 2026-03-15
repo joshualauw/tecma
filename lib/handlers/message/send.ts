@@ -18,6 +18,12 @@ type MessageToSend = {
   whatsappPhoneId: string;
 };
 
+type ExtendedCloudAPIMessageRequestBase = Omit<CloudAPIMessageRequestBase, "context"> & {
+  context?: {
+    message_id: string;
+  };
+};
+
 type ExtendedCloudAPISendImageMessageRequest = Omit<CloudAPISendImageMessageRequest, "image"> & {
   image: {
     id?: string;
@@ -33,11 +39,17 @@ async function enrichMessageToCloudApi(message: MessageToSend, to: string): Prom
 
   const toE164 = to.startsWith("+") ? to : `+${to}`;
 
-  const payload: CloudAPIMessageRequestBase = {
+  const payload: ExtendedCloudAPIMessageRequestBase = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
     to: toE164,
   };
+
+  if (databaseMessage.replyWaId) {
+    payload.context = {
+      message_id: databaseMessage.replyWaId,
+    };
+  }
 
   switch (databaseMessage.messageType) {
     case MessageType.text: {

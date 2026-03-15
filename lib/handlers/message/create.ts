@@ -11,6 +11,7 @@ type MessageToCreate = {
   propertyId: number;
   content: string;
   messageType: MessageType;
+  replyWaId: string | null;
   file: File | null;
   filename: string | null;
 };
@@ -44,6 +45,14 @@ async function enrichMessageToDatabase(message: MessageToCreate): Promise<Messag
     content: message.content,
     messageType: message.messageType,
   };
+
+  if (message.replyWaId) {
+    baseMessage.replyTo = {
+      connect: {
+        waId: message.replyWaId,
+      },
+    };
+  }
 
   switch (message.messageType) {
     case MessageType.text: {
@@ -113,6 +122,15 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
       data: databaseMessage,
       select: {
         id: true,
+        waId: true,
+        replyTo: {
+          select: {
+            id: true,
+            waId: true,
+            content: true,
+            messageType: true,
+          },
+        },
         roomId: true,
         senderType: true,
         content: true,

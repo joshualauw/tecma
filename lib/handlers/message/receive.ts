@@ -31,6 +31,7 @@ type WebhookLocationMessage = WebhookMessageBase & {
 
 type FlattenedMessage = {
   waId: string;
+  replyWaId: string | null;
   content: string;
   messageType: MessageType;
   extras: MessageExtras | null;
@@ -66,6 +67,11 @@ async function flattenWebhookMessage(msg: WebhookMessage): Promise<FlattenedMess
   let messageType: MessageType = MessageType.text;
   let content: string = "";
   let extras: MessageExtras | null = null;
+  let replyWaId: string | null = null;
+
+  if (msg.context?.id) {
+    replyWaId = msg.context.id;
+  }
 
   switch (type) {
     case "text": {
@@ -152,7 +158,7 @@ async function flattenWebhookMessage(msg: WebhookMessage): Promise<FlattenedMess
     }
   }
 
-  return { waId, content, extras, messageType: messageType as MessageType };
+  return { waId, replyWaId, content, extras, messageType: messageType as MessageType };
 }
 
 export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<void> {
@@ -270,11 +276,21 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         messageType: flattenedMessage.messageType,
         extras: flattenedMessage.extras as InputJsonValue,
         status: MessageStatus.delivered,
+        replyWaId: flattenedMessage.replyWaId,
         createdAt: messageTimestamp.toDate(),
       },
       select: {
         id: true,
         roomId: true,
+        waId: true,
+        replyTo: {
+          select: {
+            id: true,
+            waId: true,
+            content: true,
+            messageType: true,
+          },
+        },
         senderType: true,
         content: true,
         messageType: true,

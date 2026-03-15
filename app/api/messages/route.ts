@@ -7,6 +7,13 @@ import z from "zod";
 
 export type MessageApiItem = {
   id: number;
+  waId: string | null;
+  replyTo: {
+    id: number;
+    waId: string | null;
+    content: string;
+    messageType: MessageType;
+  } | null;
   roomId: number;
   senderType: SenderType;
   status: MessageStatus;
@@ -51,6 +58,15 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
     const messages = await prisma.messages.findMany({
       select: {
         id: true,
+        waId: true,
+        replyTo: {
+          select: {
+            id: true,
+            waId: true,
+            content: true,
+            messageType: true,
+          },
+        },
         roomId: true,
         senderType: true,
         content: true,
