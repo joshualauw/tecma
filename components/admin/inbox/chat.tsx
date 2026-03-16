@@ -344,13 +344,15 @@ function MessagesList() {
             if (el) messageRefsMap.current.set(message.id, el);
             else messageRefsMap.current.delete(message.id);
           }}
-          className={`group flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
+          className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
         >
-          <div className={`flex flex-col ${message.senderType === SenderType.tenant ? "items-start" : "items-end"}`}>
-            <div className="flex items-end gap-1">
-              <div
-                className={`${messageBubbleClasses(message.senderType)} ${message.status === MessageStatus.pending ? "opacity-70" : ""}`}
-              >
+          <div
+            className={`flex flex-col group ${message.senderType === SenderType.tenant ? "items-start" : "items-end"}`}
+          >
+            <div
+              className={`flex items-center gap-1 ${message.senderType === SenderType.tenant ? "flex-row" : "flex-row-reverse"}`}
+            >
+              <div className={`${messageBubbleClasses(message.senderType)}}`}>
                 {message.replyTo ? (
                   <ReplyReference
                     replyTo={message.replyTo}

@@ -119,7 +119,7 @@ export default function InboxFooter() {
       )}
 
       {replyWaId && (
-        <div className="mb-2 flex items-start gap-2 rounded-md border-l-3 border-primary bg-muted/50 px-3 py-2">
+        <div className="mb-2 flex items-start gap-2 rounded-md border-l-2 border-primary bg-muted/50 px-3 py-2">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-medium text-muted-foreground">Replying to</p>
             <p className="line-clamp-2 break-words text-sm text-foreground">

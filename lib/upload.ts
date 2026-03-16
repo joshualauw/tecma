@@ -17,8 +17,8 @@ const s3Client = new S3Client({
   },
 });
 
-export async function uploadFileToR2(buffer: Buffer, contentType: string): Promise<string> {
-  const key = uuidv4();
+export async function uploadFileToR2(buffer: Buffer, contentType: string, folder: string): Promise<string> {
+  const key = `${folder}/${uuidv4()}`;
   const command = new PutObjectCommand({
     Bucket: r2BucketName,
     Key: key,

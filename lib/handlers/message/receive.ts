@@ -57,7 +57,7 @@ async function resolveMediaUrl(mediaId: string): Promise<string> {
   const buffer = Buffer.from(arrayBuffer);
   const contentType = metadata.mime_type || fileResponse.headers.get("content-type") || "application/octet-stream";
 
-  return await uploadFileToR2(buffer, contentType);
+  return await uploadFileToR2(buffer, contentType, "whatsapp");
 }
 
 async function flattenWebhookMessage(msg: WebhookMessage): Promise<FlattenedMessage> {
