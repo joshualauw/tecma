@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma, UserRole } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -11,10 +11,9 @@ const createEmployeeSchema = z.object({
   name: z.string().trim().min(1),
   email: z.email().trim().min(1),
   password: z.string().min(6),
-  role: z.enum([UserRole.dispatcher, UserRole.worker]),
+  roleId: z.coerce.number().int().positive(),
   phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().nullable(),
-  propertyId: z.coerce.number().int().positive(),
 });
 
 type CreateEmployeeActionResponse = ApiResponse<null>;
@@ -24,10 +23,9 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
-    role: formData.get("role"),
+    roleId: formData.get("roleId"),
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
-    propertyId: formData.get("propertyId"),
   });
 
   if (!parsed.success) {
@@ -35,7 +33,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
     return { success: false, message: "Invalid input" };
   }
 
-  const { name, email, password, role, phoneNumber, address, propertyId } = parsed.data;
+  const { name, email, password, roleId, phoneNumber, address } = parsed.data;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -46,13 +44,12 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
           name,
           email,
           password: hashedPassword,
-          role,
+          roleId,
         },
       });
       await tx.employees.create({
         data: {
           userId: user.id,
-          propertyId,
           phoneNumber,
           address,
         },

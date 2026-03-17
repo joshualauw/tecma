@@ -9,6 +9,7 @@ datasource db {
 
 model Users {
   id       Int    @id @default(autoincrement())
+  roleId   Int    @map("role_id")
   name     String @db.VarChar(255)
   email    String @unique(map: "users_email_unique")
   password String @db.VarChar(255)
@@ -16,10 +17,63 @@ model Users {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  role      UserRole
-  employees Employees[]
+  employee Employees?
+  role     Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "users_role_id_roles_id_fk")
 
   @@map("users")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique(map: "roles_name_unique") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  rolePermissions RolePermissions[]
+  users           Users[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique(map: "permissions_name_unique") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  rolePermissions RolePermissions[]
+
+  @@map("permissions")
+}
+
+model RolePermissions {
+  id           Int      @id @default(autoincrement())
+  roleId       Int      @map("role_id")
+  permissionId Int      @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions_role_id_roles_id_fk")
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions_permission_id_permissions_id_fk")
+
+  @@unique([roleId, permissionId], name: "role_permissions_role_id_permission_id_unique")
+  @@map("role_permissions")
+}
+
+model Employees {
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique @map("user_id")
+  address     String?
+  phoneNumber String  @unique(map: "employees_phone_number_unique") @map("phone_number") @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user                Users                 @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
+  tickets             Tickets[]
+  employeePermissions EmployeePermissions[]
+
+  @@map("employees")
 }
 
 model Whatsapp {
@@ -46,34 +100,31 @@ model Properties {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  bots      Bots[]
-  employees Employees[]
-  messages  Messages[]
-  rooms     Rooms[]
-  tenants   Tenants[]
-  units     Units[]
-  tickets   Tickets[]
-  sources   Sources[]
-  leases    Leases[]
+  bots                Bots[]
+  messages            Messages[]
+  rooms               Rooms[]
+  tenants             Tenants[]
+  units               Units[]
+  tickets             Tickets[]
+  sources             Sources[]
+  leases              Leases[]
+  employeePermissions EmployeePermissions[]
 
   @@map("properties")
 }
 
-model Employees {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @map("user_id")
-  propertyId  Int     @map("property_id")
-  address     String?
-  phoneNumber String  @unique(map: "employees_phone_number_unique") @map("phone_number") @db.VarChar(20)
+model EmployeePermissions {
+  id         Int @id @default(autoincrement())
+  employeeId Int @map("employee_id")
+  propertyId Int @map("property_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_property_id_properties_id_fk")
-  user     Users      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
-  tickets  Tickets[]
+  employee Employees  @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_permissions_employee_id_employees_id_fk")
+  property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_permissions_property_id_properties_id_fk")
 
-  @@map("employees")
+  @@map("employee_permissions")
 }
 
 model Units {
@@ -308,12 +359,4 @@ enum MessageStatus {
   failed
 
   @@map("message_status")
-}
-
-enum UserRole {
-  super_admin
-  dispatcher
-  worker
-
-  @@map("user_role")
 }

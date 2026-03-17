@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma, UserRole } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -10,7 +10,7 @@ const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
   name: z.string().trim().min(1),
   email: z.email().trim().min(1),
-  role: z.enum([UserRole.dispatcher, UserRole.worker]),
+  roleId: z.coerce.number().int().positive(),
   phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().nullable(),
 });
@@ -22,7 +22,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     id: formData.get("id"),
     name: formData.get("name"),
     email: formData.get("email"),
-    role: formData.get("role"),
+    roleId: formData.get("roleId"),
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
   });
@@ -32,24 +32,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, name, email, role, phoneNumber, address } = parsed.data;
-
-  const employee = await prisma.employees.findUniqueOrThrow({
-    where: { id },
-    select: { id: true, user: { select: { role: true } } },
-  });
-
-  if (employee.user.role == UserRole.worker && role == UserRole.dispatcher) {
-    const ticketsCount = await prisma.tickets.count({
-      where: { employeeId: employee.id },
-    });
-    if (ticketsCount > 0) {
-      return {
-        success: false,
-        message: "Worker cannot be updated to dispatcher because they have tickets assigned to them",
-      };
-    }
-  }
+  const { id, name, email, roleId, phoneNumber, address } = parsed.data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -63,7 +46,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
 
       await tx.users.update({
         where: { id: employee.userId },
-        data: { name, email, role },
+        data: { name, email, roleId },
       });
     });
 

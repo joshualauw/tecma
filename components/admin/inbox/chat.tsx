@@ -10,7 +10,6 @@ import {
   CheckIcon,
   CheckCheckIcon,
   ChevronDownIcon,
-  CircleStopIcon,
   CopyIcon,
   FileTextIcon,
   ImageIcon,
@@ -20,6 +19,7 @@ import {
   ReplyIcon,
   VideoIcon,
   XIcon,
+  BanIcon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -65,7 +65,7 @@ function MessageStatusIcon({ status }: { status: MessageStatus | null }) {
     return <CheckCheckIcon size={size} className="shrink-0 text-green-500" />;
   }
   if (status === MessageStatus.failed) {
-    return <CircleStopIcon size={size} className="shrink-0 text-destructive" />;
+    return <BanIcon size={size} className="shrink-0 text-destructive" />;
   }
   return null;
 }

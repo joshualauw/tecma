@@ -16,6 +16,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { hasPermissions } from "@/lib/permission";
 import {
   ChevronRightIcon,
   Contact2Icon,
@@ -27,21 +28,26 @@ import {
   TicketIcon,
   Users2Icon,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function AdminSidebar() {
   const pathName = usePathname();
+  const { data: session } = useSession();
+  const user = session?.user;
 
-  const navs = [
+  const allNavs = [
     {
       name: "Dashboard",
+      isShow: hasPermissions(user, "dashboard:view"),
       icon: <PieChartIcon className="mr-1" />,
       href: "/admin/dashboard",
       isActive: false,
     },
     {
       name: "Inbox",
+      isShow: hasPermissions(user, "inbox:view"),
       group: "Communication",
       icon: <MailOpenIcon className="mr-1" />,
       href: "/admin/inbox",
@@ -49,6 +55,7 @@ export function AdminSidebar() {
     },
     {
       name: "Whatsapp",
+      isShow: hasPermissions(user, "whatsapp:view"),
       group: "Communication",
       icon: <PhoneIcon className="mr-1" />,
       href: "/admin/whatsapp",
@@ -56,23 +63,27 @@ export function AdminSidebar() {
     },
     {
       name: "Tickets",
+      isShow: hasPermissions(user, "tickets:view"),
       group: "Communication",
       icon: <TicketIcon className="mr-1" />,
       href: "#",
       isActive: false,
       children: [
-        {
-          name: "List",
-          href: "/admin/tickets",
-        },
-        {
-          name: "Categories",
-          href: "/admin/tickets/categories",
-        },
+        { name: "List", href: "/admin/tickets" },
+        { name: "Categories", href: "/admin/tickets/categories" },
       ],
     },
     {
+      name: "Employees",
+      isShow: hasPermissions(user, "employees:view"),
+      group: "Management",
+      icon: <Users2Icon className="mr-1" />,
+      href: "/admin/employees",
+      isActive: false,
+    },
+    {
       name: "Properties",
+      isShow: hasPermissions(user, "properties:view"),
       group: "Management",
       icon: <MapPinIcon className="mr-1" />,
       href: "/admin/properties",
@@ -80,6 +91,7 @@ export function AdminSidebar() {
     },
     {
       name: "Units",
+      isShow: hasPermissions(user, "units:view"),
       group: "Management",
       icon: <HouseHeartIcon className="mr-1" />,
       href: "/admin/units",
@@ -87,19 +99,15 @@ export function AdminSidebar() {
     },
     {
       name: "Tenants",
+      isShow: hasPermissions(user, "tenants:view"),
       group: "Management",
       icon: <Contact2Icon className="mr-1" />,
       href: "/admin/tenants",
       isActive: false,
     },
-    {
-      name: "Employees",
-      group: "Management",
-      icon: <Users2Icon className="mr-1" />,
-      href: "/admin/employees",
-      isActive: false,
-    },
   ];
+
+  const navs = allNavs.filter((nav) => nav.isShow);
 
   const groupedNavs = navs.reduce(
     (acc, nav) => {

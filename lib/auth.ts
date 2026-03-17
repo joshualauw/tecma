@@ -1,7 +1,6 @@
-import NextAuth, { CredentialsSignin } from "next-auth";
+import NextAuth, { CredentialsSignin, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import type { UserRole } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 
 class InvalidLoginError extends CredentialsSignin {
@@ -25,16 +24,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id.toString();
         token.role = user.role;
+        token.permissions = user.permissions;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user && token.id != null && token.role != null) {
-        const ext = session.user as { id: number; role: UserRole };
+        const ext = session.user as User;
         ext.id = Number(token.id);
         ext.role = token.role;
+        ext.permissions = token.permissions;
       }
       return session;
     },
@@ -55,6 +56,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.users.findUnique({
           where: { email },
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
         });
         if (!user) throw new InvalidLoginError();
 
@@ -64,10 +76,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         return {
-          id: user.id.toString(),
+          id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: user.role.name,
+          permissions: user.role.rolePermissions.map((p) => p.permission.name),
         };
       },
     }),

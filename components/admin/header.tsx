@@ -15,7 +15,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DynamicBreadcrumb } from "@/components/admin/breadcrumb";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { UserRole } from "@/generated/prisma/enums";
 
 export function AdminHeader() {
   const { data: session } = useSession();
@@ -25,13 +24,16 @@ export function AdminHeader() {
     await signOut({ redirectTo: "/" });
   }
 
-  function getUserRole(role: UserRole) {
+  function getUserRole(role: string) {
     switch (role) {
-      case UserRole.super_admin:
+      case "super-admin":
         return "Super Admin";
-      default:
-        return "Unknown";
+      case "dispatcher":
+        return "Dispatcher";
+      case "worker":
+        return "Worker";
     }
+    return "Unknown";
   }
 
   return (

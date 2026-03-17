@@ -32,44 +32,42 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
-import { UserRole } from "@/generated/prisma/enums";
 import { Badge } from "@/components/ui/badge";
 
-interface EmployeesDataTableProps {
-  properties: {
-    id: number;
-    name: string;
-  }[];
-}
-
-function roleBadgeVariant(role: UserRole): "default" | "secondary" {
+function roleBadgeVariant(role: string): "default" | "secondary" {
   switch (role) {
-    case UserRole.dispatcher:
+    case "dispatcher":
       return "secondary";
-    case UserRole.worker:
+    case "worker":
       return "default";
     default:
       return "default";
   }
 }
 
-function formatRoleLabel(role: UserRole) {
+function formatRoleLabel(role: string) {
   switch (role) {
-    case UserRole.dispatcher:
+    case "dispatcher":
       return "Dispatcher";
-    case UserRole.worker:
+    case "worker":
       return "Worker";
     default:
       return "Unknown";
   }
 }
 
-export default function EmployeesDataTable({ properties }: EmployeesDataTableProps) {
+interface EmployeesDataTableProps {
+  roles: {
+    id: number;
+    name: string;
+  }[];
+}
+
+export default function EmployeesDataTable({ roles }: EmployeesDataTableProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
-  const [selectedPropertyId, setSelectedPropertyId] = useState("all");
-  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedRoleId, setSelectedRoleId] = useState("all");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: DATA_TABLE_PAGE_SIZE,
@@ -87,8 +85,7 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     search: globalFilter,
-    propertyId: selectedPropertyId,
-    role: selectedRole,
+    roleId: selectedRoleId,
   });
 
   const data = apiData?.employees ?? [];
@@ -135,13 +132,10 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
       id: "role",
       header: "Role",
       cell: ({ row }) => (
-        <Badge variant={roleBadgeVariant(row.original.user.role)}>{formatRoleLabel(row.original.user.role)}</Badge>
+        <Badge variant={roleBadgeVariant(row.original.user.role.name)}>
+          {formatRoleLabel(row.original.user.role.name)}
+        </Badge>
       ),
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.property.name,
     },
     {
       accessorKey: "phoneNumber",
@@ -176,6 +170,9 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => router.push(`/admin/employees/update/${row.original.id}`)}>
               Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push(`/admin/employees/permission/${row.original.id}`)}>
+              Permissions
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
@@ -239,28 +236,9 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
               className="sm:max-w-sm"
             />
             <Select
-              value={selectedPropertyId}
+              value={selectedRoleId}
               onValueChange={(value) => {
-                setSelectedPropertyId(value);
-                setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Filter by property" />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                <SelectItem value="all">All properties</SelectItem>
-                {properties.map((property) => (
-                  <SelectItem key={property.id} value={String(property.id)}>
-                    {property.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedRole}
-              onValueChange={(value) => {
-                setSelectedRole(value);
+                setSelectedRoleId(value);
                 setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
               }}
             >
@@ -269,8 +247,11 @@ export default function EmployeesDataTable({ properties }: EmployeesDataTablePro
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value={UserRole.dispatcher}>Dispatcher</SelectItem>
-                <SelectItem value={UserRole.worker}>Worker</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.id.toString()}>
+                    {formatRoleLabel(role.name)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

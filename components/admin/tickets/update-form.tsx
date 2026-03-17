@@ -6,9 +6,9 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { TicketPriority, TicketStatus, UserRole } from "@/generated/prisma/enums";
+import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { updateTicketAction } from "@/lib/actions/tickets/update-ticket";
-import { useLeanEmployees } from "@/lib/fetching/employees/use-lean-employees";
+import { useAvailableEmployees } from "@/lib/fetching/employees/use-available-employees";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -91,9 +91,8 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     employees,
     isLoading: isLoadingEmployees,
     error: employeesError,
-  } = useLeanEmployees({
+  } = useAvailableEmployees({
     propertyId: initialPropertyId,
-    role: UserRole.worker,
   });
 
   const isLoadingOptions = isLoadingEmployees;
@@ -107,7 +106,9 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const formData = new FormData();
     formData.append("id", String(data.id));
-    formData.append("categoryId", values.categoryId ?? "");
+    if (values.categoryId) {
+      formData.append("categoryId", values.categoryId);
+    }
     if (values.employeeId) {
       formData.append("employeeId", values.employeeId);
     }

@@ -12,3 +12,7 @@ export function standardizePhoneNumber(phone: string): string {
 export function limitText(text: string, limit: number = 120): string {
   return text.length > limit ? text.slice(0, limit) + "..." : text;
 }
+
+export function firstLetterUppercase(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

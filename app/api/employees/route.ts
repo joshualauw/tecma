@@ -1,4 +1,3 @@
-import { UserRole } from "@/generated/prisma/enums";
 import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
@@ -11,11 +10,10 @@ export type EmployeeApiItem = {
   user: {
     name: string;
     email: string;
-    role: UserRole;
-  };
-  property: {
-    id: number;
-    name: string;
+    role: {
+      id: number;
+      name: string;
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -30,8 +28,7 @@ const employeeQuery = z.object({
   page: z.coerce.number().int().default(0),
   size: z.coerce.number().int().positive().default(10),
   search: z.string().trim().nullable(),
-  propertyId: z.coerce.number().int().positive().nullable(),
-  role: z.nativeEnum(UserRole).nullable(),
+  roleId: z.coerce.number().int().positive().nullable(),
 });
 
 export type EmployeesApiResponse = ApiResponse<EmployeesApiData>;
@@ -44,8 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       page: searchParams.get("page"),
       size: searchParams.get("size"),
       search: searchParams.get("search"),
-      propertyId: searchParams.get("propertyId"),
-      role: searchParams.get("role"),
+      roleId: searchParams.get("roleId"),
     });
 
     if (!parsed.success) {
@@ -60,7 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       );
     }
 
-    const { page, size, search, propertyId, role } = parsed.data;
+    const { page, size, search, roleId } = parsed.data;
 
     const where: EmployeesWhereInput = {};
 
@@ -72,12 +68,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       ];
     }
 
-    if (propertyId !== null) {
-      where.propertyId = propertyId;
-    }
-
-    if (role !== null) {
-      where.user = { role };
+    if (roleId !== null) {
+      where.user = { role: { id: roleId } };
     }
 
     const employees = await prisma.employees.findMany({
@@ -91,12 +83,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
             name: true,
             email: true,
             role: true,
-          },
-        },
-        property: {
-          select: {
-            id: true,
-            name: true,
           },
         },
       },

@@ -6,31 +6,25 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { UserRole } from "@/generated/prisma/enums";
 import { updateEmployeeAction } from "@/lib/actions/employees/update-employee";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
+import { firstLetterUppercase } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
-const userRoleOptions: { value: string; label: string }[] = [
-  { value: UserRole.dispatcher, label: "Dispatcher" },
-  { value: UserRole.worker, label: "Worker" },
-];
-
 const formSchema = z.object({
   name: z.string().trim().min(1, "Employee name is required"),
   email: z.email("Invalid email format").trim().min(1, "Email is required"),
-  role: z.enum([UserRole.dispatcher, UserRole.worker]),
+  roleId: z.string().trim().min(1, "Role is required"),
   phoneNumber: z
     .string()
     .regex(PHONE_NUMBER_REGEX, "Invalid phone number format")
     .trim()
     .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
-  propertyId: z.string().trim().optional(),
 });
 
 interface EmployeeUpdateFormProps {
@@ -38,19 +32,18 @@ interface EmployeeUpdateFormProps {
     id: number;
     name: string;
     email: string;
-    role: UserRole;
+    roleId: number;
     phoneNumber: string;
     address: string | null;
-    propertyId: number | null;
   };
-  properties: {
+  roles: {
     id: number;
     name: string;
   }[];
 }
 
-export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateFormProps) {
-  const { id, name, email, role, phoneNumber, address, propertyId } = data;
+export default function EmployeeUpdateForm({ data, roles }: EmployeeUpdateFormProps) {
+  const { id, name, email, roleId, phoneNumber, address } = data;
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -58,10 +51,9 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
     defaultValues: {
       name,
       email,
-      role: role as z.infer<typeof formSchema>["role"],
+      roleId: roleId.toString(),
       phoneNumber,
       address: address ?? "",
-      propertyId: propertyId ? String(propertyId) : "",
     },
   });
 
@@ -70,7 +62,7 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
     formData.append("id", String(id));
     formData.append("name", data.name);
     formData.append("email", data.email);
-    formData.append("role", data.role);
+    formData.append("roleId", data.roleId);
     formData.append("phoneNumber", data.phoneNumber);
     if (data.address) {
       formData.append("address", data.address);
@@ -90,28 +82,6 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="propertyId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled>
-                    <SelectTrigger className="w-full" disabled>
-                      <SelectValue placeholder="Select a property" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={String(property.id)}>
-                          {property.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Controller
                 name="name"
@@ -138,7 +108,7 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Controller
-                name="role"
+                name="roleId"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -148,9 +118,9 @@ export default function EmployeeUpdateForm({ data, properties }: EmployeeUpdateF
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent position="popper">
-                        {userRoleOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id.toString()}>
+                            {firstLetterUppercase(role.name)}
                           </SelectItem>
                         ))}
                       </SelectContent>

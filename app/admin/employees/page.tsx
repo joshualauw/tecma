@@ -5,13 +5,18 @@ import EmployeesDataTable from "@/components/admin/employees/data-table";
 import { prisma } from "@/lib/prisma";
 
 export default async function EmployeesPage() {
-  const properties = await prisma.properties.findMany({
+  const roles = await prisma.role.findMany({
+    where: {
+      name: {
+        not: "super-admin",
+      },
+    },
     select: {
       id: true,
       name: true,
     },
     orderBy: {
-      createdAt: "asc",
+      name: "asc",
     },
   });
 
@@ -28,7 +33,7 @@ export default async function EmployeesPage() {
         </Link>
       </div>
 
-      <EmployeesDataTable properties={properties} />
+      <EmployeesDataTable roles={roles} />
     </div>
   );
 }

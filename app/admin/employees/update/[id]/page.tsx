@@ -22,12 +22,11 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
       id: true,
       phoneNumber: true,
       address: true,
-      propertyId: true,
       user: {
         select: {
           name: true,
           email: true,
-          role: true,
+          roleId: true,
         },
       },
     },
@@ -37,13 +36,18 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
     notFound();
   }
 
-  const properties = await prisma.properties.findMany({
+  const roles = await prisma.role.findMany({
+    where: {
+      name: {
+        not: "super-admin",
+      },
+    },
     select: {
       id: true,
       name: true,
     },
     orderBy: {
-      createdAt: "asc",
+      name: "asc",
     },
   });
 
@@ -51,10 +55,9 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
     id: employee.id,
     name: employee.user.name,
     email: employee.user.email,
-    role: employee.user.role,
+    roleId: employee.user.roleId,
     phoneNumber: employee.phoneNumber,
     address: employee.address,
-    propertyId: employee.propertyId,
   };
 
   return (
@@ -62,7 +65,7 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Employee</h1>
       </div>
-      <EmployeeUpdateForm data={formData} properties={properties} />
+      <EmployeeUpdateForm data={formData} roles={roles} />
     </div>
   );
 }
