@@ -14,7 +14,6 @@ const updateTenantSchema = z.object({
   name: z.string().trim().min(1),
   phoneNumber: z.string().regex(PHONE_NUMBER_REGEX).trim().min(1),
   address: z.string().trim().min(1).nullable(),
-  propertyId: z.coerce.number().int().positive(),
 });
 
 type UpdateTenantActionResponse = ApiResponse<null>;
@@ -32,7 +31,6 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
     name: formData.get("name"),
     phoneNumber: formData.get("phoneNumber"),
     address: formData.get("address"),
-    propertyId: formData.get("propertyId"),
   });
 
   if (!parsed.success) {
@@ -40,28 +38,12 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, name, phoneNumber, address, propertyId } = parsed.data;
+  const { id, name, phoneNumber, address } = parsed.data;
 
   try {
-    const tenant = await prisma.tenants.findUnique({
-      where: { id },
-      select: { id: true },
-    });
-
-    if (!tenant) {
-      return { success: false, message: "Tenant not found" };
-    }
-
     await prisma.tenants.update({
-      where: {
-        id,
-      },
-      data: {
-        name: name,
-        phoneNumber: phoneNumber as string,
-        address: address,
-        propertyId,
-      },
+      where: { id },
+      data: { name, phoneNumber, address },
     });
 
     return { success: true, message: "Tenant updated successfully" };

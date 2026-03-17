@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateUnitAction } from "@/lib/actions/units/update-unit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -14,30 +13,27 @@ import z from "zod";
 
 const formSchema = z.object({
   code: z.string().trim().min(1, "Unit code is required"),
-  propertyId: z.string().trim().optional(),
 });
 
 interface UnitUpdateFormProps {
   data: {
     id: number;
     code: string;
-    propertyId: number | null;
+    property: {
+      id: number;
+      name: string;
+    };
   };
-  properties: {
-    id: number;
-    name: string;
-  }[];
 }
 
-export default function UnitUpdateForm({ data, properties }: UnitUpdateFormProps) {
-  const { id, code, propertyId } = data;
+export default function UnitUpdateForm({ data }: UnitUpdateFormProps) {
+  const { id, code, property } = data;
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       code,
-      propertyId: propertyId ? String(propertyId) : "",
     },
   });
 
@@ -60,28 +56,10 @@ export default function UnitUpdateForm({ data, properties }: UnitUpdateFormProps
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="propertyId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled>
-                    <SelectTrigger className="w-full" disabled>
-                      <SelectValue placeholder="Select a property" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={String(property.id)}>
-                          {property.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+            <Field>
+              <FieldLabel>Property</FieldLabel>
+              <Input value={property.name} disabled />
+            </Field>
             <Controller
               name="code"
               control={form.control}

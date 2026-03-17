@@ -4,8 +4,23 @@ import { prisma } from "@/lib/prisma";
 import DashboardStats from "@/components/admin/dashboard/stats";
 import DashboardTicketChart from "@/components/admin/dashboard/ticket-chart";
 import DashboardMessageChart from "@/components/admin/dashboard/message-chart";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, unauthorized } from "next/navigation";
 
 export default async function DashboardPage() {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "dashboard:view")) {
+    forbidden();
+  }
+
   const startOfMonth = dayjs().startOf("month").toDate();
   const startOfLast14Days = dayjs().subtract(13, "day").startOf("day").toDate();
 

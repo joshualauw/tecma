@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableE
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "employees:view")) {
+    if (!hasPermissions(user, "tickets:create", "tickets:edit")) {
       return NextResponse.json(
         {
           data: null,

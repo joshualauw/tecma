@@ -1,12 +1,26 @@
 import UnitUpdateForm from "@/components/admin/units/update-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface UnitUpdatePageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "units:update")) {
+    forbidden();
+  }
+
   const { id } = await params;
   const unitId = Number(id);
 
@@ -21,7 +35,12 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
     select: {
       id: true,
       code: true,
-      propertyId: true,
+      property: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -29,22 +48,12 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
     notFound();
   }
 
-  const properties = await prisma.properties.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
-
   return (
     <div className="w-full space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Unit</h1>
       </div>
-      <UnitUpdateForm data={unit} properties={properties} />
+      <UnitUpdateForm data={unit} />
     </div>
   );
 }

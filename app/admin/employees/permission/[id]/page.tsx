@@ -1,13 +1,27 @@
 import CreatePermissionForm from "@/components/admin/employees/permission/create-form";
 import EmployeePermissionsDataTable from "@/components/admin/employees/permission/data-table";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface EmployeePermissionPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EmployeePermissionPage({ params }: EmployeePermissionPageProps) {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "employees:permissions:view")) {
+    forbidden();
+  }
+
   const { id } = await params;
   const employeeId = Number(id);
 

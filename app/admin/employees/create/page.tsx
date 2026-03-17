@@ -1,7 +1,22 @@
 import EmployeeCreateForm from "@/components/admin/employees/create-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, unauthorized } from "next/navigation";
 
 export default async function EmployeeCreatePage() {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "employees:create")) {
+    forbidden();
+  }
+
   const roles = await prisma.role.findMany({
     where: {
       name: {

@@ -14,6 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     forbidden();
   }
 
+  console.log(user);
+
   return (
     <AuthProvider user={user}>
       <SidebarProvider>

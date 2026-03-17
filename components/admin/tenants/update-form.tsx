@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateTenantAction } from "@/lib/actions/tenants/update-tenant";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
@@ -22,7 +21,6 @@ const formSchema = z.object({
     .trim()
     .min(1, "Phone number is required"),
   address: z.string().trim().optional(),
-  propertyId: z.string().trim().min(1, "Property is required"),
 });
 
 interface TenantUpdateFormProps {
@@ -31,16 +29,15 @@ interface TenantUpdateFormProps {
     name: string;
     phoneNumber: string;
     address: string | null;
-    propertyId: number | null;
+    property: {
+      id: number;
+      name: string;
+    };
   };
-  properties: {
-    id: number;
-    name: string;
-  }[];
 }
 
-export default function TenantUpdateForm({ data, properties }: TenantUpdateFormProps) {
-  const { id, name, phoneNumber, address, propertyId } = data;
+export default function TenantUpdateForm({ data }: TenantUpdateFormProps) {
+  const { id, name, phoneNumber, address, property } = data;
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,7 +46,6 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
       name,
       phoneNumber,
       address: address ?? "",
-      propertyId: propertyId ? String(propertyId) : "",
     },
   });
 
@@ -61,7 +57,6 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
     if (data.address) {
       formData.append("address", data.address);
     }
-    formData.append("propertyId", data.propertyId);
 
     const result = await updateTenantAction(formData);
     if (result.success) {
@@ -77,28 +72,10 @@ export default function TenantUpdateForm({ data, properties }: TenantUpdateFormP
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="propertyId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Property</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange} disabled>
-                    <SelectTrigger className="w-full" disabled>
-                      <SelectValue placeholder="Select a property" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={String(property.id)}>
-                          {property.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+            <Field>
+              <FieldLabel>Property</FieldLabel>
+              <Input value={property.name} disabled />
+            </Field>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Controller
                 name="name"

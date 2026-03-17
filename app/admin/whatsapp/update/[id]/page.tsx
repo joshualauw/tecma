@@ -1,12 +1,26 @@
 import WhatsappUpdateForm from "@/components/admin/whatsapp/update-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface WhatsappUpdatePageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function WhatsappUpdatePage({ params }: WhatsappUpdatePageProps) {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "whatsapp:edit")) {
+    forbidden();
+  }
+
   const { id } = await params;
   const whatsappId = Number(id);
 

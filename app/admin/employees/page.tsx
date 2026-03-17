@@ -3,8 +3,23 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import EmployeesDataTable from "@/components/admin/employees/data-table";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, unauthorized } from "next/navigation";
 
 export default async function EmployeesPage() {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "employees:view")) {
+    forbidden();
+  }
+
   const roles = await prisma.role.findMany({
     where: {
       name: {

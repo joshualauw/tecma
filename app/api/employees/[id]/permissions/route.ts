@@ -33,7 +33,7 @@ export async function GET(
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "employees:view")) {
+    if (!hasPermissions(user, "employees:permissions:view")) {
       return NextResponse.json(
         {
           data: null,

@@ -223,7 +223,7 @@ async function main() {
       prisma.role.findUniqueOrThrow({ where: { name: "worker" } }),
     ]);
 
-    const hashedPassword = await bcrypt.hash("password123", 10);
+    const hashedPassword = await bcrypt.hash("123456", 10);
 
     const [employeeAUser, employeeBUser, employeeCUser, employeeDUser] = await prisma.$transaction([
       prisma.users.create({

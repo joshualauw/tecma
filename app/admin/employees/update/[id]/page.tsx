@@ -1,12 +1,26 @@
 import EmployeeUpdateForm from "@/components/admin/employees/update-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface EmployeeUpdatePageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageProps) {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "employees:edit")) {
+    forbidden();
+  }
+
   const { id } = await params;
   const employeeId = Number(id);
 

@@ -1,6 +1,9 @@
 import { RoomStatus } from "@/generated/prisma/enums";
 import { RoomsWhereInput } from "@/generated/prisma/models";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
+import { hasPermissions } from "@/lib/utils";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
@@ -34,6 +37,20 @@ export type RoomsApiResponse = ApiResponse<RoomsApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiResponse>> {
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!hasPermissions(user, "inbox:view")) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const parsed = roomQuery.safeParse({

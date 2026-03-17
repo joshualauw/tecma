@@ -1,12 +1,26 @@
 import PropertyUpdateForm from "@/components/admin/properties/update-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface PropertyUpdatePageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function PropertyUpdatePage({ params }: PropertyUpdatePageProps) {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "properties:update")) {
+    forbidden();
+  }
+
   const { id } = await params;
   const propertyId = Number(id);
 

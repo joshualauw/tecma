@@ -1,12 +1,28 @@
 import UnitCreateForm from "@/components/admin/units/create-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { forbidden, unauthorized } from "next/navigation";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
 export default async function UnitCreatePage() {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "units:create")) {
+    forbidden();
+  }
+
   const properties = await prisma.properties.findMany({
     select: {
       id: true,
       name: true,
     },
+    where: user.role === "super-admin" ? undefined : { id: { in: user.allowedProperties } },
     orderBy: {
       createdAt: "asc",
     },

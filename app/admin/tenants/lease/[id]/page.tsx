@@ -1,13 +1,27 @@
 import TenantLeasesDataTable from "@/components/admin/tenants/lease/data-table";
 import CreateLeaseForm from "@/components/admin/tenants/lease/create-form";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { forbidden, notFound, unauthorized } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/permission";
 
 interface TenantLeasePageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function TenantLeasePage({ params }: TenantLeasePageProps) {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "tenants:leases:view")) {
+    forbidden();
+  }
+
   const { id } = await params;
   const tenantId = Number(id);
 

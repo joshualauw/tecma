@@ -1,6 +1,21 @@
 import TicketCategoryCreateForm from "@/components/admin/tickets/categories/create-form";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
+import { forbidden, unauthorized } from "next/navigation";
 
-export default function TicketCategoryCreatePage() {
+export default async function TicketCategoryCreatePage() {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "tickets:categories:create")) {
+    forbidden();
+  }
+
   return (
     <div className="w-full space-y-8">
       <div>
