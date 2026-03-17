@@ -2,6 +2,9 @@
 
 import { RoomStatus } from "@/generated/prisma/enums";
 import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -13,6 +16,13 @@ const resolveRoomSchema = z.object({
 type ResolveRoomActionResponse = ApiResponse<null>;
 
 export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "inbox:send")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = resolveRoomSchema.safeParse({ id: roomId });
 
   if (!parsed.success) {

@@ -5,7 +5,6 @@ import PropertiesDataTable from "@/components/admin/properties/data-table";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/permission";
 import { forbidden, unauthorized } from "next/navigation";
-import { hasPermissions } from "@/lib/utils";
 
 export default async function PropertyPage() {
   const session = await auth();
@@ -15,7 +14,7 @@ export default async function PropertyPage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "properties:view")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

@@ -24,7 +24,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "employees:edit")) {
+  if (!user || !hasPermissions(user, "employees:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -43,6 +43,14 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
   }
 
   const { id, name, email, roleId, phoneNumber, address } = parsed.data;
+
+  const thisEmployee = await prisma.employees.findFirstOrThrow({
+    where: { userId: user.id },
+  });
+
+  if (thisEmployee.id === id) {
+    return { success: false, message: "You cannot update your own employee details" };
+  }
 
   try {
     await prisma.$transaction(async (tx) => {

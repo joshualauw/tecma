@@ -73,16 +73,8 @@ export function AdminSidebar() {
       ],
     },
     {
-      name: "Employees",
-      isShow: hasPermissions(user, "employees:view"),
-      group: "Management",
-      icon: <Users2Icon className="mr-1" />,
-      href: "/admin/employees",
-      isActive: false,
-    },
-    {
       name: "Properties",
-      isShow: hasPermissions(user, "properties:view"),
+      isShow: user.role === "super-admin",
       group: "Management",
       icon: <MapPinIcon className="mr-1" />,
       href: "/admin/properties",
@@ -102,6 +94,14 @@ export function AdminSidebar() {
       group: "Management",
       icon: <Contact2Icon className="mr-1" />,
       href: "/admin/tenants",
+      isActive: false,
+    },
+    {
+      name: "Employees",
+      isShow: hasPermissions(user, "employees:view"),
+      group: "Management",
+      icon: <Users2Icon className="mr-1" />,
+      href: "/admin/employees",
       isActive: false,
     },
   ];

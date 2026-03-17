@@ -9,6 +9,9 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import { AxiosError } from "axios";
 import z from "zod";
 import pusher from "@/lib/pusher";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),
@@ -23,6 +26,13 @@ const sendMessageSchema = z.object({
 type SendMessageActionResponse = ApiResponse<null>;
 
 export async function sendMessageAction(formData: FormData): Promise<SendMessageActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "inbox:send")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = sendMessageSchema.safeParse({
     roomId: formData.get("roomId"),
     replyWaId: formData.get("replyWaId"),

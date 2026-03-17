@@ -1,7 +1,6 @@
 import { PropertiesWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Properties
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "properties:view")) {
+    if (!user || user.role !== "super-admin") {
       return NextResponse.json(
         {
           data: null,

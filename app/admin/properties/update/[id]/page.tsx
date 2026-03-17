@@ -2,7 +2,6 @@ import PropertyUpdateForm from "@/components/admin/properties/update-form";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface PropertyUpdatePageProps {
@@ -17,7 +16,7 @@ export default async function PropertyUpdatePage({ params }: PropertyUpdatePageP
     unauthorized();
   }
 
-  if (!hasPermissions(user, "properties:update")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

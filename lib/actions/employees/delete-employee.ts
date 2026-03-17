@@ -18,7 +18,7 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "employees:delete")) {
+  if (!user || !hasPermissions(user, "employees:delete")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -30,6 +30,14 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
   }
 
   const { id } = parsed.data;
+
+  const thisEmployee = await prisma.employees.findFirstOrThrow({
+    where: { userId: user.id },
+  });
+
+  if (thisEmployee.id === id) {
+    return { success: false, message: "You cannot delete your own employee account" };
+  }
 
   try {
     await prisma.$transaction(async (tx) => {
