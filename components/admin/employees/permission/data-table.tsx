@@ -21,7 +21,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { EmployeePermissionApiItem } from "@/app/api/employees/[id]/permissions/route";
-import { useEmployeePermissions } from "@/lib/fetching/employees/use-employee-permissions";
+import { useEmployeePermissions } from "@/hooks/swr/employees/use-employee-permissions";
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -35,11 +35,7 @@ interface EmployeePermissionsDataTableProps {
 }
 
 export default function EmployeePermissionsDataTable({ employeeId }: EmployeePermissionsDataTableProps) {
-  const {
-    data: apiData,
-    error,
-    isLoading,
-  } = useEmployeePermissions(employeeId);
+  const { data: apiData, error, isLoading } = useEmployeePermissions(employeeId);
 
   const { mutate } = useSWRConfig();
   const [permissionToDelete, setPermissionToDelete] = useState<EmployeePermissionApiItem | null>(null);
@@ -186,4 +182,3 @@ export default function EmployeePermissionsDataTable({ employeeId }: EmployeePer
     </Card>
   );
 }
-

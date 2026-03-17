@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 
 export type AvailableEmployeeApiItem = {
   id: number;
@@ -23,10 +24,9 @@ export type AvailableEmployeesApiResponse = ApiResponse<AvailableEmployeesApiDat
 export async function GET(request: NextRequest): Promise<NextResponse<AvailableEmployeesApiResponse>> {
   try {
     const session = await auth();
-    const user = session?.user;
+    const user = await getAuthenticatedUser(session?.user?.id);
 
-    const allowed = hasPermissions(user, "tickets:view", "tickets:create", "tickets:edit");
-    if (!allowed) {
+    if (!hasPermissions(user, "employees:view")) {
       return NextResponse.json(
         {
           data: null,

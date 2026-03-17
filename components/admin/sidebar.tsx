@@ -16,7 +16,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { hasPermissions } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import {
   ChevronRightIcon,
   Contact2Icon,
@@ -28,14 +28,13 @@ import {
   TicketIcon,
   Users2Icon,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/components/admin/providers/auth-context";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function AdminSidebar() {
   const pathName = usePathname();
-  const { data: session } = useSession();
-  const user = session?.user;
+  const user = useAuth();
 
   const allNavs = [
     {

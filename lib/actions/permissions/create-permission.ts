@@ -1,6 +1,9 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -13,6 +16,13 @@ const createPermissionSchema = z.object({
 type CreatePermissionActionResponse = ApiResponse<null>;
 
 export async function createPermissionAction(formData: FormData): Promise<CreatePermissionActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "employees:permissions:create")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = createPermissionSchema.safeParse({
     employeeId: formData.get("employeeId"),
     propertyId: formData.get("propertyId"),

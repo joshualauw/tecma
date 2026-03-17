@@ -14,11 +14,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DynamicBreadcrumb } from "@/components/admin/breadcrumb";
 import { signOut } from "next-auth/react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/components/admin/providers/auth-context";
 
 export function AdminHeader() {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const user = useAuth();
 
   async function handleSignOut() {
     await signOut({ redirectTo: "/" });
@@ -66,7 +65,7 @@ export function AdminHeader() {
                   <span className="text-[10px] text-muted-foreground">{getUserRole(user.role)}</span>
                 </div>
                 <Avatar className="h-9 w-9 border-2 border-primary/20">
-                  <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
+                  <AvatarImage src={""} alt={user.name ?? ""} />
                   <AvatarFallback className="bg-secondary text-secondary-foreground">
                     {user.name?.charAt(0).toUpperCase()}
                     {user.name?.split(" ")[1]?.charAt(0).toUpperCase()}

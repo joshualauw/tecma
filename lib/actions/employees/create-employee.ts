@@ -1,7 +1,10 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import bcrypt from "bcryptjs";
@@ -19,6 +22,13 @@ const createEmployeeSchema = z.object({
 type CreateEmployeeActionResponse = ApiResponse<null>;
 
 export async function createEmployeeAction(formData: FormData): Promise<CreateEmployeeActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "employees:create")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = createEmployeeSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

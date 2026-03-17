@@ -1,8 +1,11 @@
 import { EmployeesWhereInput } from "@/generated/prisma/models";
+import { auth } from "@/lib/auth";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { getAuthenticatedUser } from "@/lib/permission";
 
 export type EmployeeApiItem = {
   id: number;
@@ -35,6 +38,20 @@ export type EmployeesApiResponse = ApiResponse<EmployeesApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<EmployeesApiResponse>> {
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!hasPermissions(user, "employees:view")) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const parsed = employeeQuery.safeParse({

@@ -1,5 +1,8 @@
 "use server";
 
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -12,6 +15,13 @@ const createUnitSchema = z.object({
 type CreateUnitActionResponse = ApiResponse<null>;
 
 export async function createUnitAction(formData: FormData): Promise<CreateUnitActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "units:create")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = createUnitSchema.safeParse({
     code: formData.get("code"),
     propertyId: formData.get("propertyId"),

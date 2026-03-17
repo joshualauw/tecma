@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { updateTicketAction } from "@/lib/actions/tickets/update-ticket";
-import { useAvailableEmployees } from "@/lib/fetching/employees/use-available-employees";
+import { useAvailableEmployees } from "@/hooks/swr/employees/use-available-employees";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";

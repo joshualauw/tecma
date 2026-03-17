@@ -1,5 +1,8 @@
 import { TicketsWhereInput } from "@/generated/prisma/models";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -58,6 +61,20 @@ export type TicketsApiResponse = ApiResponse<TicketsApiData>;
 
 export async function GET(request: NextRequest): Promise<NextResponse<TicketsApiResponse>> {
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!hasPermissions(user, "tickets:view")) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const parsed = ticketQuery.safeParse({

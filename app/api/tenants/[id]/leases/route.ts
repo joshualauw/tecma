@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { LeaseStatus } from "@/generated/prisma/enums";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import z from "zod";
 
@@ -38,6 +41,20 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<TenantLeasesApiResponse>> {
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!hasPermissions(user, "tenants:leases:view")) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
+
     const contextParams = await context.params;
     const parsed = tenantLeasesQuery.safeParse({ id: contextParams.id });
 

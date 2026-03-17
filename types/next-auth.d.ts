@@ -8,15 +8,11 @@ declare module "next-auth" {
 
   interface User {
     id: number;
-    role: string;
-    permissions: string[];
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
-    role: string;
-    permissions: string[];
   }
 }

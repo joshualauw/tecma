@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SessionProvider refetchOnWindowFocus={false} refetchInterval={1000 * 60 * 5}>
+        <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
           {children}
           <Toaster position="top-right" richColors />
         </SessionProvider>

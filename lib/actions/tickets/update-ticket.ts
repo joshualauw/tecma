@@ -2,6 +2,9 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -19,6 +22,13 @@ const updateTicketSchema = z.object({
 type UpdateTicketActionResponse = ApiResponse<null>;
 
 export async function updateTicketAction(formData: FormData): Promise<UpdateTicketActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "tickets:edit")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = updateTicketSchema.safeParse({
     id: formData.get("id"),
     categoryId: formData.get("categoryId"),

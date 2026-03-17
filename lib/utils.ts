@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { AuthenticatedUser } from "@/types/AuthenticatedUser";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -15,4 +16,11 @@ export function limitText(text: string, limit: number = 120): string {
 
 export function firstLetterUppercase(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function hasPermissions(user: AuthenticatedUser | null, ...permissions: string[]) {
+  if (!user) return false;
+  if (user.role === "super-admin") return true;
+
+  return user.permissions.some((permission) => permissions.includes(permission));
 }

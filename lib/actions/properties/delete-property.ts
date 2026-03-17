@@ -1,6 +1,9 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -12,6 +15,13 @@ const deletePropertySchema = z.object({
 type DeletePropertyActionResponse = ApiResponse<null>;
 
 export async function deletePropertyAction(propertyId: number): Promise<DeletePropertyActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "properties:delete")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = deletePropertySchema.safeParse({ id: propertyId });
 
   if (!parsed.success) {

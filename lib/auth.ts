@@ -1,7 +1,8 @@
-import NextAuth, { CredentialsSignin, User } from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { User } from "next-auth";
 
 class InvalidLoginError extends CredentialsSignin {
   code = "Invalid credentials";
@@ -25,17 +26,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id.toString();
-        token.role = user.role;
-        token.permissions = user.permissions;
       }
       return token;
     },
     session({ session, token }) {
-      if (session.user && token.id != null && token.role != null) {
+      if (session.user && token.id != null) {
         const ext = session.user as User;
         ext.id = Number(token.id);
-        ext.role = token.role;
-        ext.permissions = token.permissions;
       }
       return session;
     },
@@ -77,10 +74,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         return {
           id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role.name,
-          permissions: user.role.rolePermissions.map((p) => p.permission.name),
         };
       },
     }),

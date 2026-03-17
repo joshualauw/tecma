@@ -1,7 +1,10 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -17,6 +20,13 @@ const updateTenantSchema = z.object({
 type UpdateTenantActionResponse = ApiResponse<null>;
 
 export async function updateTenantAction(formData: FormData): Promise<UpdateTenantActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "tenants:edit")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = updateTenantSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),

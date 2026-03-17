@@ -6,7 +6,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui2/date-picker";
 import { createLeaseAction } from "@/lib/actions/leases/create-lease";
-import { useAvailableUnits } from "@/lib/fetching/units/use-available-units";
+import { useAvailableUnits } from "@/hooks/swr/units/use-available-units";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { useState } from "react";

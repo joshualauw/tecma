@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { createTicketAction } from "@/lib/actions/tickets/create-ticket";
-import { useAvailableEmployees } from "@/lib/fetching/employees/use-available-employees";
-import { useLeanTenants } from "@/lib/fetching/tenants/use-lean-tenants";
+import { useAvailableEmployees } from "@/hooks/swr/employees/use-available-employees";
+import { useLeanTenants } from "@/hooks/swr/tenants/use-lean-tenants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";

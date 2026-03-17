@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTicketCategories } from "@/lib/fetching/ticket-categories/use-ticket-categories";
+import { useTicketCategories } from "@/hooks/swr/ticket-categories/use-ticket-categories";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

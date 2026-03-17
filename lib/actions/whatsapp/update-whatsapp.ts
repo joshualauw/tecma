@@ -1,7 +1,10 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
+import { getAuthenticatedUser } from "@/lib/permission";
+import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -17,6 +20,13 @@ const updateWhatsappSchema = z.object({
 type UpdateWhatsappActionResponse = ApiResponse<null>;
 
 export async function updateWhatsappAction(formData: FormData): Promise<UpdateWhatsappActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "whatsapp:edit")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = updateWhatsappSchema.safeParse({
     id: formData.get("id"),
     displayName: formData.get("displayName"),

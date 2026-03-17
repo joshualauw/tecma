@@ -2,6 +2,9 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
+import { hasPermissions } from "@/lib/utils";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/permission";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -18,6 +21,13 @@ const updateEmployeeSchema = z.object({
 type UpdateEmployeeActionResponse = ApiResponse<null>;
 
 export async function updateEmployeeAction(formData: FormData): Promise<UpdateEmployeeActionResponse> {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!hasPermissions(user, "employees:edit")) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   const parsed = updateEmployeeSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
