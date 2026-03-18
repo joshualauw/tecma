@@ -84,7 +84,33 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       whatsappPhoneId: room.whatsapp.phoneId,
     });
 
-    const users = await prisma.users.findMany();
+    const users = await prisma.users.findMany({
+      where: {
+        OR: [
+          { role: { name: "super-admin" } },
+          {
+            AND: [
+              {
+                role: {
+                  rolePermissions: {
+                    some: { permission: { name: "inbox:view" } },
+                  },
+                },
+              },
+              {
+                employee: {
+                  employeePermissions: {
+                    some: { propertyId: room.propertyId },
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
     for (const user of users) {
       await pusher.trigger(`user-${user.id}`, "update-room", createdMessage);
     }

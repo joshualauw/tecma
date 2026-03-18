@@ -303,7 +303,33 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
     return { createdRoom: room, createdMessage };
   });
 
-  const users = await prisma.users.findMany();
+  const users = await prisma.users.findMany({
+    where: {
+      OR: [
+        { role: { name: "super-admin" } },
+        {
+          AND: [
+            {
+              role: {
+                rolePermissions: {
+                  some: { permission: { name: "inbox:view" } },
+                },
+              },
+            },
+            {
+              employee: {
+                employeePermissions: {
+                  some: { propertyId: tenant.propertyId },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    select: { id: true },
+  });
+
   for (const user of users) {
     if (isNewRoom) {
       await pusher.trigger(`user-${user.id}`, "new-room", createdRoom);
