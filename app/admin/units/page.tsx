@@ -20,6 +20,10 @@ export default async function UnitsPage() {
     forbidden();
   }
 
+  const canCreate = hasPermissions(user, "units:create");
+  const canEdit = hasPermissions(user, "units:edit");
+  const canDelete = hasPermissions(user, "units:delete");
+
   const properties = await prisma.properties.findMany({
     select: {
       id: true,
@@ -37,14 +41,16 @@ export default async function UnitsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Units</h1>
         </div>
-        <Link href="/admin/units/create">
-          <Button className="w-full md:w-auto shadow-sm">
-            <Plus className="h-4 w-4" /> Add Units
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link href="/admin/units/create">
+            <Button className="w-full md:w-auto shadow-sm">
+              <Plus className="h-4 w-4" /> Add Units
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <UnitsDataTable properties={properties} />
+      <UnitsDataTable properties={properties} permissions={{ canEdit, canDelete }} />
     </div>
   );
 }

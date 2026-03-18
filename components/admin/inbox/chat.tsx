@@ -409,7 +409,7 @@ function MessagesList() {
 }
 
 export default function InboxChat() {
-  const { isRoomDataOpen, isLoadingRoomData, messages, attachmentFile } = useInbox();
+  const { isRoomDataOpen, isLoadingRoomData, messages, attachmentFile, permissions } = useInbox();
 
   return (
     <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
@@ -425,7 +425,7 @@ export default function InboxChat() {
         )}
       </div>
       <Separator />
-      <InboxFooter />
+      {permissions.canSend && <InboxFooter />}
     </div>
   );
 }

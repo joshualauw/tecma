@@ -7,7 +7,7 @@ import DashboardMessageChart from "@/components/admin/dashboard/message-chart";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions } from "@/lib/utils";
-import { forbidden, redirect, unauthorized } from "next/navigation";
+import { unauthorized } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -18,12 +18,12 @@ export default async function DashboardPage() {
   }
 
   if (!hasPermissions(user, "dashboard:view")) {
-    if (user.permissions.length === 0) {
-      forbidden();
-    } else {
-      const permission = user.permissions[0].split(":")[0];
-      redirect(`/admin/${permission}`);
-    }
+    return (
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome {user.name}!</h1>
+        <p className="text-muted-foreground">You don’t have access to dashboard reports.</p>
+      </div>
+    );
   }
 
   const startOfMonth = dayjs().startOf("month").toDate();

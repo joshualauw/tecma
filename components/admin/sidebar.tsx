@@ -36,7 +36,7 @@ export function AdminSidebar() {
   const allNavs = [
     {
       name: "Dashboard",
-      isShow: hasPermissions(user, "dashboard:view"),
+      isShow: true,
       icon: <PieChartIcon className="mr-1" />,
       href: "/admin/dashboard",
       isActive: false,

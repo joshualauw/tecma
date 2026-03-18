@@ -7,6 +7,25 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 
+type RoomDetailTicket = {
+  id: number;
+  title: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  category: {
+    id: number;
+    name: string;
+  } | null;
+  employee: {
+    id: number;
+    user: {
+      id: number;
+      name: string;
+    };
+  } | null;
+  createdAt: Date;
+};
+
 export type RoomDetailApiItem = {
   id: number;
   status: RoomStatus;
@@ -34,24 +53,7 @@ export type RoomDetailApiItem = {
   expiredAt: Date;
   closedAt: Date | null;
   createdAt: Date;
-  tickets: {
-    id: number;
-    title: string;
-    status: TicketStatus;
-    priority: TicketPriority;
-    category: {
-      id: number;
-      name: string;
-    } | null;
-    employee: {
-      id: number;
-      user: {
-        id: number;
-        name: string;
-      };
-    } | null;
-    createdAt: Date;
-  }[];
+  tickets: RoomDetailTicket[];
 };
 
 const roomDetailQuery = z.object({
@@ -167,41 +169,45 @@ export async function GET(
       );
     }
 
-    const tickets = await prisma.tickets.findMany({
-      where: {
-        lease: {
-          tenantId: room.tenant.id,
-        },
-        status: { not: TicketStatus.closed },
-      },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        priority: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
+    let tickets: RoomDetailTicket[] = [];
+
+    if (hasPermissions(user, "tickets:view")) {
+      tickets = await prisma.tickets.findMany({
+        where: {
+          lease: {
+            tenantId: room.tenant.id,
           },
+          status: { not: TicketStatus.closed },
         },
-        employee: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          priority: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          employee: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
+          createdAt: true,
         },
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    }
 
     return NextResponse.json({
       data: {

@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
 import { forbidden, unauthorized } from "next/navigation";
+import { InboxProvider } from "@/components/admin/inbox/providers/inbox-context";
 
 export default async function InboxPage() {
   const session = await auth();
@@ -16,6 +17,12 @@ export default async function InboxPage() {
   if (!hasPermissions(user, "inbox:view")) {
     forbidden();
   }
+
+  const canSend = hasPermissions(user, "inbox:send");
+  const canResolve = hasPermissions(user, "inbox:send");
+  const canViewTickets = hasPermissions(user, "tickets:view");
+  const canCreateTicket = hasPermissions(user, "tickets:create");
+  const canEditTicket = hasPermissions(user, "tickets:edit");
 
   const properties = await prisma.properties.findMany({
     select: {
@@ -30,7 +37,12 @@ export default async function InboxPage() {
 
   return (
     <div className="space-y-6">
-      <InboxContainer properties={properties} />
+      <InboxProvider
+        properties={properties}
+        permissions={{ canSend, canResolve, canViewTickets, canCreateTicket, canEditTicket }}
+      >
+        <InboxContainer />
+      </InboxProvider>
     </div>
   );
 }

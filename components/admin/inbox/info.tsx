@@ -56,7 +56,7 @@ function ticketStatusBadgeVariant(status: TicketStatus): "default" | "secondary"
 }
 
 export default function InboxInfo() {
-  const { roomDetail } = useInbox();
+  const { roomDetail, permissions } = useInbox();
 
   return (
     <div className="h-full overflow-y-auto p-4">
@@ -110,47 +110,70 @@ export default function InboxInfo() {
           </div>
         </div>
 
-        <Separator />
+        {permissions.canViewTickets && (
+          <>
+            <Separator />
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-bold">Tickets</p>
-            <Button size="sm" asChild>
-              <a href="/admin/tickets/create" target="_blank" rel="noreferrer">
-                <PlusIcon /> Add
-              </a>
-            </Button>
-          </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold">Tickets</p>
+                {permissions.canCreateTicket && (
+                  <Button size="sm" asChild>
+                    <a href="/admin/tickets/create" target="_blank" rel="noreferrer">
+                      <PlusIcon /> Add
+                    </a>
+                  </Button>
+                )}
+              </div>
 
-          {roomDetail?.tickets.length ? (
-            <div className="space-y-2">
-              {roomDetail.tickets.map((ticket) => (
-                <a
-                  key={ticket.id}
-                  href={`/admin/tickets/update/${ticket.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block rounded-md border p-3 text-sm transition-colors hover:bg-muted"
-                >
-                  <p className="font-medium">{ticket.title}</p>
-                  <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <p>Category: {ticket.category?.name ?? "-"}</p>
-                    <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
-                    <p>Employee: {ticket.employee?.user.name ?? "-"}</p>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
-                      {formatTicketStatusLabel(ticket.status)}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.createdAt)}</p>
-                  </div>
-                </a>
-              ))}
+              {roomDetail?.tickets.length ? (
+                <div className="space-y-2">
+                  {roomDetail.tickets.map((ticket) =>
+                    permissions.canEditTicket ? (
+                      <a
+                        key={ticket.id}
+                        href={`/admin/tickets/update/${ticket.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-md border p-3 text-sm transition-colors hover:bg-muted"
+                      >
+                        <p className="font-medium">{ticket.title}</p>
+                        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                          <p>Category: {ticket.category?.name ?? "-"}</p>
+                          <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
+                          <p>Employee: {ticket.employee?.user.name ?? "-"}</p>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
+                            {formatTicketStatusLabel(ticket.status)}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.createdAt)}</p>
+                        </div>
+                      </a>
+                    ) : (
+                      <div key={ticket.id} className="block rounded-md border p-3 text-sm opacity-80">
+                        <p className="font-medium">{ticket.title}</p>
+                        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                          <p>Category: {ticket.category?.name ?? "-"}</p>
+                          <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
+                          <p>Employee: {ticket.employee?.user.name ?? "-"}</p>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
+                            {formatTicketStatusLabel(ticket.status)}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.createdAt)}</p>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No tickets found.</p>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No tickets found.</p>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

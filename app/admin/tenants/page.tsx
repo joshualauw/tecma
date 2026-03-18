@@ -20,6 +20,11 @@ export default async function TenantsPage() {
     forbidden();
   }
 
+  const canCreate = hasPermissions(user, "tenants:create");
+  const canEdit = hasPermissions(user, "tenants:edit");
+  const canDelete = hasPermissions(user, "tenants:delete");
+  const canViewLeases = hasPermissions(user, "tenants:leases:view");
+
   const properties = await prisma.properties.findMany({
     select: {
       id: true,
@@ -37,14 +42,16 @@ export default async function TenantsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Tenants</h1>
         </div>
-        <Link href="/admin/tenants/create">
-          <Button className="w-full md:w-auto shadow-sm">
-            <Plus className="h-4 w-4" /> Add Tenant
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link href="/admin/tenants/create">
+            <Button className="w-full md:w-auto shadow-sm">
+              <Plus className="h-4 w-4" /> Add Tenant
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <TenantsDataTable properties={properties} />
+      <TenantsDataTable properties={properties} permissions={{ canEdit, canDelete, canViewLeases }} />
     </div>
   );
 }

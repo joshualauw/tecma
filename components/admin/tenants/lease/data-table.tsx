@@ -16,13 +16,16 @@ import { useTenantLeases } from "@/hooks/swr/leases/use-tenant-leases";
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { Ellipsis } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import UpdateLeaseForm from "@/components/admin/tenants/lease/update-form";
 
 interface TenantLeasesDataTableProps {
   tenantId: number;
+  permissions: {
+    canEditLease: boolean;
+  };
 }
 
 function LeaseStatusBadge({ status }: { status: LeaseStatus }) {
@@ -35,49 +38,56 @@ function LeaseStatusBadge({ status }: { status: LeaseStatus }) {
   return <Badge variant="destructive">Terminated</Badge>;
 }
 
-export default function TenantLeasesDataTable({ tenantId }: TenantLeasesDataTableProps) {
+export default function TenantLeasesDataTable({ tenantId, permissions }: TenantLeasesDataTableProps) {
   const [leaseToEdit, setLeaseToEdit] = useState<TenantLeaseApiItem | null>(null);
   const { data: apiData, error, isLoading } = useTenantLeases(tenantId);
 
   const data = apiData?.leases ?? [];
 
-  const columns: ColumnDef<TenantLeaseApiItem>[] = [
-    {
-      id: "row",
-      header: "Row",
-      cell: ({ row }) => row.index + 1,
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.property.name,
-    },
-    {
-      id: "unit",
-      header: "Unit",
-      cell: ({ row }) => row.original.unit.code,
-    },
-    {
-      id: "tenant",
-      header: "Tenant",
-      cell: ({ row }) => row.original.tenant.name,
-    },
-    {
-      accessorKey: "startDate",
-      header: "Start Date",
-      cell: ({ row }) => dayjs(row.original.startDate).format("DD/MM/YYYY"),
-    },
-    {
-      accessorKey: "endDate",
-      header: "End Date",
-      cell: ({ row }) => dayjs(row.original.endDate).format("DD/MM/YYYY"),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => <LeaseStatusBadge status={row.original.status} />,
-    },
-    {
+  const columns: ColumnDef<TenantLeaseApiItem>[] = useMemo(() => {
+    const base: ColumnDef<TenantLeaseApiItem>[] = [
+      {
+        id: "row",
+        header: "Row",
+        cell: ({ row }) => row.index + 1,
+      },
+      {
+        id: "property",
+        header: "Property",
+        cell: ({ row }) => row.original.property.name,
+      },
+      {
+        id: "unit",
+        header: "Unit",
+        cell: ({ row }) => row.original.unit.code,
+      },
+      {
+        id: "tenant",
+        header: "Tenant",
+        cell: ({ row }) => row.original.tenant.name,
+      },
+      {
+        accessorKey: "startDate",
+        header: "Start Date",
+        cell: ({ row }) => dayjs(row.original.startDate).format("DD/MM/YYYY"),
+      },
+      {
+        accessorKey: "endDate",
+        header: "End Date",
+        cell: ({ row }) => dayjs(row.original.endDate).format("DD/MM/YYYY"),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <LeaseStatusBadge status={row.original.status} />,
+      },
+    ];
+
+    if (!permissions.canEditLease) {
+      return base;
+    }
+
+    base.push({
       id: "action",
       header: "Action",
       cell: ({ row }) => (
@@ -92,8 +102,10 @@ export default function TenantLeasesDataTable({ tenantId }: TenantLeasesDataTabl
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-    },
-  ];
+    });
+
+    return base;
+  }, [permissions.canEditLease]);
 
   useEffect(() => {
     if (error) {
@@ -145,7 +157,7 @@ export default function TenantLeasesDataTable({ tenantId }: TenantLeasesDataTabl
           </div>
         </CardContent>
       </Card>
-      {leaseToEdit && (
+      {permissions.canEditLease && leaseToEdit && (
         <UpdateLeaseForm
           lease={leaseToEdit}
           open={true}

@@ -6,32 +6,23 @@ import InboxChat from "@/components/admin/inbox/chat";
 import InboxHeader from "@/components/admin/inbox/header";
 import InboxInfo from "@/components/admin/inbox/info";
 import InboxRooms from "@/components/admin/inbox/rooms";
-import { InboxProvider, useInbox } from "@/components/admin/inbox/providers/inbox-context";
+import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { getPusherClient } from "@/lib/pusher-client";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { RoomStatus } from "@/generated/prisma/enums";
 
-interface InboxContainerProps {
-  properties: {
-    id: number;
-    name: string;
-  }[];
-}
-
-export default function InboxContainer({ properties }: InboxContainerProps) {
+export default function InboxContainer() {
   return (
     <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
-        <InboxProvider properties={properties}>
-          <InboxPusherSubscription />
-          <div className="grid h-[calc(100vh-6rem)] min-h-[520px] md:grid-cols-[320px_1fr]">
-            <InboxRooms />
-            <div className="flex min-h-0 flex-col">
-              <InboxRightColumn />
-            </div>
+        <InboxPusherSubscription />
+        <div className="grid h-[calc(100vh-6rem)] min-h-[520px] md:grid-cols-[320px_1fr]">
+          <InboxRooms />
+          <div className="flex min-h-0 flex-col">
+            <InboxRightColumn />
           </div>
-        </InboxProvider>
+        </div>
       </CardContent>
     </Card>
   );

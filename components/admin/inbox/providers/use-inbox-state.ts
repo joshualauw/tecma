@@ -13,15 +13,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MessageApiItem } from "@/app/api/messages/route";
 import { MessageStatusUpdate } from "@/lib/handlers/message/status";
+import type { InboxPermissions } from "@/components/admin/inbox/providers/inbox-context";
 
 export interface UseInboxStateProps {
   properties: {
     id: number;
     name: string;
   }[];
+  permissions: InboxPermissions;
 }
 
-export function useInboxState({ properties }: UseInboxStateProps) {
+export function useInboxState({ properties, permissions }: UseInboxStateProps) {
   const [selectedPropertyId, setSelectedPropertyId] = useState("all");
   const [selectedRoomStatus, setSelectedRoomStatus] = useState<"all" | RoomStatus>(RoomStatus.active);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
@@ -279,6 +281,7 @@ export function useInboxState({ properties }: UseInboxStateProps) {
   }, []);
 
   return {
+    permissions,
     properties,
     selectedPropertyId,
     setSelectedPropertyId,

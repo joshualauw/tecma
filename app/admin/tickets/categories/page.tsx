@@ -19,20 +19,26 @@ export default async function TicketsCategoriesPage() {
     forbidden();
   }
 
+  const canCreate = hasPermissions(user, "tickets:categories:create");
+  const canEdit = hasPermissions(user, "tickets:categories:edit");
+  const canDelete = hasPermissions(user, "tickets:categories:delete");
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Ticket Categories</h1>
         </div>
-        <Link href="/admin/tickets/categories/create">
-          <Button className="w-full md:w-auto shadow-sm">
-            <Plus className="h-4 w-4" /> Add Category
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link href="/admin/tickets/categories/create">
+            <Button className="w-full md:w-auto shadow-sm">
+              <Plus className="h-4 w-4" /> Add Category
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <TicketCategoriesDataTable />
+      <TicketCategoriesDataTable permissions={{ canEdit, canDelete }} />
     </div>
   );
 }

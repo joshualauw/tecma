@@ -43,6 +43,7 @@ export default function InboxHeader() {
     isResolvingRoom,
     isRoomActive,
     hasRoomDetail,
+    permissions,
   } = useInbox();
 
   const onToggleRoomData = () => setIsRoomDataOpen((prev) => !prev);
@@ -56,14 +57,16 @@ export default function InboxHeader() {
           <p className="text-xs text-muted-foreground">Expires in: {formatExpiresIn(roomDetail?.expiredAt ?? "")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => setIsResolveDialogOpen(true)}
-            disabled={!hasRoomDetail || !isRoomActive || isResolvingRoom}
-          >
-            Resolve
-          </Button>
+          {permissions.canResolve && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setIsResolveDialogOpen(true)}
+              disabled={!hasRoomDetail || !isRoomActive || isResolvingRoom}
+            >
+              Resolve
+            </Button>
+          )}
           <Button
             type="button"
             size="icon-sm"
@@ -77,31 +80,33 @@ export default function InboxHeader() {
         </div>
       </div>
 
-      <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Resolve this room?</AlertDialogTitle>
-            <AlertDialogDescription>This will close the room and end the conversation</AlertDialogDescription>
-          </AlertDialogHeader>
+      {permissions.canResolve && (
+        <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Resolve this room?</AlertDialogTitle>
+              <AlertDialogDescription>This will close the room and end the conversation</AlertDialogDescription>
+            </AlertDialogHeader>
 
-          {openTicketsCount > 0 && (
-            <Alert variant="warning">
-              <AlertTriangleIcon />
-              <AlertTitle>Open tickets still exist</AlertTitle>
-              <AlertDescription>
-                {openTicketsCount} {openTicketsCount === 1 ? "ticket is" : "tickets are"} still open.
-              </AlertDescription>
-            </Alert>
-          )}
+            {openTicketsCount > 0 && (
+              <Alert variant="warning">
+                <AlertTriangleIcon />
+                <AlertTitle>Open tickets still exist</AlertTitle>
+                <AlertDescription>
+                  {openTicketsCount} {openTicketsCount === 1 ? "ticket is" : "tickets are"} still open.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isResolvingRoom}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onConfirmResolveRoom} disabled={isResolvingRoom}>
-              {isResolvingRoom ? "Resolving..." : "Resolve"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isResolvingRoom}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={onConfirmResolveRoom} disabled={isResolvingRoom}>
+                {isResolvingRoom ? "Resolving..." : "Resolve"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }

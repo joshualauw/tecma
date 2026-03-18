@@ -22,6 +22,9 @@ export default async function TenantLeasePage({ params }: TenantLeasePageProps) 
     forbidden();
   }
 
+  const canCreateLease = hasPermissions(user, "tenants:leases:create");
+  const canEditLease = hasPermissions(user, "tenants:leases:edit");
+
   const { id } = await params;
   const tenantId = Number(id);
 
@@ -44,9 +47,9 @@ export default async function TenantLeasePage({ params }: TenantLeasePageProps) 
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Tenant Leases</h1>
         </div>
-        <CreateLeaseForm tenantId={tenantId} propertyId={tenant.propertyId} />
+        {canCreateLease && <CreateLeaseForm tenantId={tenantId} propertyId={tenant.propertyId} />}
       </div>
-      <TenantLeasesDataTable tenantId={tenantId} />
+      <TenantLeasesDataTable tenantId={tenantId} permissions={{ canEditLease }} />
     </div>
   );
 }

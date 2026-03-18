@@ -38,9 +38,14 @@ interface TenantsDataTableProps {
     id: number;
     name: string;
   }[];
+  permissions: {
+    canEdit: boolean;
+    canDelete: boolean;
+    canViewLeases: boolean;
+  };
 }
 
-export default function TenantsDataTable({ properties }: TenantsDataTableProps) {
+export default function TenantsDataTable({ properties, permissions }: TenantsDataTableProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -89,48 +94,55 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<TenantApiItem>[] = [
-    {
-      id: "row",
-      header: "Row",
-      cell: ({ row }) => row.index + 1,
-    },
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.property.name,
-    },
-    {
-      id: "leases",
-      header: "Leases",
-      cell: ({ row }) =>
-        row.original.leases.length > 0 ? row.original.leases.map((lease) => lease.unit.code).join(", ") : "-",
-    },
-    {
-      accessorKey: "phoneNumber",
-      header: "Phone Number",
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const value = row.original.createdAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+  const columns: ColumnDef<TenantApiItem>[] = useMemo(() => {
+    const base: ColumnDef<TenantApiItem>[] = [
+      {
+        id: "row",
+        header: "Row",
+        cell: ({ row }) => row.index + 1,
       },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-      cell: ({ row }) => {
-        const value = row.original.updatedAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      {
+        accessorKey: "name",
+        header: "Name",
       },
-    },
-    {
+      {
+        id: "property",
+        header: "Property",
+        cell: ({ row }) => row.original.property.name,
+      },
+      {
+        id: "leases",
+        header: "Leases",
+        cell: ({ row }) =>
+          row.original.leases.length > 0 ? row.original.leases.map((lease) => lease.unit.code).join(", ") : "-",
+      },
+      {
+        accessorKey: "phoneNumber",
+        header: "Phone Number",
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => {
+          const value = row.original.createdAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated At",
+        cell: ({ row }) => {
+          const value = row.original.updatedAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+    ];
+
+    if (!permissions.canEdit && !permissions.canDelete && !permissions.canViewLeases) {
+      return base;
+    }
+
+    base.push({
       id: "action",
       header: "Action",
       cell: ({ row }) => (
@@ -141,26 +153,34 @@ export default function TenantsDataTable({ properties }: TenantsDataTableProps) 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/update/${row.original.id}`)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/lease/${row.original.id}`)}>
-              Leases
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => {
-                setTenantToDelete(row.original);
-                setIsDeleteDialogOpen(true);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
+            {permissions.canEdit && (
+              <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/update/${row.original.id}`)}>
+                Edit
+              </DropdownMenuItem>
+            )}
+            {permissions.canViewLeases && (
+              <DropdownMenuItem onSelect={() => router.push(`/admin/tenants/lease/${row.original.id}`)}>
+                Leases
+              </DropdownMenuItem>
+            )}
+            {permissions.canDelete && (
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => {
+                  setTenantToDelete(row.original);
+                  setIsDeleteDialogOpen(true);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-    },
-  ];
+    });
+
+    return base;
+  }, [permissions.canDelete, permissions.canEdit, permissions.canViewLeases, router]);
 
   async function onConfirmDelete() {
     if (!tenantToDelete || isDeleting) {

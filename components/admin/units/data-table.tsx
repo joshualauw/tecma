@@ -38,9 +38,13 @@ interface UnitsDataTableProps {
     id: number;
     name: string;
   }[];
+  permissions: {
+    canEdit: boolean;
+    canDelete: boolean;
+  };
 }
 
-export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
+export default function UnitsDataTable({ properties, permissions }: UnitsDataTableProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -89,38 +93,45 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<UnitApiItem>[] = [
-    {
-      id: "row",
-      header: "Row",
-      cell: ({ row }) => row.index + 1,
-    },
-    {
-      accessorKey: "code",
-      header: "Code",
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.property.name,
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const value = row.original.createdAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+  const columns: ColumnDef<UnitApiItem>[] = useMemo(() => {
+    const base: ColumnDef<UnitApiItem>[] = [
+      {
+        id: "row",
+        header: "Row",
+        cell: ({ row }) => row.index + 1,
       },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-      cell: ({ row }) => {
-        const value = row.original.updatedAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      {
+        accessorKey: "code",
+        header: "Code",
       },
-    },
-    {
+      {
+        id: "property",
+        header: "Property",
+        cell: ({ row }) => row.original.property.name,
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => {
+          const value = row.original.createdAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated At",
+        cell: ({ row }) => {
+          const value = row.original.updatedAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+    ];
+
+    if (!permissions.canEdit && !permissions.canDelete) {
+      return base;
+    }
+
+    base.push({
       id: "action",
       header: "Action",
       cell: ({ row }) => (
@@ -131,23 +142,29 @@ export default function UnitsDataTable({ properties }: UnitsDataTableProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/units/update/${row.original.id}`)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => {
-                setUnitToDelete(row.original);
-                setIsDeleteDialogOpen(true);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
+            {permissions.canEdit && (
+              <DropdownMenuItem onSelect={() => router.push(`/admin/units/update/${row.original.id}`)}>
+                Edit
+              </DropdownMenuItem>
+            )}
+            {permissions.canDelete && (
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => {
+                  setUnitToDelete(row.original);
+                  setIsDeleteDialogOpen(true);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-    },
-  ];
+    });
+
+    return base;
+  }, [permissions.canDelete, permissions.canEdit, router]);
 
   async function onConfirmDelete() {
     if (!unitToDelete || isDeleting) {

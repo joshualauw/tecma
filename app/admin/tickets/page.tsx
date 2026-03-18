@@ -20,6 +20,10 @@ export default async function TicketsPage() {
     forbidden();
   }
 
+  const canCreate = hasPermissions(user, "tickets:create");
+  const canEdit = hasPermissions(user, "tickets:edit");
+  const canDelete = hasPermissions(user, "tickets:delete");
+
   const [properties, categories] = await Promise.all([
     prisma.properties.findMany({
       select: { id: true, name: true },
@@ -38,14 +42,16 @@ export default async function TicketsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Tickets</h1>
         </div>
-        <Link href="/admin/tickets/create">
-          <Button className="w-full md:w-auto shadow-sm">
-            <Plus className="h-4 w-4" /> Add Ticket
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link href="/admin/tickets/create">
+            <Button className="w-full md:w-auto shadow-sm">
+              <Plus className="h-4 w-4" /> Add Ticket
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <TicketsDataTable properties={properties} categories={categories} />
+      <TicketsDataTable properties={properties} categories={categories} permissions={{ canEdit, canDelete }} />
     </div>
   );
 }

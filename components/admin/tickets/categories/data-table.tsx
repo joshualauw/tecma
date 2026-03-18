@@ -32,7 +32,14 @@ import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
-export default function TicketCategoriesDataTable() {
+interface TicketCategoriesDataTableProps {
+  permissions: {
+    canEdit: boolean;
+    canDelete: boolean;
+  };
+}
+
+export default function TicketCategoriesDataTable({ permissions }: TicketCategoriesDataTableProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -79,38 +86,45 @@ export default function TicketCategoriesDataTable() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<TicketCategoryApiItem>[] = [
-    {
-      id: "row",
-      header: "Row",
-      cell: ({ row }) => row.index + 1,
-    },
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => row.original.description ?? "-",
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const value = row.original.createdAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+  const columns: ColumnDef<TicketCategoryApiItem>[] = useMemo(() => {
+    const base: ColumnDef<TicketCategoryApiItem>[] = [
+      {
+        id: "row",
+        header: "Row",
+        cell: ({ row }) => row.index + 1,
       },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-      cell: ({ row }) => {
-        const value = row.original.updatedAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      {
+        accessorKey: "name",
+        header: "Name",
       },
-    },
-    {
+      {
+        accessorKey: "description",
+        header: "Description",
+        cell: ({ row }) => row.original.description ?? "-",
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => {
+          const value = row.original.createdAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated At",
+        cell: ({ row }) => {
+          const value = row.original.updatedAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+    ];
+
+    if (!permissions.canEdit && !permissions.canDelete) {
+      return base;
+    }
+
+    base.push({
       id: "action",
       header: "Action",
       cell: ({ row }) => (
@@ -121,23 +135,29 @@ export default function TicketCategoriesDataTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/tickets/categories/update/${row.original.id}`)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => {
-                setCategoryToDelete(row.original);
-                setIsDeleteDialogOpen(true);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
+            {permissions.canEdit && (
+              <DropdownMenuItem onSelect={() => router.push(`/admin/tickets/categories/update/${row.original.id}`)}>
+                Edit
+              </DropdownMenuItem>
+            )}
+            {permissions.canDelete && (
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => {
+                  setCategoryToDelete(row.original);
+                  setIsDeleteDialogOpen(true);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-    },
-  ];
+    });
+
+    return base;
+  }, [permissions.canDelete, permissions.canEdit, router]);
 
   async function onConfirmDelete() {
     if (!categoryToDelete || isDeleting) {

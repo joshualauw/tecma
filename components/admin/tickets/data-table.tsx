@@ -44,6 +44,10 @@ interface TicketsDataTableProps {
     id: number;
     name: string;
   }[];
+  permissions: {
+    canEdit: boolean;
+    canDelete: boolean;
+  };
 }
 
 function formatStatusLabel(status: TicketStatus) {
@@ -98,7 +102,7 @@ function priorityBadgeVariant(priority: TicketPriority): "secondary" | "default"
   }
 }
 
-export default function TicketsDataTable({ properties, categories }: TicketsDataTableProps) {
+export default function TicketsDataTable({ properties, categories, permissions }: TicketsDataTableProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -153,74 +157,81 @@ export default function TicketsDataTable({ properties, categories }: TicketsData
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns: ColumnDef<TicketApiItem>[] = [
-    {
-      id: "row",
-      header: "Row",
-      cell: ({ row }) => row.index + 1,
-    },
-    {
-      accessorKey: "title",
-      header: "Title",
-    },
-    {
-      id: "property",
-      header: "Property",
-      cell: ({ row }) => row.original.property.name,
-    },
-    {
-      id: "tenant",
-      header: "Tenant",
-      cell: ({ row }) => row.original.lease.tenant.name,
-    },
-    {
-      id: "unit",
-      header: "Unit",
-      cell: ({ row }) => row.original.lease.unit.code,
-    },
-    {
-      id: "category",
-      header: "Category",
-      cell: ({ row }) => row.original.category?.name ?? "-",
-    },
-    {
-      id: "employee",
-      header: "Employee",
-      cell: ({ row }) => row.original.employee?.user.name ?? "-",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <Badge variant={statusBadgeVariant(row.original.status)}>{formatStatusLabel(row.original.status)}</Badge>
-      ),
-    },
-    {
-      accessorKey: "priority",
-      header: "Priority",
-      cell: ({ row }) => (
-        <Badge variant={priorityBadgeVariant(row.original.priority)}>
-          {formatPriorityLabel(row.original.priority)}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const value = row.original.createdAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+  const columns: ColumnDef<TicketApiItem>[] = useMemo(() => {
+    const base: ColumnDef<TicketApiItem>[] = [
+      {
+        id: "row",
+        header: "Row",
+        cell: ({ row }) => row.index + 1,
       },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-      cell: ({ row }) => {
-        const value = row.original.updatedAt;
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+      {
+        accessorKey: "title",
+        header: "Title",
       },
-    },
-    {
+      {
+        id: "property",
+        header: "Property",
+        cell: ({ row }) => row.original.property.name,
+      },
+      {
+        id: "tenant",
+        header: "Tenant",
+        cell: ({ row }) => row.original.lease.tenant.name,
+      },
+      {
+        id: "unit",
+        header: "Unit",
+        cell: ({ row }) => row.original.lease.unit.code,
+      },
+      {
+        id: "category",
+        header: "Category",
+        cell: ({ row }) => row.original.category?.name ?? "-",
+      },
+      {
+        id: "employee",
+        header: "Employee",
+        cell: ({ row }) => row.original.employee?.user.name ?? "-",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge variant={statusBadgeVariant(row.original.status)}>{formatStatusLabel(row.original.status)}</Badge>
+        ),
+      },
+      {
+        accessorKey: "priority",
+        header: "Priority",
+        cell: ({ row }) => (
+          <Badge variant={priorityBadgeVariant(row.original.priority)}>
+            {formatPriorityLabel(row.original.priority)}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => {
+          const value = row.original.createdAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated At",
+        cell: ({ row }) => {
+          const value = row.original.updatedAt;
+          return dayjs(value).format("DD/MM/YYYY HH:mm");
+        },
+      },
+    ];
+
+    if (!permissions.canEdit && !permissions.canDelete) {
+      return base;
+    }
+
+    base.push({
       id: "action",
       header: "Action",
       cell: ({ row }) => (
@@ -231,23 +242,29 @@ export default function TicketsDataTable({ properties, categories }: TicketsData
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/admin/tickets/update/${row.original.id}`)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => {
-                setTicketToDelete(row.original);
-                setIsDeleteDialogOpen(true);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
+            {permissions.canEdit && (
+              <DropdownMenuItem onSelect={() => router.push(`/admin/tickets/update/${row.original.id}`)}>
+                Edit
+              </DropdownMenuItem>
+            )}
+            {permissions.canDelete && (
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => {
+                  setTicketToDelete(row.original);
+                  setIsDeleteDialogOpen(true);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-    },
-  ];
+    });
+
+    return base;
+  }, [permissions.canDelete, permissions.canEdit, router]);
 
   async function onConfirmDelete() {
     if (!ticketToDelete || isDeleting) {
