@@ -2,9 +2,8 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { hasPermissions } from "@/lib/utils";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -24,7 +23,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!user || !hasPermissions(user, "employees:edit")) {
+  if (!user || user.role !== "super-admin") {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 

@@ -1,8 +1,7 @@
 import EmployeeUpdateForm from "@/components/admin/employees/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface EmployeeUpdatePageProps {
@@ -17,7 +16,7 @@ export default async function EmployeeUpdatePage({ params }: EmployeeUpdatePageP
     unauthorized();
   }
 
-  if (!hasPermissions(user, "employees:edit")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

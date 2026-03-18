@@ -5,7 +5,7 @@ async function main() {
   const roles = await prisma.role.count();
   if (roles === 0) {
     await prisma.role.createMany({
-      data: [{ name: "super-admin" }, { name: "dispatcher" }, { name: "worker" }],
+      data: [{ name: "super-admin" }, { name: "dispatcher" }, { name: "worker" }, { name: "manager" }],
     });
   }
 
@@ -16,10 +16,6 @@ async function main() {
         { name: "dashboard:view" },
         { name: "inbox:view" },
         { name: "inbox:send" },
-        { name: "whatsapp:view" },
-        { name: "whatsapp:create" },
-        { name: "whatsapp:edit" },
-        { name: "whatsapp:delete" },
         { name: "tickets:view" },
         { name: "tickets:create" },
         { name: "tickets:edit" },
@@ -40,13 +36,6 @@ async function main() {
         { name: "tenants:leases:view" },
         { name: "tenants:leases:create" },
         { name: "tenants:leases:edit" },
-        { name: "employees:view" },
-        { name: "employees:create" },
-        { name: "employees:edit" },
-        { name: "employees:delete" },
-        { name: "employees:permissions:view" },
-        { name: "employees:permissions:create" },
-        { name: "employees:permissions:delete" },
       ],
     });
   }
@@ -95,6 +84,34 @@ async function main() {
     });
     await prisma.rolePermissions.createMany({
       data: workerPermissions.map((permission) => ({ roleId: workerRole.id, permissionId: permission.id })),
+    });
+
+    const managerRole = await prisma.role.findUniqueOrThrow({
+      where: {
+        name: "manager",
+      },
+    });
+    const managerPermissions = await prisma.permission.findMany({
+      where: {
+        name: {
+          in: [
+            "units:view",
+            "units:create",
+            "units:edit",
+            "units:delete",
+            "tenants:view",
+            "tenants:create",
+            "tenants:edit",
+            "tenants:delete",
+            "tenants:leases:view",
+            "tenants:leases:create",
+            "tenants:leases:edit",
+          ],
+        },
+      },
+    });
+    await prisma.rolePermissions.createMany({
+      data: managerPermissions.map((permission) => ({ roleId: managerRole.id, permissionId: permission.id })),
     });
   }
 
@@ -214,50 +231,68 @@ async function main() {
 
   const employeesCount = await prisma.employees.count();
   if (employeesCount === 0 && properties.length >= 2) {
-    const [dispatcherRole, workerRole] = await Promise.all([
+    const [dispatcherRole, workerRole, managerRole] = await Promise.all([
       prisma.role.findUniqueOrThrow({ where: { name: "dispatcher" } }),
       prisma.role.findUniqueOrThrow({ where: { name: "worker" } }),
+      prisma.role.findUniqueOrThrow({ where: { name: "manager" } }),
     ]);
 
     const hashedPassword = await bcrypt.hash("123456", 10);
 
-    const [employeeAUser, employeeBUser, employeeCUser, employeeDUser] = await prisma.$transaction([
-      prisma.users.create({
-        data: {
-          name: "Mason Brooks",
-          email: "mason.brooks@example.com",
-          password: hashedPassword,
-          roleId: workerRole.id,
-        },
-      }),
-      prisma.users.create({
-        data: {
-          name: "Ava Reynolds",
-          email: "ava.reynolds@example.com",
-          password: hashedPassword,
-          roleId: dispatcherRole.id,
-        },
-      }),
+    const [employeeAUser, employeeBUser, employeeCUser, employeeDUser, managerAUser, managerBUser] =
+      await prisma.$transaction([
+        prisma.users.create({
+          data: {
+            name: "Mason Brooks",
+            email: "mason.brooks@example.com",
+            password: hashedPassword,
+            roleId: workerRole.id,
+          },
+        }),
+        prisma.users.create({
+          data: {
+            name: "Ava Reynolds",
+            email: "ava.reynolds@example.com",
+            password: hashedPassword,
+            roleId: dispatcherRole.id,
+          },
+        }),
 
-      prisma.users.create({
-        data: {
-          name: "Noah Patel",
-          email: "noah.patel@example.com",
-          password: hashedPassword,
-          roleId: workerRole.id,
-        },
-      }),
-      prisma.users.create({
-        data: {
-          name: "Sophia Martinez",
-          email: "sophia.martinez@example.com",
-          password: hashedPassword,
-          roleId: dispatcherRole.id,
-        },
-      }),
-    ]);
+        prisma.users.create({
+          data: {
+            name: "Noah Patel",
+            email: "noah.patel@example.com",
+            password: hashedPassword,
+            roleId: workerRole.id,
+          },
+        }),
+        prisma.users.create({
+          data: {
+            name: "Sophia Martinez",
+            email: "sophia.martinez@example.com",
+            password: hashedPassword,
+            roleId: dispatcherRole.id,
+          },
+        }),
+        prisma.users.create({
+          data: {
+            name: "Harper Jordan",
+            email: "harper.jordan@example.com",
+            password: hashedPassword,
+            roleId: managerRole.id,
+          },
+        }),
+        prisma.users.create({
+          data: {
+            name: "Logan Kim",
+            email: "logan.kim@example.com",
+            password: hashedPassword,
+            roleId: managerRole.id,
+          },
+        }),
+      ]);
 
-    const [employeeA, employeeB, employeeC, employeeD] = await prisma.$transaction([
+    const [employeeA, employeeB, employeeC, employeeD, managerA, managerB] = await prisma.$transaction([
       prisma.employees.create({
         data: {
           userId: employeeAUser.id,
@@ -286,6 +321,20 @@ async function main() {
           address: "4 Service Rd",
         },
       }),
+      prisma.employees.create({
+        data: {
+          userId: managerAUser.id,
+          phoneNumber: "+15550002001",
+          address: "1 Manager Rd",
+        },
+      }),
+      prisma.employees.create({
+        data: {
+          userId: managerBUser.id,
+          phoneNumber: "+15550002002",
+          address: "2 Manager Rd",
+        },
+      }),
     ]);
 
     await prisma.employeePermissions.createMany({
@@ -294,6 +343,8 @@ async function main() {
         { employeeId: employeeB.id, propertyId: properties[0].id },
         { employeeId: employeeC.id, propertyId: properties[1].id },
         { employeeId: employeeD.id, propertyId: properties[1].id },
+        { employeeId: managerA.id, propertyId: properties[0].id },
+        { employeeId: managerB.id, propertyId: properties[1].id },
       ],
     });
   }

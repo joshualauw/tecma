@@ -1,6 +1,6 @@
 import TicketCategoryCreateForm from "@/components/admin/tickets/categories/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions } from "@/lib/utils";
 import { forbidden, unauthorized } from "next/navigation";
 

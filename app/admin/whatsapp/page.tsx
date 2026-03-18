@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import WhatsappDataTable from "@/components/admin/whatsapp/data-table";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function WhatsappPage() {
@@ -15,7 +14,7 @@ export default async function WhatsappPage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "whatsapp:view")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

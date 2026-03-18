@@ -1,8 +1,8 @@
 import TenantUpdateForm from "@/components/admin/tenants/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface TenantUpdatePageProps {
@@ -17,7 +17,7 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
     unauthorized();
   }
 
-  if (!hasPermissions(user, "tenants:update")) {
+  if (!hasPermissions(user, "tenants:edit")) {
     forbidden();
   }
 
@@ -48,6 +48,10 @@ export default async function TenantUpdatePage({ params }: TenantUpdatePageProps
 
   if (!tenant) {
     notFound();
+  }
+
+  if (!userCanAccessProperty(user, tenant.property.id)) {
+    forbidden();
   }
 
   return (

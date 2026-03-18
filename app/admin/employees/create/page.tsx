@@ -1,8 +1,7 @@
 import EmployeeCreateForm from "@/components/admin/employees/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function EmployeeCreatePage() {
@@ -13,7 +12,7 @@ export default async function EmployeeCreatePage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "employees:create")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

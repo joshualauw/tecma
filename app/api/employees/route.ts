@@ -1,11 +1,10 @@
 import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
-import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 
 export type EmployeeApiItem = {
   id: number;
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "employees:view")) {
+    if (!user || user.role !== "super-admin") {
       return NextResponse.json(
         {
           data: null,

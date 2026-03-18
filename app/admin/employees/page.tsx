@@ -4,8 +4,7 @@ import Link from "next/link";
 import EmployeesDataTable from "@/components/admin/employees/data-table";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function EmployeesPage() {
@@ -16,7 +15,7 @@ export default async function EmployeesPage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "employees:view")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

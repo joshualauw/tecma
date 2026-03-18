@@ -4,8 +4,8 @@ import { NextResponse } from "next/server";
 import { LeaseStatus, RoomStatus, TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import z from "zod";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 
 export type RoomDetailApiItem = {
   id: number;
@@ -68,7 +68,7 @@ export async function GET(
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "inbox:view")) {
+    if (!user || !hasPermissions(user, "inbox:view")) {
       return NextResponse.json(
         {
           data: null,
@@ -153,6 +153,17 @@ export async function GET(
           success: false,
         },
         { status: 404 },
+      );
+    }
+
+    if (!userCanAccessProperty(user, room.tenant.property.id)) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
       );
     }
 

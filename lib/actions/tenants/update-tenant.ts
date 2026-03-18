@@ -3,8 +3,8 @@
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -22,7 +22,7 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tenants:edit")) {
+  if (!user || !hasPermissions(user, "tenants:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -39,6 +39,17 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
   }
 
   const { id, name, phoneNumber, address } = parsed.data;
+
+  const tenant = await prisma.tenants.findUnique({
+    where: { id },
+    select: { propertyId: true },
+  });
+  if (!tenant) {
+    return { success: false, message: "Tenant not found" };
+  }
+  if (!userCanAccessProperty(user, tenant.propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
 
   try {
     await prisma.tenants.update({

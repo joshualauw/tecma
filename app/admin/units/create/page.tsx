@@ -1,8 +1,8 @@
 import UnitCreateForm from "@/components/admin/units/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
 export default async function UnitCreatePage() {
@@ -22,7 +22,7 @@ export default async function UnitCreatePage() {
       id: true,
       name: true,
     },
-    where: user.role === "super-admin" ? undefined : { id: { in: user.allowedProperties } },
+    where: propertiesWhereForUser(user),
     orderBy: {
       createdAt: "asc",
     },

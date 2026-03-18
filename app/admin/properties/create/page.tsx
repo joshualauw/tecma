@@ -1,6 +1,6 @@
 import PropertyCreateForm from "@/components/admin/properties/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function PropertyCreatePage() {

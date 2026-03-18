@@ -5,9 +5,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -47,15 +44,13 @@ export function AdminSidebar() {
     {
       name: "Inbox",
       isShow: hasPermissions(user, "inbox:view"),
-      group: "Communication",
       icon: <MailOpenIcon className="mr-1" />,
       href: "/admin/inbox",
       isActive: false,
     },
     {
       name: "Whatsapp",
-      isShow: hasPermissions(user, "whatsapp:view"),
-      group: "Communication",
+      isShow: user.role === "super-admin",
       icon: <PhoneIcon className="mr-1" />,
       href: "/admin/whatsapp",
       isActive: false,
@@ -63,7 +58,6 @@ export function AdminSidebar() {
     {
       name: "Tickets",
       isShow: hasPermissions(user, "tickets:view"),
-      group: "Communication",
       icon: <TicketIcon className="mr-1" />,
       href: "#",
       isActive: false,
@@ -75,7 +69,6 @@ export function AdminSidebar() {
     {
       name: "Properties",
       isShow: user.role === "super-admin",
-      group: "Management",
       icon: <MapPinIcon className="mr-1" />,
       href: "/admin/properties",
       isActive: false,
@@ -83,7 +76,6 @@ export function AdminSidebar() {
     {
       name: "Units",
       isShow: hasPermissions(user, "units:view"),
-      group: "Management",
       icon: <HouseHeartIcon className="mr-1" />,
       href: "/admin/units",
       isActive: false,
@@ -91,15 +83,13 @@ export function AdminSidebar() {
     {
       name: "Tenants",
       isShow: hasPermissions(user, "tenants:view"),
-      group: "Management",
       icon: <Contact2Icon className="mr-1" />,
       href: "/admin/tenants",
       isActive: false,
     },
     {
       name: "Employees",
-      isShow: hasPermissions(user, "employees:view"),
-      group: "Management",
+      isShow: user.role === "super-admin",
       icon: <Users2Icon className="mr-1" />,
       href: "/admin/employees",
       isActive: false,
@@ -108,20 +98,10 @@ export function AdminSidebar() {
 
   const navs = allNavs.filter((nav) => nav.isShow);
 
-  const groupedNavs = navs.reduce(
-    (acc, nav) => {
-      const group = nav.group || "General";
-      if (!acc[group]) acc[group] = [];
-      acc[group].push(nav);
-      return acc;
-    },
-    {} as Record<string, typeof navs>,
-  );
-
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="px-2 pt-4">
+        <div className="px-2 pt-4 mb-2">
           <Logo />
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
             Tenant Complaint Management
@@ -129,54 +109,47 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {Object.entries(groupedNavs).map(([groupName, items]) => (
-          <SidebarGroup key={groupName} className="-mb-3">
-            <SidebarGroupLabel>{groupName}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((nav) => {
-                  const isActive = pathName === nav.href || pathName.startsWith(`${nav.href}/`);
-                  return (
-                    <Collapsible key={nav.name} asChild defaultOpen={nav.isActive} className="group/collapsible">
-                      <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton asChild size="md" isActive={isActive}>
-                            <Link href={nav.href} className="cursor-default">
-                              {nav.icon}
-                              {nav.name}
-                              {nav.children && (
-                                <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                              )}
-                            </Link>
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-
+        <SidebarMenu>
+          {navs.map((nav) => {
+            const isActive = pathName === nav.href || pathName.startsWith(`${nav.href}/`);
+            return (
+              <Collapsible key={nav.name} asChild defaultOpen={nav.isActive} className="group/collapsible">
+                <SidebarMenuItem className="mx-2 my-0.5">
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton asChild size="md" isActive={isActive}>
+                      <Link href={nav.href} className="cursor-default">
+                        {nav.icon}
+                        {nav.name}
                         {nav.children && (
-                          <CollapsibleContent>
-                            <SidebarMenuSub>
-                              {nav.children.map((child) => {
-                                const isChildActive = pathName === child.href;
-                                return (
-                                  <SidebarMenuSubItem key={child.name}>
-                                    <SidebarMenuSubButton asChild size="sm" isActive={isChildActive}>
-                                      <Link href={child.href} className="cursor-default">
-                                        {child.name}
-                                      </Link>
-                                    </SidebarMenuSubButton>
-                                  </SidebarMenuSubItem>
-                                );
-                              })}
-                            </SidebarMenuSub>
-                          </CollapsibleContent>
+                          <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         )}
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                      </Link>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+
+                  {nav.children && (
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {nav.children.map((child) => {
+                          const isChildActive = pathName === child.href;
+                          return (
+                            <SidebarMenuSubItem key={child.name}>
+                              <SidebarMenuSubButton asChild size="sm" isActive={isChildActive}>
+                                <Link href={child.href} className="cursor-default">
+                                  {child.name}
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  )}
+                </SidebarMenuItem>
+              </Collapsible>
+            );
+          })}
+        </SidebarMenu>
       </SidebarContent>
     </Sidebar>
   );

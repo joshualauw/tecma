@@ -1,8 +1,7 @@
 import WhatsappUpdateForm from "@/components/admin/whatsapp/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface WhatsappUpdatePageProps {
@@ -17,7 +16,7 @@ export default async function WhatsappUpdatePage({ params }: WhatsappUpdatePageP
     unauthorized();
   }
 
-  if (!hasPermissions(user, "whatsapp:edit")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

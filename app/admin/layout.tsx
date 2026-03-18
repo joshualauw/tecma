@@ -2,7 +2,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { AuthProvider } from "@/components/admin/providers/auth-context";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { auth } from "@/lib/auth";
 import { forbidden } from "next/navigation";
 
@@ -13,8 +13,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) {
     forbidden();
   }
-
-  console.log(user);
 
   return (
     <AuthProvider user={user}>

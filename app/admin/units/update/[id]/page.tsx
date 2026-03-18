@@ -1,8 +1,8 @@
 import UnitUpdateForm from "@/components/admin/units/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface UnitUpdatePageProps {
@@ -17,7 +17,7 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "units:update")) {
+  if (!hasPermissions(user, "units:edit")) {
     forbidden();
   }
 
@@ -46,6 +46,10 @@ export default async function UnitUpdatePage({ params }: UnitUpdatePageProps) {
 
   if (!unit) {
     notFound();
+  }
+
+  if (!userCanAccessProperty(user, unit.property.id)) {
+    forbidden();
   }
 
   return (

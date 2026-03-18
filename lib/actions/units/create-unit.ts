@@ -1,8 +1,8 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -18,7 +18,7 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "units:create")) {
+  if (!user || !hasPermissions(user, "units:create")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -33,6 +33,10 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
   }
 
   const { code, propertyId } = parsed.data;
+
+  if (!userCanAccessProperty(user, propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
 
   try {
     await prisma.units.create({

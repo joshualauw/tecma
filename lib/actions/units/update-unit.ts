@@ -2,8 +2,8 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -19,7 +19,7 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "units:edit")) {
+  if (!user || !hasPermissions(user, "units:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -34,6 +34,17 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
   }
 
   const { id, code } = parsed.data;
+
+  const unit = await prisma.units.findUnique({
+    where: { id },
+    select: { propertyId: true },
+  });
+  if (!unit) {
+    return { success: false, message: "Unit not found" };
+  }
+  if (!userCanAccessProperty(user, unit.propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
 
   try {
     await prisma.units.update({

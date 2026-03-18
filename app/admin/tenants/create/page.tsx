@@ -1,8 +1,8 @@
 import TenantCreateForm from "@/components/admin/tenants/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function TenantCreatePage() {
@@ -22,7 +22,7 @@ export default async function TenantCreatePage() {
       id: true,
       name: true,
     },
-    where: user.role === "super-admin" ? undefined : { id: { in: user.allowedProperties } },
+    where: propertiesWhereForUser(user),
     orderBy: {
       createdAt: "asc",
     },

@@ -33,28 +33,7 @@ import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
-
-function roleBadgeVariant(role: string): "default" | "secondary" {
-  switch (role) {
-    case "dispatcher":
-      return "secondary";
-    case "worker":
-      return "default";
-    default:
-      return "default";
-  }
-}
-
-function formatRoleLabel(role: string) {
-  switch (role) {
-    case "dispatcher":
-      return "Dispatcher";
-    case "worker":
-      return "Worker";
-    default:
-      return "Unknown";
-  }
-}
+import { formatLabel } from "@/lib/utils";
 
 interface EmployeesDataTableProps {
   roles: {
@@ -131,11 +110,7 @@ export default function EmployeesDataTable({ roles }: EmployeesDataTableProps) {
     {
       id: "role",
       header: "Role",
-      cell: ({ row }) => (
-        <Badge variant={roleBadgeVariant(row.original.user.role.name)}>
-          {formatRoleLabel(row.original.user.role.name)}
-        </Badge>
-      ),
+      cell: ({ row }) => <Badge variant="secondary">{formatLabel(row.original.user.role.name)}</Badge>,
     },
     {
       accessorKey: "phoneNumber",
@@ -249,7 +224,7 @@ export default function EmployeesDataTable({ roles }: EmployeesDataTableProps) {
                 <SelectItem value="all">All roles</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id.toString()}>
-                    {formatRoleLabel(role.name)}
+                    {formatLabel(role.name)}
                   </SelectItem>
                 ))}
               </SelectContent>

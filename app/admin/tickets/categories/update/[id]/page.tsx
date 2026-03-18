@@ -1,6 +1,6 @@
 import TicketCategoryUpdateForm from "@/components/admin/tickets/categories/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { hasPermissions } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";

@@ -15,24 +15,13 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DynamicBreadcrumb } from "@/components/admin/breadcrumb";
 import { signOut } from "next-auth/react";
 import { useAuth } from "@/components/admin/providers/auth-context";
+import { formatLabel } from "@/lib/utils";
 
 export function AdminHeader() {
   const user = useAuth();
 
   async function handleSignOut() {
     await signOut({ redirectTo: "/" });
-  }
-
-  function getUserRole(role: string) {
-    switch (role) {
-      case "super-admin":
-        return "Super Admin";
-      case "dispatcher":
-        return "Dispatcher";
-      case "worker":
-        return "Worker";
-    }
-    return "Unknown";
   }
 
   return (
@@ -62,7 +51,7 @@ export function AdminHeader() {
               <Button variant="ghost" className="flex items-center gap-3 p-2 hover:bg-accent/50 transition-colors">
                 <div className="flex flex-col items-end leading-none">
                   <span className="text-sm font-semibold text-foreground">{user.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{getUserRole(user.role)}</span>
+                  <span className="text-[10px] text-muted-foreground">{formatLabel(user.role)}</span>
                 </div>
                 <Avatar className="h-9 w-9 border-2 border-primary/20">
                   <AvatarImage src={""} alt={user.name ?? ""} />

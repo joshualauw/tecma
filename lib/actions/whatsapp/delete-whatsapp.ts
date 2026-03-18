@@ -2,8 +2,7 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -18,7 +17,7 @@ export async function deleteWhatsappAction(whatsappId: number): Promise<DeleteWh
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "whatsapp:delete")) {
+  if (!user || user.role !== "super-admin") {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 

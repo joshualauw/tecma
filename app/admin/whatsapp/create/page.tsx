@@ -1,9 +1,7 @@
 import WhatsappCreateForm from "@/components/admin/whatsapp/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { hasPermissions } from "@/lib/utils";
-
 export default async function WhatsappCreatePage() {
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
@@ -12,7 +10,7 @@ export default async function WhatsappCreatePage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "whatsapp:create")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 

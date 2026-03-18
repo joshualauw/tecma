@@ -2,8 +2,7 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 
@@ -14,7 +13,7 @@ export async function deletePermissionAction(id: number): Promise<DeletePermissi
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "employees:permissions:delete")) {
+    if (!user || user.role !== "super-admin") {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 

@@ -2,8 +2,8 @@
 
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -18,7 +18,7 @@ export async function deleteUnitAction(unitId: number): Promise<DeleteUnitAction
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "units:delete")) {
+  if (!user || !hasPermissions(user, "units:delete")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -30,6 +30,17 @@ export async function deleteUnitAction(unitId: number): Promise<DeleteUnitAction
   }
 
   const { id } = parsed.data;
+
+  const unit = await prisma.units.findUnique({
+    where: { id },
+    select: { propertyId: true },
+  });
+  if (!unit) {
+    return { success: false, message: "Unit not found" };
+  }
+  if (!userCanAccessProperty(user, unit.propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
 
   try {
     await prisma.units.delete({

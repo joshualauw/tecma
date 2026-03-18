@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 
 export type AvailableEmployeeApiItem = {
   id: number;
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableE
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "tickets:create", "tickets:edit")) {
+    if (!user || !hasPermissions(user, "tickets:create", "tickets:edit")) {
       return NextResponse.json(
         {
           data: null,
@@ -55,6 +55,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableE
     }
 
     const { propertyId } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
 
     const rows = await prisma.users.findMany({
       select: {

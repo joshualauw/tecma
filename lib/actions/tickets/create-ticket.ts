@@ -2,8 +2,8 @@
 
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -25,7 +25,7 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tickets:create")) {
+  if (!user || !hasPermissions(user, "tickets:create")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -46,6 +46,18 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
   }
 
   const { propertyId, leaseId, categoryId, employeeId, title, description, status, priority } = parsed.data;
+
+  if (!userCanAccessProperty(user, propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
+  const lease = await prisma.leases.findFirst({
+    where: { id: leaseId, propertyId },
+    select: { id: true },
+  });
+  if (!lease) {
+    return { success: false, message: "Lease not found for this property" };
+  }
 
   try {
     await prisma.tickets.create({

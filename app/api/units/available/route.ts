@@ -1,7 +1,7 @@
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -27,7 +27,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "units:view")) {
+    if (
+      !user ||
+      !hasPermissions(user, "tenants:view", "tenants:leases:view", "tenants:leases:create", "tenants:leases:edit")
+    ) {
       return NextResponse.json(
         {
           data: null,
@@ -57,6 +60,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
     }
 
     const { propertyId } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
 
     const units = await prisma.units.findMany({
       select: {

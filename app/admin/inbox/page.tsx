@@ -1,8 +1,8 @@
 import InboxContainer from "@/components/admin/inbox/container";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function InboxPage() {
@@ -22,7 +22,7 @@ export default async function InboxPage() {
       id: true,
       name: true,
     },
-    where: user.role === "super-admin" ? undefined : { id: { in: user.allowedProperties } },
+    where: propertiesWhereForUser(user),
     orderBy: {
       createdAt: "asc",
     },

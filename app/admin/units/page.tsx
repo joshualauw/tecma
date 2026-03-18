@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import UnitsDataTable from "@/components/admin/units/data-table";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
 export default async function UnitsPage() {
@@ -25,7 +25,7 @@ export default async function UnitsPage() {
       id: true,
       name: true,
     },
-    where: user.role === "super-admin" ? undefined : { id: { in: user.allowedProperties } },
+    where: propertiesWhereForUser(user),
     orderBy: {
       createdAt: "asc",
     },

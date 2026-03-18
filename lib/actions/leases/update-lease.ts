@@ -3,8 +3,8 @@
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -27,7 +27,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tenants:leases:edit")) {
+  if (!user || !hasPermissions(user, "tenants:leases:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -46,10 +46,16 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
   const { id, startDate, endDate, status } = parsed.data;
 
   try {
-    const lease = await prisma.leases.findUniqueOrThrow({
+    const lease = await prisma.leases.findUnique({
       where: { id },
-      select: { tenantId: true, unitId: true, status: true },
+      select: { tenantId: true, unitId: true, status: true, propertyId: true },
     });
+    if (!lease) {
+      return { success: false, message: "Lease not found" };
+    }
+    if (!userCanAccessProperty(user, lease.propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
 
     const existingActive = await prisma.leases.findFirst({
       where: { tenantId: lease.tenantId, unitId: lease.unitId, status: LeaseStatus.active },

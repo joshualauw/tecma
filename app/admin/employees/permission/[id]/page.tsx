@@ -1,9 +1,9 @@
 import CreatePermissionForm from "@/components/admin/employees/permission/create-form";
 import EmployeePermissionsDataTable from "@/components/admin/employees/permission/data-table";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import { hasPermissions } from "@/lib/utils";
+import { propertiesWhereForUser } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface EmployeePermissionPageProps {
@@ -18,7 +18,7 @@ export default async function EmployeePermissionPage({ params }: EmployeePermiss
     unauthorized();
   }
 
-  if (!hasPermissions(user, "employees:permissions:view")) {
+  if (user.role !== "super-admin") {
     forbidden();
   }
 
@@ -34,6 +34,7 @@ export default async function EmployeePermissionPage({ params }: EmployeePermiss
       id: true,
       name: true,
     },
+    where: propertiesWhereForUser(user),
     orderBy: {
       createdAt: "asc",
     },

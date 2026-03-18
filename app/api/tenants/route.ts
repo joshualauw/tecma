@@ -1,8 +1,8 @@
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { TenantsWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "tenants:view")) {
+    if (!user || !hasPermissions(user, "tenants:view")) {
       return NextResponse.json(
         {
           data: null,
@@ -80,6 +80,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
 
     const { page, size, search, propertyId } = parsed.data;
 
+    const scope = resolvePropertyIdScope(user, propertyId);
+    if (!scope.ok) {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "You are not authorized to access this resource",
+          success: false,
+        },
+        { status: 403 },
+      );
+    }
+
     const where: TenantsWhereInput = {};
 
     if (search) {
@@ -89,8 +101,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
       ];
     }
 
-    if (propertyId !== null) {
-      where.propertyId = propertyId;
+    if (scope.filter !== undefined) {
+      where.propertyId = scope.filter;
     }
 
     const tenants = await prisma.tenants.findMany({

@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
@@ -33,7 +32,7 @@ export async function GET(
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "employees:permissions:view")) {
+    if (!user || user.role !== "super-admin") {
       return NextResponse.json(
         {
           data: null,

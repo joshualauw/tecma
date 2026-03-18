@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { updateEmployeeAction } from "@/lib/actions/employees/update-employee";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { firstLetterUppercase } from "@/lib/utils";
+import { formatLabel } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -120,7 +120,7 @@ export default function EmployeeUpdateForm({ data, roles }: EmployeeUpdateFormPr
                       <SelectContent position="popper">
                         {roles.map((role) => (
                           <SelectItem key={role.id} value={role.id.toString()}>
-                            {firstLetterUppercase(role.name)}
+                            {formatLabel(role.name)}
                           </SelectItem>
                         ))}
                       </SelectContent>

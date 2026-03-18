@@ -1,6 +1,6 @@
 import PropertyUpdateForm from "@/components/admin/properties/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 

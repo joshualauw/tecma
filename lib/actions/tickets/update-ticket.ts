@@ -3,8 +3,8 @@
 import { Prisma } from "@/generated/prisma/client";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
@@ -25,7 +25,7 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tickets:edit")) {
+  if (!user || !hasPermissions(user, "tickets:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -45,6 +45,17 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
   }
 
   const { id, categoryId, employeeId, title, description, status, priority } = parsed.data;
+
+  const existing = await prisma.tickets.findUnique({
+    where: { id },
+    select: { propertyId: true },
+  });
+  if (!existing) {
+    return { success: false, message: "Ticket not found" };
+  }
+  if (!userCanAccessProperty(user, existing.propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
 
   try {
     await prisma.tickets.update({

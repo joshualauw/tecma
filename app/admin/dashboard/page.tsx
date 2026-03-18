@@ -5,9 +5,9 @@ import DashboardStats from "@/components/admin/dashboard/stats";
 import DashboardTicketChart from "@/components/admin/dashboard/ticket-chart";
 import DashboardMessageChart from "@/components/admin/dashboard/message-chart";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions } from "@/lib/utils";
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden, redirect, unauthorized } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -18,7 +18,12 @@ export default async function DashboardPage() {
   }
 
   if (!hasPermissions(user, "dashboard:view")) {
-    forbidden();
+    if (user.permissions.length === 0) {
+      forbidden();
+    } else {
+      const permission = user.permissions[0].split(":")[0];
+      redirect(`/admin/${permission}`);
+    }
   }
 
   const startOfMonth = dayjs().startOf("month").toDate();

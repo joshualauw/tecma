@@ -10,8 +10,8 @@ import { AxiosError } from "axios";
 import z from "zod";
 import pusher from "@/lib/pusher";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/permission";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),
@@ -29,7 +29,7 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "inbox:send")) {
+  if (!user || !hasPermissions(user, "inbox:send")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
@@ -50,14 +50,23 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
 
   const { roomId, propertyId, content, messageType, file, filename, replyWaId } = parsed.data;
 
+  if (!userCanAccessProperty(user, propertyId)) {
+    return { success: false, message: "You are not authorized to access this resource" };
+  }
+
   try {
-    const room = await prisma.rooms.findFirstOrThrow({
+    const room = await prisma.rooms.findUnique({
       where: { id: roomId },
       select: {
+        propertyId: true,
         tenant: { select: { phoneNumber: true } },
         whatsapp: { select: { phoneId: true } },
       },
     });
+
+    if (!room || room.propertyId !== propertyId) {
+      return { success: false, message: "Room not found or property mismatch" };
+    }
 
     const createdMessage = await handleWhatsappMessageCreate({
       roomId,

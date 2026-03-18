@@ -3,8 +3,8 @@ import CreateLeaseForm from "@/components/admin/tenants/lease/create-form";
 import { prisma } from "@/lib/prisma";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { hasPermissions } from "@/lib/utils";
-import { getAuthenticatedUser } from "@/lib/permission";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 
 interface TenantLeasePageProps {
   params: Promise<{ id: string }>;
@@ -32,6 +32,10 @@ export default async function TenantLeasePage({ params }: TenantLeasePageProps) 
 
   if (!tenant) {
     notFound();
+  }
+
+  if (!userCanAccessProperty(user, tenant.propertyId)) {
+    forbidden();
   }
 
   return (

@@ -1,13 +1,29 @@
 import TicketCreateForm from "@/components/admin/tickets/create-form";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/user";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
+import { forbidden, unauthorized } from "next/navigation";
 
 export default async function TicketCreatePage() {
+  const session = await auth();
+  const user = await getAuthenticatedUser(session?.user?.id);
+
+  if (!user) {
+    unauthorized();
+  }
+
+  if (!hasPermissions(user, "tickets:create")) {
+    forbidden();
+  }
+
   const [properties, categories] = await Promise.all([
     prisma.properties.findMany({
       select: {
         id: true,
         name: true,
       },
+      where: propertiesWhereForUser(user),
       orderBy: {
         createdAt: "asc",
       },
@@ -18,7 +34,7 @@ export default async function TicketCreatePage() {
         name: true,
       },
       orderBy: {
-        createdAt: "asc",
+        name: "asc",
       },
     }),
   ]);
