@@ -27,7 +27,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!user || !hasPermissions(user, "tenants:leases:edit")) {
+  if (!user || !hasPermissions(user, "tenants-leases:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 

@@ -18,12 +18,12 @@ export default async function TenantLeasePage({ params }: TenantLeasePageProps) 
     unauthorized();
   }
 
-  if (!hasPermissions(user, "tenants:leases:view")) {
+  if (!hasPermissions(user, "tenants-leases:view")) {
     forbidden();
   }
 
-  const canCreateLease = hasPermissions(user, "tenants:leases:create");
-  const canEditLease = hasPermissions(user, "tenants:leases:edit");
+  const canCreateLease = hasPermissions(user, "tenants-leases:create");
+  const canEditLease = hasPermissions(user, "tenants-leases:edit");
 
   const { id } = await params;
   const tenantId = Number(id);

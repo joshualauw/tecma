@@ -32,7 +32,6 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
-import { Badge } from "@/components/ui/badge";
 import { formatLabel } from "@/lib/utils";
 
 interface EmployeesDataTableProps {
@@ -110,7 +109,7 @@ export default function EmployeesDataTable({ roles }: EmployeesDataTableProps) {
     {
       id: "role",
       header: "Role",
-      cell: ({ row }) => <Badge variant="secondary">{formatLabel(row.original.user.role.name)}</Badge>,
+      cell: ({ row }) => formatLabel(row.original.user.role.name),
     },
     {
       accessorKey: "phoneNumber",

@@ -17,7 +17,7 @@ export default async function TicketCategoryUpdatePage({ params }: TicketCategor
     unauthorized();
   }
 
-  if (!hasPermissions(user, "tickets:categories:edit")) {
+  if (!hasPermissions(user, "tickets-categories:edit")) {
     forbidden();
   }
 

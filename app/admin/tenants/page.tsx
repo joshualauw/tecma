@@ -23,7 +23,7 @@ export default async function TenantsPage() {
   const canCreate = hasPermissions(user, "tenants:create");
   const canEdit = hasPermissions(user, "tenants:edit");
   const canDelete = hasPermissions(user, "tenants:delete");
-  const canViewLeases = hasPermissions(user, "tenants:leases:view");
+  const canViewLeases = hasPermissions(user, "tenants-leases:view");
 
   const properties = await prisma.properties.findMany({
     select: {

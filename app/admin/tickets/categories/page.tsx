@@ -15,13 +15,13 @@ export default async function TicketsCategoriesPage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "tickets:categories:view")) {
+  if (!hasPermissions(user, "tickets-categories:view")) {
     forbidden();
   }
 
-  const canCreate = hasPermissions(user, "tickets:categories:create");
-  const canEdit = hasPermissions(user, "tickets:categories:edit");
-  const canDelete = hasPermissions(user, "tickets:categories:delete");
+  const canCreate = hasPermissions(user, "tickets-categories:create");
+  const canEdit = hasPermissions(user, "tickets-categories:edit");
+  const canDelete = hasPermissions(user, "tickets-categories:delete");
 
   return (
     <div className="space-y-6">

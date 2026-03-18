@@ -18,6 +18,7 @@ import {
   ChevronRightIcon,
   Contact2Icon,
   HouseHeartIcon,
+  LockKeyholeIcon,
   MailOpenIcon,
   MapPinIcon,
   PhoneIcon,
@@ -46,13 +47,6 @@ export function AdminSidebar() {
       isShow: hasPermissions(user, "inbox:view"),
       icon: <MailOpenIcon className="mr-1" />,
       href: "/admin/inbox",
-      isActive: false,
-    },
-    {
-      name: "Whatsapp",
-      isShow: user.role === "super-admin",
-      icon: <PhoneIcon className="mr-1" />,
-      href: "/admin/whatsapp",
       isActive: false,
     },
     {
@@ -88,10 +82,24 @@ export function AdminSidebar() {
       isActive: false,
     },
     {
+      name: "Whatsapp",
+      isShow: user.role === "super-admin",
+      icon: <PhoneIcon className="mr-1" />,
+      href: "/admin/whatsapp",
+      isActive: false,
+    },
+    {
       name: "Employees",
       isShow: user.role === "super-admin",
       icon: <Users2Icon className="mr-1" />,
       href: "/admin/employees",
+      isActive: false,
+    },
+    {
+      name: "Roles",
+      isShow: user.role === "super-admin",
+      icon: <LockKeyholeIcon className="mr-1" />,
+      href: "/admin/roles",
       isActive: false,
     },
   ];

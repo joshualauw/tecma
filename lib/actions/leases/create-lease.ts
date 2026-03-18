@@ -28,7 +28,7 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!user || !hasPermissions(user, "tenants:leases:create")) {
+  if (!user || !hasPermissions(user, "tenants-leases:create")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 

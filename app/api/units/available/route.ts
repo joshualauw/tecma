@@ -29,7 +29,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
 
     if (
       !user ||
-      !hasPermissions(user, "tenants:view", "tenants:leases:view", "tenants:leases:create", "tenants:leases:edit")
+      !hasPermissions(user, "tenants:view", "tenants-leases:view", "tenants-leases:create", "tenants-leases:edit")
     ) {
       return NextResponse.json(
         {

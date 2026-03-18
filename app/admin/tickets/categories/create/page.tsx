@@ -12,7 +12,7 @@ export default async function TicketCategoryCreatePage() {
     unauthorized();
   }
 
-  if (!hasPermissions(user, "tickets:categories:create")) {
+  if (!hasPermissions(user, "tickets-categories:create")) {
     forbidden();
   }
 

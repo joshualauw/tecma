@@ -18,7 +18,7 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tickets:categories:create")) {
+  if (!hasPermissions(user, "tickets-categories:create")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 

@@ -20,7 +20,7 @@ export async function deleteTicketCategoryAction(
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tickets:categories:delete")) {
+  if (!hasPermissions(user, "tickets-categories:delete")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 

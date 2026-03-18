@@ -20,7 +20,7 @@ export async function updateTicketCategoryAction(formData: FormData): Promise<Up
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!hasPermissions(user, "tickets:categories:edit")) {
+  if (!hasPermissions(user, "tickets-categories:edit")) {
     return { success: false, message: "You are not authorized to access this resource" };
   }
 
