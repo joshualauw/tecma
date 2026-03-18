@@ -3,6 +3,34 @@ export const PHONE_NUMBER_REGEX = /^\+?[1-9]\d{6,14}$/;
 export const DATA_TABLE_PAGE_SIZE = 6;
 export const REPLY_PREVIEW_MAX_LENGTH = 80;
 
+export const AVAILABLE_PERMISSIONS = [
+  "dashboard:view",
+  "inbox:view",
+  "inbox:send",
+  "tickets:view",
+  "tickets:create",
+  "tickets:edit",
+  "tickets:delete",
+  "tickets:assigned",
+  "tickets-categories:view",
+  "tickets-categories:create",
+  "tickets-categories:edit",
+  "tickets-categories:delete",
+  "units:view",
+  "units:create",
+  "units:edit",
+  "units:delete",
+  "tenants:view",
+  "tenants:create",
+  "tenants:edit",
+  "tenants:delete",
+  "tenants-leases:view",
+  "tenants-leases:create",
+  "tenants-leases:edit",
+] as const;
+
+export type AvailablePermission = (typeof AVAILABLE_PERMISSIONS)[number];
+
 /** Bytes per MB */
 const MB = 1024 * 1024;
 

@@ -56,8 +56,12 @@ export function AdminSidebar() {
       href: "#",
       isActive: false,
       children: [
-        { name: "List", href: "/admin/tickets" },
-        { name: "Categories", href: "/admin/tickets/categories" },
+        { name: "List", href: "/admin/tickets", isShow: hasPermissions(user, "tickets:view") },
+        {
+          name: "Categories",
+          href: "/admin/tickets/categories",
+          isShow: hasPermissions(user, "tickets-categories:view"),
+        },
       ],
     },
     {
@@ -104,7 +108,17 @@ export function AdminSidebar() {
     },
   ];
 
-  const navs = allNavs.filter((nav) => nav.isShow);
+  const navs = allNavs
+    .filter((nav) => nav.isShow)
+    .map((nav) => {
+      if (nav.children) {
+        return {
+          ...nav,
+          children: nav.children.filter((child) => child.isShow),
+        };
+      }
+      return nav;
+    });
 
   return (
     <Sidebar>

@@ -1,3 +1,4 @@
+import { AVAILABLE_PERMISSIONS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -12,31 +13,7 @@ async function main() {
   const permissions = await prisma.permission.count();
   if (permissions === 0) {
     await prisma.permission.createMany({
-      data: [
-        { name: "dashboard:view" },
-        { name: "inbox:view" },
-        { name: "inbox:send" },
-        { name: "tickets:view" },
-        { name: "tickets:create" },
-        { name: "tickets:edit" },
-        { name: "tickets:delete" },
-        { name: "tickets:assigned" },
-        { name: "tickets-categories:view" },
-        { name: "tickets-categories:create" },
-        { name: "tickets-categories:edit" },
-        { name: "tickets-categories:delete" },
-        { name: "units:view" },
-        { name: "units:create" },
-        { name: "units:edit" },
-        { name: "units:delete" },
-        { name: "tenants:view" },
-        { name: "tenants:create" },
-        { name: "tenants:edit" },
-        { name: "tenants:delete" },
-        { name: "tenants-leases:view" },
-        { name: "tenants-leases:create" },
-        { name: "tenants-leases:edit" },
-      ],
+      data: AVAILABLE_PERMISSIONS.map((permission) => ({ name: permission })),
     });
   }
 

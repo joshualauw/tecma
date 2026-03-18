@@ -1,6 +1,9 @@
+import { Plus } from "lucide-react";
 import RolesDataTable from "@/components/admin/roles/data-table";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
+import Link from "next/link";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function RolesPage() {
@@ -21,6 +24,11 @@ export default async function RolesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Roles</h1>
         </div>
+        <Link href="/admin/roles/create">
+          <Button className="w-full md:w-auto shadow-sm">
+            <Plus className="h-4 w-4" /> Create Role
+          </Button>
+        </Link>
       </div>
 
       <RolesDataTable />
