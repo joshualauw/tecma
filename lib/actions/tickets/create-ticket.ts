@@ -21,43 +21,43 @@ const createTicketSchema = z.object({
 type CreateTicketActionResponse = ApiResponse<null>;
 
 export async function createTicketAction(formData: FormData): Promise<CreateTicketActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "tickets:create")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createTicketSchema.safeParse({
-    propertyId: formData.get("propertyId"),
-    leaseId: formData.get("leaseId"),
-    categoryId: formData.get("categoryId"),
-    employeeIds: formData.getAll("employeeIds"),
-    title: formData.get("title"),
-    description: formData.get("description"),
-    priority: formData.get("priority"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Ticket validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { propertyId, leaseId, categoryId, employeeIds, title, description, priority } = parsed.data;
-
-  if (!userCanAccessProperty(user, propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const lease = await prisma.leases.findFirst({
-    where: { id: leaseId, propertyId },
-    select: { id: true },
-  });
-  if (!lease) {
-    return { success: false, message: "Lease not found for this property" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "tickets:create")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createTicketSchema.safeParse({
+      propertyId: formData.get("propertyId"),
+      leaseId: formData.get("leaseId"),
+      categoryId: formData.get("categoryId"),
+      employeeIds: formData.getAll("employeeIds"),
+      title: formData.get("title"),
+      description: formData.get("description"),
+      priority: formData.get("priority"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Ticket validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { propertyId, leaseId, categoryId, employeeIds, title, description, priority } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const lease = await prisma.leases.findFirst({
+      where: { id: leaseId, propertyId },
+      select: { id: true },
+    });
+    if (!lease) {
+      return { success: false, message: "Lease not found for this property" };
+    }
+
     await prisma.tickets.create({
       data: {
         propertyId,

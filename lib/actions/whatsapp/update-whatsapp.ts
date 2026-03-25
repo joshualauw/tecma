@@ -19,29 +19,29 @@ const updateWhatsappSchema = z.object({
 type UpdateWhatsappActionResponse = ApiResponse<null>;
 
 export async function updateWhatsappAction(formData: FormData): Promise<UpdateWhatsappActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = updateWhatsappSchema.safeParse({
-    id: formData.get("id"),
-    displayName: formData.get("displayName"),
-    wabaId: formData.get("wabaId"),
-    phoneId: formData.get("phoneId"),
-    phoneNumber: formData.get("phoneNumber"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update WhatsApp validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, displayName, wabaId, phoneId, phoneNumber } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = updateWhatsappSchema.safeParse({
+      id: formData.get("id"),
+      displayName: formData.get("displayName"),
+      wabaId: formData.get("wabaId"),
+      phoneId: formData.get("phoneId"),
+      phoneNumber: formData.get("phoneNumber"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update WhatsApp validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, displayName, wabaId, phoneId, phoneNumber } = parsed.data;
+
     await prisma.whatsapp.update({
       where: { id },
       data: { displayName, wabaId, phoneId, phoneNumber },

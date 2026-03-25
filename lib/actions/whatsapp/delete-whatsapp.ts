@@ -14,25 +14,25 @@ const deleteWhatsappSchema = z.object({
 type DeleteWhatsappActionResponse = ApiResponse<null>;
 
 export async function deleteWhatsappAction(whatsappId: number): Promise<DeleteWhatsappActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = deleteWhatsappSchema.safeParse({
-    id: whatsappId,
-  });
-
-  if (!parsed.success) {
-    console.error("Delete WhatsApp validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = deleteWhatsappSchema.safeParse({
+      id: whatsappId,
+    });
+
+    if (!parsed.success) {
+      console.error("Delete WhatsApp validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id } = parsed.data;
+
     await prisma.whatsapp.delete({
       where: { id },
     });

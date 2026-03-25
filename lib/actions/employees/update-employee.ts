@@ -20,38 +20,38 @@ const updateEmployeeSchema = z.object({
 type UpdateEmployeeActionResponse = ApiResponse<null>;
 
 export async function updateEmployeeAction(formData: FormData): Promise<UpdateEmployeeActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = updateEmployeeSchema.safeParse({
-    id: formData.get("id"),
-    name: formData.get("name"),
-    email: formData.get("email"),
-    roleId: formData.get("roleId"),
-    phoneNumber: formData.get("phoneNumber"),
-    address: formData.get("address"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update Employee validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, name, email, roleId, phoneNumber, address } = parsed.data;
-
-  const thisEmployee = await prisma.employees.findFirstOrThrow({
-    where: { userId: user.id },
-  });
-
-  if (thisEmployee.id === id) {
-    return { success: false, message: "You cannot update your own employee details" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = updateEmployeeSchema.safeParse({
+      id: formData.get("id"),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      roleId: formData.get("roleId"),
+      phoneNumber: formData.get("phoneNumber"),
+      address: formData.get("address"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update Employee validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, name, email, roleId, phoneNumber, address } = parsed.data;
+
+    const thisEmployee = await prisma.employees.findFirstOrThrow({
+      where: { userId: user.id },
+    });
+
+    if (thisEmployee.id === id) {
+      return { success: false, message: "You cannot update your own employee details" };
+    }
+
     await prisma.$transaction(async (tx) => {
       const employee = await tx.employees.update({
         where: { id },

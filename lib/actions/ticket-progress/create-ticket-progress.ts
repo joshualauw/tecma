@@ -19,51 +19,51 @@ const createTicketProgressSchema = z.object({
 type CreateTicketProgressActionResponse = ApiResponse<null>;
 
 export async function createTicketProgressAction(formData: FormData): Promise<CreateTicketProgressActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
+  try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!user || !hasPermissions(user, "tickets-progress:create")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const file = formData.get("file") as File | null;
-
-  const parsed = createTicketProgressSchema.safeParse({
-    ticketId: formData.get("ticketId"),
-    status: formData.get("status"),
-    comment: formData.get("comment"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create ticket progress validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { ticketId, status, comment } = parsed.data;
-
-  const ticket = await prisma.tickets.findFirst({
-    where: { id: ticketId },
-    select: { propertyId: true, status: true },
-  });
-
-  if (!ticket) {
-    return { success: false, message: "Ticket not found" };
-  }
-
-  if (!userCanAccessProperty(user, ticket.propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  if (user.role !== "super-admin") {
-    const ticketAssignment = await prisma.ticketAssignments.findFirst({
-      where: { ticketId, employee: { userId: user.id } },
-    });
-    if (!ticketAssignment) {
+    if (!user || !hasPermissions(user, "tickets-progress:create")) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
-  }
 
-  try {
+    const file = formData.get("file") as File | null;
+
+    const parsed = createTicketProgressSchema.safeParse({
+      ticketId: formData.get("ticketId"),
+      status: formData.get("status"),
+      comment: formData.get("comment"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create ticket progress validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { ticketId, status, comment } = parsed.data;
+
+    const ticket = await prisma.tickets.findFirst({
+      where: { id: ticketId },
+      select: { propertyId: true, status: true },
+    });
+
+    if (!ticket) {
+      return { success: false, message: "Ticket not found" };
+    }
+
+    if (!userCanAccessProperty(user, ticket.propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    if (user.role !== "super-admin") {
+      const ticketAssignment = await prisma.ticketAssignments.findFirst({
+        where: { ticketId, employee: { userId: user.id } },
+      });
+      if (!ticketAssignment) {
+        return { success: false, message: "You are not authorized to access this resource" };
+      }
+    }
+
     let imageUrl: string | null = null;
     if (file) {
       const buffer = Buffer.from(await file.arrayBuffer());

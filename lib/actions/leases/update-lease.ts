@@ -24,28 +24,28 @@ const updateLeaseSchema = z
 type UpdateLeaseActionResponse = ApiResponse<null>;
 
 export async function updateLeaseAction(formData: FormData): Promise<UpdateLeaseActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "tenants-leases:edit")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = updateLeaseSchema.safeParse({
-    id: formData.get("id"),
-    startDate: formData.get("startDate"),
-    endDate: formData.get("endDate"),
-    status: formData.get("status"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update Lease validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, startDate, endDate, status } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "tenants-leases:edit")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = updateLeaseSchema.safeParse({
+      id: formData.get("id"),
+      startDate: formData.get("startDate"),
+      endDate: formData.get("endDate"),
+      status: formData.get("status"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update Lease validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, startDate, endDate, status } = parsed.data;
+
     const lease = await prisma.leases.findUnique({
       where: { id },
       select: { tenantId: true, unitId: true, status: true, propertyId: true },

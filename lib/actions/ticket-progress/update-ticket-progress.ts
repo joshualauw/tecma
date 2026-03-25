@@ -17,58 +17,58 @@ const updateTicketProgressSchema = z.object({
 type UpdateTicketProgressActionResponse = ApiResponse<null>;
 
 export async function updateTicketProgressAction(formData: FormData): Promise<UpdateTicketProgressActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
+  try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!user || !hasPermissions(user, "tickets-progress:edit")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const file = formData.get("file") as File | null;
-
-  const parsed = updateTicketProgressSchema.safeParse({
-    id: formData.get("id"),
-    comment: formData.get("comment"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update ticket progress validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, comment } = parsed.data;
-
-  const ticketProgress = await prisma.ticketProgress.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      ticketId: true,
-      imageUrl: true,
-      createdBy: true,
-      ticket: {
-        select: { propertyId: true },
-      },
-    },
-  });
-
-  if (!ticketProgress) {
-    return { success: false, message: "Ticket progress not found" };
-  }
-
-  if (!userCanAccessProperty(user, ticketProgress.ticket.propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  if (user.role !== "super-admin") {
-    const ticketAssignment = await prisma.ticketAssignments.findFirst({
-      where: { ticketId: ticketProgress.ticketId, employee: { userId: user.id } },
-    });
-    if (!ticketAssignment) {
+    if (!user || !hasPermissions(user, "tickets-progress:edit")) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
-  }
 
-  try {
+    const file = formData.get("file") as File | null;
+
+    const parsed = updateTicketProgressSchema.safeParse({
+      id: formData.get("id"),
+      comment: formData.get("comment"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update ticket progress validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, comment } = parsed.data;
+
+    const ticketProgress = await prisma.ticketProgress.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        ticketId: true,
+        imageUrl: true,
+        createdBy: true,
+        ticket: {
+          select: { propertyId: true },
+        },
+      },
+    });
+
+    if (!ticketProgress) {
+      return { success: false, message: "Ticket progress not found" };
+    }
+
+    if (!userCanAccessProperty(user, ticketProgress.ticket.propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    if (user.role !== "super-admin") {
+      const ticketAssignment = await prisma.ticketAssignments.findFirst({
+        where: { ticketId: ticketProgress.ticketId, employee: { userId: user.id } },
+      });
+      if (!ticketAssignment) {
+        return { success: false, message: "You are not authorized to access this resource" };
+      }
+    }
+
     let imageUrl = ticketProgress.imageUrl;
 
     if (file && file.size > 0) {

@@ -16,31 +16,31 @@ const updateRoleSchema = z.object({
 type UpdateRoleActionResponse = ApiResponse<null>;
 
 export async function updateRoleAction(formData: FormData): Promise<UpdateRoleActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = updateRoleSchema.safeParse({
-    id: formData.get("id"),
-    name: formData.get("name"),
-    permissions: formData.getAll("permissions"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update Role validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, name, permissions } = parsed.data;
-
-  if (name == "super-admin") {
-    return { success: false, message: "Role name is reserved" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = updateRoleSchema.safeParse({
+      id: formData.get("id"),
+      name: formData.get("name"),
+      permissions: formData.getAll("permissions"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update Role validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, name, permissions } = parsed.data;
+
+    if (name == "super-admin") {
+      return { success: false, message: "Role name is reserved" };
+    }
+
     await prisma.role.update({
       where: { id },
       data: {

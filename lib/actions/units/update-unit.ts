@@ -16,37 +16,37 @@ const updateUnitSchema = z.object({
 type UpdateUnitActionResponse = ApiResponse<null>;
 
 export async function updateUnitAction(formData: FormData): Promise<UpdateUnitActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "units:edit")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = updateUnitSchema.safeParse({
-    id: formData.get("id"),
-    code: formData.get("code"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update Unit validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, code } = parsed.data;
-
-  const unit = await prisma.units.findUnique({
-    where: { id },
-    select: { propertyId: true },
-  });
-  if (!unit) {
-    return { success: false, message: "Unit not found" };
-  }
-  if (!userCanAccessProperty(user, unit.propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "units:edit")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = updateUnitSchema.safeParse({
+      id: formData.get("id"),
+      code: formData.get("code"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update Unit validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, code } = parsed.data;
+
+    const unit = await prisma.units.findUnique({
+      where: { id },
+      select: { propertyId: true },
+    });
+    if (!unit) {
+      return { success: false, message: "Unit not found" };
+    }
+    if (!userCanAccessProperty(user, unit.propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
     await prisma.units.update({
       where: { id },
       data: { code },

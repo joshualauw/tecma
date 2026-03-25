@@ -21,30 +21,30 @@ const createEmployeeSchema = z.object({
 type CreateEmployeeActionResponse = ApiResponse<null>;
 
 export async function createEmployeeAction(formData: FormData): Promise<CreateEmployeeActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createEmployeeSchema.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    password: formData.get("password"),
-    roleId: formData.get("roleId"),
-    phoneNumber: formData.get("phoneNumber"),
-    address: formData.get("address"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Employee validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { name, email, password, roleId, phoneNumber, address } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createEmployeeSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email"),
+      password: formData.get("password"),
+      roleId: formData.get("roleId"),
+      phoneNumber: formData.get("phoneNumber"),
+      address: formData.get("address"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Employee validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { name, email, password, roleId, phoneNumber, address } = parsed.data;
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await prisma.$transaction(async (tx) => {

@@ -15,26 +15,26 @@ const createTicketCategorySchema = z.object({
 type CreateTicketCategoryActionResponse = ApiResponse<null>;
 
 export async function createTicketCategoryAction(formData: FormData): Promise<CreateTicketCategoryActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!hasPermissions(user, "tickets-categories:create")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createTicketCategorySchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Ticket Category validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { name, description } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!hasPermissions(user, "tickets-categories:create")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createTicketCategorySchema.safeParse({
+      name: formData.get("name"),
+      description: formData.get("description"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Ticket Category validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { name, description } = parsed.data;
+
     await prisma.ticketCategories.create({
       data: { name, description },
     });

@@ -21,53 +21,53 @@ const updateTicketSchema = z.object({
 type UpdateTicketActionResponse = ApiResponse<null>;
 
 export async function updateTicketAction(formData: FormData): Promise<UpdateTicketActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
+  try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
 
-  if (!user || !hasPermissions(user, "tickets:edit")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = updateTicketSchema.safeParse({
-    id: formData.get("id"),
-    categoryId: formData.get("categoryId"),
-    employeeIds: formData.getAll("employeeIds"),
-    title: formData.get("title"),
-    description: formData.get("description"),
-    status: formData.get("status"),
-    priority: formData.get("priority"),
-  });
-
-  if (!parsed.success) {
-    console.error("Update Ticket validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id, categoryId, employeeIds, title, description, priority } = parsed.data;
-
-  const ticket = await prisma.tickets.findFirst({
-    where: { id },
-    select: { propertyId: true },
-  });
-
-  if (!ticket) {
-    return { success: false, message: "Ticket not found" };
-  }
-
-  if (!userCanAccessProperty(user, ticket.propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  if (user.role !== "super-admin") {
-    const ticketAssignment = await prisma.ticketAssignments.findFirst({
-      where: { ticketId: id, employee: { userId: user.id } },
-    });
-    if (!ticketAssignment) {
+    if (!user || !hasPermissions(user, "tickets:edit")) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
-  }
 
-  try {
+    const parsed = updateTicketSchema.safeParse({
+      id: formData.get("id"),
+      categoryId: formData.get("categoryId"),
+      employeeIds: formData.getAll("employeeIds"),
+      title: formData.get("title"),
+      description: formData.get("description"),
+      status: formData.get("status"),
+      priority: formData.get("priority"),
+    });
+
+    if (!parsed.success) {
+      console.error("Update Ticket validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id, categoryId, employeeIds, title, description, priority } = parsed.data;
+
+    const ticket = await prisma.tickets.findFirst({
+      where: { id },
+      select: { propertyId: true },
+    });
+
+    if (!ticket) {
+      return { success: false, message: "Ticket not found" };
+    }
+
+    if (!userCanAccessProperty(user, ticket.propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    if (user.role !== "super-admin") {
+      const ticketAssignment = await prisma.ticketAssignments.findFirst({
+        where: { ticketId: id, employee: { userId: user.id } },
+      });
+      if (!ticketAssignment) {
+        return { success: false, message: "You are not authorized to access this resource" };
+      }
+    }
+
     await prisma.tickets.update({
       where: {
         id: id,

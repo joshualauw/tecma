@@ -16,23 +16,23 @@ const resolveRoomSchema = z.object({
 type ResolveRoomActionResponse = ApiResponse<null>;
 
 export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!hasPermissions(user, "inbox:send")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = resolveRoomSchema.safeParse({ id: roomId });
-
-  if (!parsed.success) {
-    console.error("Resolve Room validation failed:", parsed.error);
-    return { success: false, message: "Invalid room ID" };
-  }
-
-  const { id } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!hasPermissions(user, "inbox:send")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = resolveRoomSchema.safeParse({ id: roomId });
+
+    if (!parsed.success) {
+      console.error("Resolve Room validation failed:", parsed.error);
+      return { success: false, message: "Invalid room ID" };
+    }
+
+    const { id } = parsed.data;
+
     const room = await prisma.rooms.findFirstOrThrow({
       where: { id },
       select: { status: true },

@@ -25,41 +25,41 @@ const createLeaseSchema = z
 type CreateLeaseActionResponse = ApiResponse<null>;
 
 export async function createLeaseAction(formData: FormData): Promise<CreateLeaseActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "tenants-leases:create")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createLeaseSchema.safeParse({
-    unitId: formData.get("unitId"),
-    startDate: formData.get("startDate"),
-    endDate: formData.get("endDate"),
-    tenantId: formData.get("tenantId"),
-    propertyId: formData.get("propertyId"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Lease validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { unitId, startDate, endDate, tenantId, propertyId } = parsed.data;
-
-  if (!userCanAccessProperty(user, propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const [tenant, unit] = await Promise.all([
-    prisma.tenants.findFirst({ where: { id: tenantId, propertyId }, select: { id: true } }),
-    prisma.units.findFirst({ where: { id: unitId, propertyId }, select: { id: true } }),
-  ]);
-  if (!tenant || !unit) {
-    return { success: false, message: "Tenant or unit does not belong to the selected property" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "tenants-leases:create")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createLeaseSchema.safeParse({
+      unitId: formData.get("unitId"),
+      startDate: formData.get("startDate"),
+      endDate: formData.get("endDate"),
+      tenantId: formData.get("tenantId"),
+      propertyId: formData.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Lease validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { unitId, startDate, endDate, tenantId, propertyId } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const [tenant, unit] = await Promise.all([
+      prisma.tenants.findFirst({ where: { id: tenantId, propertyId }, select: { id: true } }),
+      prisma.units.findFirst({ where: { id: unitId, propertyId }, select: { id: true } }),
+    ]);
+    if (!tenant || !unit) {
+      return { success: false, message: "Tenant or unit does not belong to the selected property" };
+    }
+
     const existingActive = await prisma.leases.findFirst({
       where: { tenantId, unitId, status: LeaseStatus.active },
       select: { id: true },

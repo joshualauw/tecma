@@ -15,26 +15,26 @@ const createPermissionSchema = z.object({
 type CreatePermissionActionResponse = ApiResponse<null>;
 
 export async function createPermissionAction(formData: FormData): Promise<CreatePermissionActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createPermissionSchema.safeParse({
-    employeeId: formData.get("employeeId"),
-    propertyId: formData.get("propertyId"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Permission validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { employeeId, propertyId } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createPermissionSchema.safeParse({
+      employeeId: formData.get("employeeId"),
+      propertyId: formData.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Permission validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { employeeId, propertyId } = parsed.data;
+
     const existingPermission = await prisma.employeePermissions.findFirst({
       where: { employeeId, propertyId },
     });

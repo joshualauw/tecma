@@ -19,32 +19,32 @@ const createTenantSchema = z.object({
 type CreateTenantActionResponse = ApiResponse<null>;
 
 export async function createTenantAction(formData: FormData): Promise<CreateTenantActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "tenants:create")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createTenantSchema.safeParse({
-    name: formData.get("name"),
-    phoneNumber: formData.get("phoneNumber"),
-    address: formData.get("address"),
-    propertyId: formData.get("propertyId"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Tenant validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { name, phoneNumber, address, propertyId } = parsed.data;
-
-  if (!userCanAccessProperty(user, propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "tenants:create")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createTenantSchema.safeParse({
+      name: formData.get("name"),
+      phoneNumber: formData.get("phoneNumber"),
+      address: formData.get("address"),
+      propertyId: formData.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Tenant validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { name, phoneNumber, address, propertyId } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
     await prisma.tenants.create({
       data: {
         name: name,

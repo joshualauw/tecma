@@ -26,35 +26,35 @@ const sendMessageSchema = z.object({
 type SendMessageActionResponse = ApiResponse<null>;
 
 export async function sendMessageAction(formData: FormData): Promise<SendMessageActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "inbox:send")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = sendMessageSchema.safeParse({
-    roomId: formData.get("roomId"),
-    replyWaId: formData.get("replyWaId"),
-    propertyId: formData.get("propertyId"),
-    content: formData.get("content"),
-    messageType: formData.get("messageType"),
-    file: formData.get("file"),
-    filename: formData.get("filename"),
-  });
-
-  if (!parsed.success) {
-    console.error("Send message schema validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { roomId, propertyId, content, messageType, file, filename, replyWaId } = parsed.data;
-
-  if (!userCanAccessProperty(user, propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "inbox:send")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = sendMessageSchema.safeParse({
+      roomId: formData.get("roomId"),
+      replyWaId: formData.get("replyWaId"),
+      propertyId: formData.get("propertyId"),
+      content: formData.get("content"),
+      messageType: formData.get("messageType"),
+      file: formData.get("file"),
+      filename: formData.get("filename"),
+    });
+
+    if (!parsed.success) {
+      console.error("Send message schema validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { roomId, propertyId, content, messageType, file, filename, replyWaId } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
     const room = await prisma.rooms.findUnique({
       where: { id: roomId },
       select: {

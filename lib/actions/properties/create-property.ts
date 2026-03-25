@@ -14,26 +14,26 @@ const createPropertySchema = z.object({
 type CreatePropertyActionResponse = ApiResponse<null>;
 
 export async function createPropertyAction(formData: FormData): Promise<CreatePropertyActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createPropertySchema.safeParse({
-    name: formData.get("name"),
-    address: formData.get("address"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Property validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { name, address } = parsed.data;
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createPropertySchema.safeParse({
+      name: formData.get("name"),
+      address: formData.get("address"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Property validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { name, address } = parsed.data;
+
     await prisma.properties.create({
       data: { name, address },
     });

@@ -14,31 +14,31 @@ const deleteEmployeeSchema = z.object({
 type DeleteEmployeeActionResponse = ApiResponse<null>;
 
 export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEmployeeActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || user.role !== "super-admin") {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = deleteEmployeeSchema.safeParse({ id: employeeId });
-
-  if (!parsed.success) {
-    console.error("Delete Employee validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { id } = parsed.data;
-
-  const thisEmployee = await prisma.employees.findFirstOrThrow({
-    where: { userId: user.id },
-  });
-
-  if (thisEmployee.id === id) {
-    return { success: false, message: "You cannot delete your own employee account" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || user.role !== "super-admin") {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = deleteEmployeeSchema.safeParse({ id: employeeId });
+
+    if (!parsed.success) {
+      console.error("Delete Employee validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { id } = parsed.data;
+
+    const thisEmployee = await prisma.employees.findFirstOrThrow({
+      where: { userId: user.id },
+    });
+
+    if (thisEmployee.id === id) {
+      return { success: false, message: "You cannot delete your own employee account" };
+    }
+
     await prisma.$transaction(async (tx) => {
       const employee = await tx.employees.delete({
         where: { id },

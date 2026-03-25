@@ -15,30 +15,30 @@ const createUnitSchema = z.object({
 type CreateUnitActionResponse = ApiResponse<null>;
 
 export async function createUnitAction(formData: FormData): Promise<CreateUnitActionResponse> {
-  const session = await auth();
-  const user = await getAuthenticatedUser(session?.user?.id);
-
-  if (!user || !hasPermissions(user, "units:create")) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
-  const parsed = createUnitSchema.safeParse({
-    code: formData.get("code"),
-    propertyId: formData.get("propertyId"),
-  });
-
-  if (!parsed.success) {
-    console.error("Create Unit validation failed:", parsed.error);
-    return { success: false, message: "Invalid input" };
-  }
-
-  const { code, propertyId } = parsed.data;
-
-  if (!userCanAccessProperty(user, propertyId)) {
-    return { success: false, message: "You are not authorized to access this resource" };
-  }
-
   try {
+    const session = await auth();
+    const user = await getAuthenticatedUser(session?.user?.id);
+
+    if (!user || !hasPermissions(user, "units:create")) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
+    const parsed = createUnitSchema.safeParse({
+      code: formData.get("code"),
+      propertyId: formData.get("propertyId"),
+    });
+
+    if (!parsed.success) {
+      console.error("Create Unit validation failed:", parsed.error);
+      return { success: false, message: "Invalid input" };
+    }
+
+    const { code, propertyId } = parsed.data;
+
+    if (!userCanAccessProperty(user, propertyId)) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
+
     await prisma.units.create({
       data: { code, propertyId },
     });
