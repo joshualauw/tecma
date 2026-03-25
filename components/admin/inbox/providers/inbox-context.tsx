@@ -13,6 +13,7 @@ export type InboxPermissions = {
   canViewTickets: boolean;
   canCreateTicket: boolean;
   canEditTicket: boolean;
+  canViewTicketProgress: boolean;
 };
 
 export interface InboxProviderProps {

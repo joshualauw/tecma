@@ -6,6 +6,7 @@ import z from "zod";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { TicketsWhereInput } from "@/generated/prisma/models";
 
 type RoomDetailTicket = {
   id: number;
@@ -173,13 +174,23 @@ export async function GET(
     let tickets: RoomDetailTicket[] = [];
 
     if (hasPermissions(user, "tickets:view")) {
-      tickets = await prisma.tickets.findMany({
-        where: {
-          lease: {
-            tenantId: room.tenant.id,
-          },
-          status: { not: TicketStatus.closed },
+      const where: TicketsWhereInput = {
+        lease: {
+          tenantId: room.tenant.id,
         },
+        status: { not: TicketStatus.closed },
+      };
+
+      if (user.role !== "super-admin") {
+        where.ticketAssignments = {
+          some: {
+            employee: { userId: user.id },
+          },
+        };
+      }
+
+      tickets = await prisma.tickets.findMany({
+        where,
         select: {
           id: true,
           title: true,

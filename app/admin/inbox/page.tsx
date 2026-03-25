@@ -23,6 +23,7 @@ export default async function InboxPage() {
   const canViewTickets = hasPermissions(user, "tickets:view");
   const canCreateTicket = hasPermissions(user, "tickets:create");
   const canEditTicket = hasPermissions(user, "tickets:edit");
+  const canViewTicketProgress = hasPermissions(user, "tickets-progress:view");
 
   const properties = await prisma.properties.findMany({
     select: {
@@ -39,7 +40,7 @@ export default async function InboxPage() {
     <div className="space-y-6">
       <InboxProvider
         properties={properties}
-        permissions={{ canSend, canResolve, canViewTickets, canCreateTicket, canEditTicket }}
+        permissions={{ canSend, canResolve, canViewTickets, canCreateTicket, canEditTicket, canViewTicketProgress }}
       >
         <InboxContainer />
       </InboxProvider>

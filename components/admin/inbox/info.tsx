@@ -3,10 +3,16 @@
 import type { RoomDetailApiItem } from "@/app/api/rooms/[id]/route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
-import { HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
+import { Ellipsis, HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import dayjs from "@/lib/dayjs";
 
 function formatStatusLabel(status: RoomStatus) {
@@ -57,6 +63,10 @@ function ticketStatusBadgeVariant(status: TicketStatus): "default" | "secondary"
 
 export default function InboxInfo() {
   const { roomDetail, permissions } = useInbox();
+
+  const openInNewTab = (href: string) => {
+    window.open(href, "_blank", "noreferrer");
+  };
 
   return (
     <div className="h-full overflow-y-auto p-4">
@@ -128,36 +138,49 @@ export default function InboxInfo() {
 
               {roomDetail?.tickets.length ? (
                 <div className="space-y-2">
-                  {roomDetail.tickets.map((ticket) =>
-                    permissions.canEditTicket ? (
-                      <a
-                        key={ticket.id}
-                        href={`/admin/tickets/update/${ticket.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block rounded-md border p-3 text-sm transition-colors hover:bg-muted"
-                      >
-                        <p className="font-medium">{ticket.title}</p>
+                  {roomDetail.tickets.map((ticket) => {
+                    const showTicketActions = permissions.canEditTicket || permissions.canViewTicketProgress;
+
+                    return (
+                      <div key={ticket.id} className="block rounded-md border p-3 text-sm">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium">{ticket.title}</p>
+                          {showTicketActions && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  aria-label="Ticket actions"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <Ellipsis className="size-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {permissions.canEditTicket && (
+                                  <DropdownMenuItem onSelect={() => openInNewTab(`/admin/tickets/update/${ticket.id}`)}>
+                                    Edit
+                                  </DropdownMenuItem>
+                                )}
+                                {permissions.canViewTicketProgress && (
+                                  <DropdownMenuItem
+                                    onSelect={() => openInNewTab(`/admin/tickets/progress/${ticket.id}`)}
+                                  >
+                                    Progress
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+
                         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                           <p>Category: {ticket.category?.name ?? "-"}</p>
                           <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
                           <p>Employee: {ticket.ticketAssignments.map((a) => a.employee.user.name).join(", ") ?? "-"}</p>
                         </div>
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
-                            {formatTicketStatusLabel(ticket.status)}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.createdAt)}</p>
-                        </div>
-                      </a>
-                    ) : (
-                      <div key={ticket.id} className="block rounded-md border p-3 text-sm opacity-80">
-                        <p className="font-medium">{ticket.title}</p>
-                        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                          <p>Category: {ticket.category?.name ?? "-"}</p>
-                          <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
-                          <p>Employee: {ticket.ticketAssignments.map((a) => a.employee.user.name).join(", ") ?? "-"}</p>
-                        </div>
+
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
                             {formatTicketStatusLabel(ticket.status)}
@@ -165,8 +188,8 @@ export default function InboxInfo() {
                           <p className="text-xs text-muted-foreground">{formatTimestamp(ticket.createdAt)}</p>
                         </div>
                       </div>
-                    ),
-                  )}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No tickets found.</p>
