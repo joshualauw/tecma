@@ -1,0 +1,86 @@
+---
+description: Next.js server actions in lib/actions — auth, permissions, Zod, Prisma errors, naming
+globs: lib/actions/**/*.ts
+alwaysApply: false
+---
+
+# Server actions (`lib/actions`)
+
+Every file starts with **`"use server"`** and exports one or more async functions that return **`Promise<ApiResponse<T>>`** (`@/types/ApiResponse`: `success`, `message`, optional `data`).
+
+## Authentication and authorization
+
+1. **`const session = await auth()`** — `@/lib/auth` (NextAuth).
+2. **`const user = await getAuthenticatedUser(session?.user?.id)`** — `@/lib/user`; loads role, permissions, allowed properties.
+3. **Permission check (typical):**
+
+```ts
+if (!user || !hasPermissions(user, "resource:action")) {
+  return { success: false, message: "You are not authorized to access this resource" };
+}
+```
+
+- Use **`hasPermissions(user, ...)`** from `@/lib/utils` with strings from **`AVAILABLE_PERMISSIONS`** (e.g. `tickets:create`, `inbox:send`). Super-admin bypasses inside `hasPermissions`.
+
+4. **Super-admin-only** (no permission row): `if (!user || user.role !== "super-admin") { ... }`.
+
+5. **Property scope:** after validation, ensure the user may touch the row’s property:
+
+```ts
+if (!userCanAccessProperty(user, propertyId)) {
+  return { success: false, message: "You are not authorized to access this resource" };
+}
+```
+
+- Load the entity first if you only have `id` (e.g. `findUnique` → `existing.propertyId`), then call **`userCanAccessProperty`**.
+
+Order: **auth → user → permission (and/or role) → parse input → property / business checks → DB.**
+
+## Zod and `FormData`
+
+- Define a **`const …Schema = z.object({ … })`** in the same file (or shared module if reused).
+- Use **`safeParse`** with an object built from **`formData.get("field")`**; for repeated fields use **`formData.getAll("field")`** (e.g. role permissions).
+- Prefer **`z.coerce.number()`** for numeric ids from form strings; **`z.enum()`** for Prisma enums; **`z.instanceof(File)`** when uploading files.
+- **On failure:** `console.error("… validation failed:", parsed.error)` and return **`{ success: false, message: "Invalid input" }`**
+
+Do not leak raw Zod errors to the client; keep messages generic unless the product needs specificity.
+
+## Database and other errors
+
+- Wrap **`prisma`** writes/updates/deletes that can throw in **`try/catch`**.
+- **Prisma known errors** — import **`Prisma`** from `@/generated/prisma/client`:
+
+```ts
+import { Prisma } from "@/generated/prisma/client";
+
+// …
+} catch (error) {
+  console.error("Error …:", error);
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    return { success: false, message: "… not found" } as const;
+  }
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    // optional: parse message for unique field (see create-permission)
+    return { success: false, message: "… already exists" };
+  }
+  return { success: false, message: "An unexpected error occurred" };
+}
+```
+
+- **`P2025`:** record not found on update/delete. **`P2002`:** unique constraint violation.
+- **Non-Prisma errors:** e.g. **`AxiosError`** in integrations — branch with a specific user message, then a generic fallback; always **`console.error`** in the catch.
+
+## Return shape
+
+- Success: **`{ success: true, message: "…", data?: … }`** — use `data` when the client needs a payload.
+- Failure: **`{ success: false, message: "…" }`** — never throw for expected auth/validation failures.
+
+## Naming conventions
+
+| Item | Convention | Example |
+|------|------------|---------|
+| File path | `lib/actions/{area}/{verb}-{resource}.ts` kebab-case | `tickets/create-ticket.ts`, `ticket-categories/update-ticket-category.ts` |
+| Exported function | **`{verb}{PascalResource}Action`** camelCase | `createTicketAction`, `deleteTicketAction` |
+| Response type | `type XActionResponse = ApiResponse<…>` | `ApiResponse<null>` when no payload |
+
+**Verb** is usually `create`, `update`, `delete`, or domain-specific (`send`, `resolve`).
