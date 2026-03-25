@@ -39,11 +39,9 @@ export function useTickets(
   }
   const key = `/api/tickets?${params.toString()}`;
 
-  const swr = useSWR<TicketsApiData>(key, fetcher, {
+  return useSWR<TicketsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

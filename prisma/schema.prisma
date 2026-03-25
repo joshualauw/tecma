@@ -17,8 +17,9 @@ model Users {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  employee Employees?
-  role     Role       @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "users_role_id_roles_id_fk")
+  employee         Employees?
+  role             Role             @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "users_role_id_roles_id_fk")
+  ticketProgresses TicketProgress[]
 
   @@map("users")
 }
@@ -70,8 +71,8 @@ model Employees {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   user                Users                 @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
-  tickets             Tickets[]
   employeePermissions EmployeePermissions[]
+  ticketAssignments   TicketAssignments[]
 
   @@map("employees")
 }
@@ -229,7 +230,6 @@ model Tickets {
   propertyId  Int            @map("property_id")
   leaseId     Int            @map("lease_id")
   categoryId  Int?           @map("category_id")
-  employeeId  Int?           @map("employee_id")
   title       String         @db.VarChar(255)
   description String?
   status      TicketStatus   @default(open)
@@ -238,12 +238,46 @@ model Tickets {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  property Properties        @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
-  category TicketCategories? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
-  employee Employees?        @relation(fields: [employeeId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_employee_id_employees_id_fk")
-  lease    Leases            @relation(fields: [leaseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_lease_id_leases_id_fk")
+  property          Properties          @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
+  category          TicketCategories?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
+  lease             Leases              @relation(fields: [leaseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_lease_id_leases_id_fk")
+  ticketProgresses  TicketProgress[]
+  ticketAssignments TicketAssignments[]
 
   @@map("tickets")
+}
+
+model TicketAssignments {
+  id         Int @id @default(autoincrement())
+  ticketId   Int @map("ticket_id")
+  employeeId Int @map("employee_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  ticket   Tickets   @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ticket_assignments_ticket_id_tickets_id_fk")
+  employee Employees @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ticket_assignments_employee_id_employees_id_fk")
+
+  @@unique([ticketId, employeeId], name: "ticket_assignments_ticket_id_employee_id_unique")
+  @@map("ticket_assignments")
+}
+
+model TicketProgress {
+  id           Int          @id @default(autoincrement())
+  ticketId     Int          @map("ticket_id")
+  beforeStatus TicketStatus @map("before_status")
+  afterStatus  TicketStatus @map("after_status")
+  comment      String?
+  imageUrl     String?      @map("image_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy Int?     @map("created_by")
+
+  ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ticket_progress_ticket_id_tickets_id_fk")
+  user   Users?  @relation(fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "ticket_progress_created_by_users_id_fk")
+
+  @@map("ticket_progress")
 }
 
 model TicketCategories {

@@ -6,6 +6,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import z from "zod";
+import { Prisma } from "@/generated/prisma/client";
 
 export type TenantLeaseApiItem = {
   id: number;
@@ -72,20 +73,11 @@ export async function GET(
 
     const { id } = parsed.data;
 
-    const tenant = await prisma.tenants.findUnique({
+    const tenant = await prisma.tenants.findFirstOrThrow({
       where: { id },
       select: { propertyId: true },
     });
-    if (!tenant) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Tenant not found",
-          success: false,
-        },
-        { status: 404 },
-      );
-    }
+
     if (!userCanAccessProperty(user, tenant.propertyId)) {
       return NextResponse.json(
         {
@@ -133,6 +125,16 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error fetching tenant leases:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json(
+        {
+          data: null,
+          message: "Lease not found",
+          success: false,
+        },
+        { status: 404 },
+      );
+    }
     return NextResponse.json(
       {
         data: null,

@@ -41,11 +41,11 @@ function formatLastMessageAt(value: Date | string | null) {
 }
 
 function messageBubbleClasses(senderType: SenderType) {
-  const classes = "w-full rounded-lg px-3 py-2 text-sm";
+  const classes = "w-full px-3 py-2 text-sm rounded-lg";
   if (senderType === SenderType.tenant) {
-    return `${classes} bg-muted text-foreground`;
+    return `${classes} rounded-bl-none bg-muted text-foreground`;
   } else {
-    return `${classes} bg-secondary text-secondary-foreground`;
+    return `${classes} rounded-br-none bg-secondary text-secondary-foreground`;
   }
 }
 
@@ -353,13 +353,13 @@ function MessagesList() {
               className={`flex items-center gap-1 ${message.senderType === SenderType.tenant ? "flex-row" : "flex-row-reverse"}`}
             >
               <div className={`${messageBubbleClasses(message.senderType)}}`}>
-                {message.replyTo ? (
+                {message.replyTo && (
                   <ReplyReference
                     replyTo={message.replyTo}
                     senderType={message.senderType}
                     onScrollToMessage={scrollToMessage}
                   />
-                ) : null}
+                )}
                 {getMessageBubble({
                   content: message.content,
                   messageType: message.messageType,

@@ -35,6 +35,9 @@ async function main() {
             "tickets:create",
             "tickets:edit",
             "tickets:delete",
+            "tickets-progress:view",
+            "tickets-progress:create",
+            "tickets-progress:edit",
             "tickets-categories:view",
             "tickets-categories:create",
             "tickets-categories:edit",
@@ -55,7 +58,7 @@ async function main() {
     const workerPermissions = await prisma.permission.findMany({
       where: {
         name: {
-          in: ["tickets:assigned"],
+          in: ["tickets:view", "tickets-progress:view", "tickets-progress:create", "tickets-progress:edit"],
         },
       },
     });
@@ -78,6 +81,8 @@ async function main() {
             "units:delete",
             "tenants:view",
             "tenants:create",
+            "tickets:view",
+            "tickets-progress:view",
             "tenants:edit",
             "tenants:delete",
             "tenants-leases:view",

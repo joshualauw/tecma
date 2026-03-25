@@ -27,11 +27,9 @@ export function useUnits(
   }
   const key = `/api/units?${params.toString()}`;
 
-  const swr = useSWR<UnitsApiData>(key, fetcher, {
+  return useSWR<UnitsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

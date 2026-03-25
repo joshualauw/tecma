@@ -9,12 +9,10 @@ export function useEmployeePermissions(
 ) {
   const key = employeeId != null ? `/api/employees/${employeeId}/permissions` : null;
 
-  const swr = useSWR<EmployeePermissionsApiData>(key, fetcher, {
+  return useSWR<EmployeePermissionsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }
 

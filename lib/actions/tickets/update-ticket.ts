@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
-import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import { TicketPriority } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
@@ -12,10 +12,9 @@ import z from "zod";
 const updateTicketSchema = z.object({
   id: z.coerce.number().int().positive(),
   categoryId: z.coerce.number().int().positive().nullable(),
-  employeeId: z.coerce.number().int().positive().nullable(),
+  employeeIds: z.array(z.coerce.number().int().positive()).default([]),
   title: z.string().trim().min(1),
   description: z.string().trim().nullable(),
-  status: z.enum(TicketStatus),
   priority: z.enum(TicketPriority),
 });
 
@@ -32,7 +31,7 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
   const parsed = updateTicketSchema.safeParse({
     id: formData.get("id"),
     categoryId: formData.get("categoryId"),
-    employeeId: formData.get("employeeId"),
+    employeeIds: formData.getAll("employeeIds"),
     title: formData.get("title"),
     description: formData.get("description"),
     status: formData.get("status"),
@@ -44,17 +43,28 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
     return { success: false, message: "Invalid input" };
   }
 
-  const { id, categoryId, employeeId, title, description, status, priority } = parsed.data;
+  const { id, categoryId, employeeIds, title, description, priority } = parsed.data;
 
-  const existing = await prisma.tickets.findUnique({
+  const ticket = await prisma.tickets.findFirst({
     where: { id },
     select: { propertyId: true },
   });
-  if (!existing) {
+
+  if (!ticket) {
     return { success: false, message: "Ticket not found" };
   }
-  if (!userCanAccessProperty(user, existing.propertyId)) {
+
+  if (!userCanAccessProperty(user, ticket.propertyId)) {
     return { success: false, message: "You are not authorized to access this resource" };
+  }
+
+  if (user.role !== "super-admin") {
+    const ticketAssignment = await prisma.ticketAssignments.findFirst({
+      where: { ticketId: id, employee: { userId: user.id } },
+    });
+    if (!ticketAssignment) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
   }
 
   try {
@@ -64,11 +74,15 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
       },
       data: {
         categoryId,
-        employeeId,
         title,
         description,
-        status,
         priority,
+        ticketAssignments: {
+          deleteMany: {},
+          createMany: {
+            data: employeeIds.map((employeeId) => ({ employeeId })),
+          },
+        },
       },
     });
 

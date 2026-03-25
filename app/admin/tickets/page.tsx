@@ -23,6 +23,7 @@ export default async function TicketsPage() {
   const canCreate = hasPermissions(user, "tickets:create");
   const canEdit = hasPermissions(user, "tickets:edit");
   const canDelete = hasPermissions(user, "tickets:delete");
+  const canViewProgress = hasPermissions(user, "tickets-progress:view");
 
   const [properties, categories] = await Promise.all([
     prisma.properties.findMany({
@@ -51,7 +52,11 @@ export default async function TicketsPage() {
         )}
       </div>
 
-      <TicketsDataTable properties={properties} categories={categories} permissions={{ canEdit, canDelete }} />
+      <TicketsDataTable
+        properties={properties}
+        categories={categories}
+        permissions={{ canEdit, canDelete, canViewProgress }}
+      />
     </div>
   );
 }

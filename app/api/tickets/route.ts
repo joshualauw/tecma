@@ -32,12 +32,6 @@ export type TicketApiItem = {
     id: number;
     name: string;
   } | null;
-  employee: {
-    id: number;
-    user: {
-      name: string;
-    };
-  } | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -115,11 +109,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
 
     const where: TicketsWhereInput = {};
 
+    if (user.role !== "super-admin") {
+      where.ticketAssignments = { some: { employee: { userId: user.id } } };
+    }
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
         { lease: { tenant: { name: { contains: search, mode: "insensitive" } } } },
-        { employee: { user: { name: { contains: search, mode: "insensitive" } } } },
       ];
     }
 
@@ -174,16 +171,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
           select: {
             id: true,
             name: true,
-          },
-        },
-        employee: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                name: true,
-              },
-            },
           },
         },
       },

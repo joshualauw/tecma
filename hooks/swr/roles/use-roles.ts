@@ -20,12 +20,10 @@ export function useRoles({ pageIndex, pageSize, search }: UseRolesParams, option
   }
   const key = `/api/roles?${params.toString()}`;
 
-  const swr = useSWR<RolesApiData>(key, fetcher, {
+  return useSWR<RolesApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }
 

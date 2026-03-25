@@ -9,7 +9,7 @@ import { createLeaseAction } from "@/lib/actions/leases/create-lease";
 import { useAvailableUnits } from "@/hooks/swr/units/use-available-units";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
@@ -39,9 +39,10 @@ interface CreateLeaseFormProps {
 export default function CreateLeaseForm({ tenantId, propertyId }: CreateLeaseFormProps) {
   const [open, setOpen] = useState(false);
   const { mutate } = useSWRConfig();
-  const { units: availableUnits, isLoading: isLoadingUnits } = useAvailableUnits({
+  const { data: unitsData, isLoading: isLoadingUnits } = useAvailableUnits({
     propertyId: String(propertyId),
   });
+  const availableUnits = unitsData?.units ?? [];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -51,6 +52,16 @@ export default function CreateLeaseForm({ tenantId, propertyId }: CreateLeaseFor
       endDate: dayjs().add(1, "year").toDate(),
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        unitId: "",
+        startDate: dayjs().toDate(),
+        endDate: dayjs().add(1, "year").toDate(),
+      });
+    }
+  }, [open, form.reset]);
 
   async function onSubmit(data: FormValues) {
     if (data.startDate == null || data.endDate == null) return;

@@ -26,20 +26,31 @@ export async function deleteTicketAction(ticketId: number): Promise<DeleteTicket
 
   if (!parsed.success) {
     console.error("Delete Ticket validation failed:", parsed.error);
-    return { success: false, message: "Invalid ticket ID" };
+    return { success: false, message: "Invalid input" };
   }
 
   const { id } = parsed.data;
 
-  const existing = await prisma.tickets.findUnique({
+  const ticket = await prisma.tickets.findFirst({
     where: { id },
     select: { propertyId: true },
   });
-  if (!existing) {
+
+  if (!ticket) {
     return { success: false, message: "Ticket not found" };
   }
-  if (!userCanAccessProperty(user, existing.propertyId)) {
+
+  if (!userCanAccessProperty(user, ticket.propertyId)) {
     return { success: false, message: "You are not authorized to access this resource" };
+  }
+
+  if (user.role !== "super-admin") {
+    const ticketAssignment = await prisma.ticketAssignments.findFirst({
+      where: { ticketId: id, employee: { userId: user.id } },
+    });
+    if (!ticketAssignment) {
+      return { success: false, message: "You are not authorized to access this resource" };
+    }
   }
 
   try {

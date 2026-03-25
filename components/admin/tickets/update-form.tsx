@@ -2,25 +2,37 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { TicketPriority, TicketStatus } from "@/generated/prisma/enums";
+import { TicketPriority } from "@/generated/prisma/enums";
 import { updateTicketAction } from "@/lib/actions/tickets/update-ticket";
 import { useAvailableEmployees } from "@/hooks/swr/employees/use-available-employees";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
+import { formatLabel } from "@/lib/utils";
 
 const formSchema = z.object({
   categoryId: z.string().trim().optional(),
-  employeeId: z.string().trim().optional(),
-  status: z.enum([TicketStatus.open, TicketStatus.in_progress, TicketStatus.closed]),
+  employeeIds: z.array(z.string().trim().min(1)).optional(),
   priority: z.enum([TicketPriority.low, TicketPriority.medium, TicketPriority.high]),
   title: z.string().trim().min(1, "Title is required"),
   description: z.string().trim().optional(),
@@ -41,8 +53,9 @@ interface TicketUpdateFormProps {
       };
     };
     categoryId: number | null;
-    employeeId: number | null;
-    status: TicketStatus;
+    ticketAssignments: {
+      employeeId: number;
+    }[];
     priority: TicketPriority;
     title: string;
     description: string | null;
@@ -56,12 +69,6 @@ interface TicketUpdateFormProps {
     name: string;
   }[];
 }
-
-const statusOptions = [
-  { value: TicketStatus.open, label: "Open" },
-  { value: TicketStatus.in_progress, label: "In Progress" },
-  { value: TicketStatus.closed, label: "Closed" },
-];
 
 const priorityOptions = [
   { value: TicketPriority.low, label: "Low" },
@@ -79,8 +86,7 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     resolver: zodResolver(formSchema),
     defaultValues: {
       categoryId: data.categoryId ? String(data.categoryId) : "",
-      employeeId: data.employeeId ? String(data.employeeId) : "",
-      status: data.status,
+      employeeIds: data.ticketAssignments.map((assignment) => String(assignment.employeeId)),
       priority: data.priority,
       title: data.title,
       description: data.description ?? "",
@@ -88,12 +94,22 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
   });
 
   const {
-    employees,
+    data: employeesData,
     isLoading: isLoadingEmployees,
     error: employeesError,
   } = useAvailableEmployees({
     propertyId: initialPropertyId,
   });
+
+  const employees = employeesData?.employees ?? [];
+  const employeeOptionIds = employees.map((employee) => String(employee.id));
+  const employeeNamesById = new Map(
+    employees.map((employee) => [
+      String(employee.id),
+      `${employee.user.name} - ${formatLabel(employee.user.role.name)}`,
+    ]),
+  );
+  const employeeAnchor = useComboboxAnchor();
 
   const isLoadingOptions = isLoadingEmployees;
 
@@ -109,10 +125,9 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
     if (values.categoryId) {
       formData.append("categoryId", values.categoryId);
     }
-    if (values.employeeId) {
-      formData.append("employeeId", values.employeeId);
+    for (const employeeId of values.employeeIds ?? []) {
+      formData.append("employeeIds", employeeId);
     }
-    formData.append("status", values.status);
     formData.append("priority", values.priority);
     formData.append("title", values.title);
     if (values.description) {
@@ -187,73 +202,6 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
               />
 
               <Controller
-                name="employeeId"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Employee</FieldLabel>
-                    <div className="flex items-center gap-1">
-                      <Select
-                        value={field.value ?? ""}
-                        onValueChange={field.onChange}
-                        disabled={isLoadingOptions || employees.length === 0}
-                      >
-                        <SelectTrigger className="w-full flex-1">
-                          <SelectValue
-                            placeholder={
-                              isLoadingOptions
-                                ? "Loading employees..."
-                                : employees.length === 0
-                                  ? "No employees found"
-                                  : "Select an employee"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent position="popper">
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={String(employee.id)}>
-                              {employee.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {field.value && (
-                        <Button type="button" variant="ghost" size="icon" onClick={() => field.onChange("")}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Controller
-                name="status"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Status</FieldLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a status" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-
-              <Controller
                 name="priority"
                 control={form.control}
                 render={({ field, fieldState }) => (
@@ -276,6 +224,66 @@ export default function TicketUpdateForm({ data, properties, categories }: Ticke
                 )}
               />
             </div>
+
+            <Controller
+              name="employeeIds"
+              control={form.control}
+              render={({ field, fieldState }) => {
+                const selectedEmployeeIds = field.value ?? [];
+
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Employees</FieldLabel>
+                    <Combobox
+                      multiple
+                      autoHighlight
+                      items={employeeOptionIds}
+                      value={selectedEmployeeIds}
+                      onValueChange={(value) => field.onChange(value as string[])}
+                      itemToStringValue={(id) => employeeNamesById.get(id) ?? id}
+                    >
+                      <ComboboxChips
+                        ref={employeeAnchor}
+                        aria-invalid={fieldState.invalid ? "true" : "false"}
+                        className="w-full"
+                        data-disabled={isLoadingOptions || employees.length === 0}
+                      >
+                        <ComboboxValue>
+                          {(values) => (
+                            <Fragment>
+                              {(values as string[]).map((value) => (
+                                <ComboboxChip key={value}>{employeeNamesById.get(value) ?? value}</ComboboxChip>
+                              ))}
+                              <ComboboxChipsInput
+                                placeholder={
+                                  isLoadingOptions
+                                    ? "Loading employees..."
+                                    : employees.length === 0
+                                      ? "No employees found"
+                                      : "Select employees"
+                                }
+                                disabled={isLoadingOptions || employees.length === 0}
+                              />
+                            </Fragment>
+                          )}
+                        </ComboboxValue>
+                      </ComboboxChips>
+                      <ComboboxContent anchor={employeeAnchor}>
+                        <ComboboxEmpty>No employees found.</ComboboxEmpty>
+                        <ComboboxList>
+                          {(employeeId) => (
+                            <ComboboxItem key={employeeId} value={employeeId}>
+                              {employeeNamesById.get(employeeId) ?? employeeId}
+                            </ComboboxItem>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+            />
 
             <Controller
               name="title"

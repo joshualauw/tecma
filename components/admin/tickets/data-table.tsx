@@ -47,6 +47,7 @@ interface TicketsDataTableProps {
   permissions: {
     canEdit: boolean;
     canDelete: boolean;
+    canViewProgress: boolean;
   };
 }
 
@@ -189,11 +190,6 @@ export default function TicketsDataTable({ properties, categories, permissions }
         cell: ({ row }) => row.original.category?.name ?? "-",
       },
       {
-        id: "employee",
-        header: "Employee",
-        cell: ({ row }) => row.original.employee?.user.name ?? "-",
-      },
-      {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => (
@@ -227,7 +223,7 @@ export default function TicketsDataTable({ properties, categories, permissions }
       },
     ];
 
-    if (!permissions.canEdit && !permissions.canDelete) {
+    if (!permissions.canEdit && !permissions.canDelete && !permissions.canViewProgress) {
       return base;
     }
 
@@ -247,6 +243,11 @@ export default function TicketsDataTable({ properties, categories, permissions }
                 Edit
               </DropdownMenuItem>
             )}
+            {permissions.canViewProgress && (
+              <DropdownMenuItem onSelect={() => router.push(`/admin/tickets/progress/${row.original.id}`)}>
+                Progress
+              </DropdownMenuItem>
+            )}
             {permissions.canDelete && (
               <DropdownMenuItem
                 variant="destructive"
@@ -264,7 +265,7 @@ export default function TicketsDataTable({ properties, categories, permissions }
     });
 
     return base;
-  }, [permissions.canDelete, permissions.canEdit, router]);
+  }, [permissions.canDelete, permissions.canEdit, permissions.canViewProgress, router]);
 
   async function onConfirmDelete() {
     if (!ticketToDelete || isDeleting) {
@@ -309,7 +310,7 @@ export default function TicketsDataTable({ properties, categories, permissions }
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search by title, tenant, or employee..."
+              placeholder="Search by title, tenant"
               className="sm:max-w-sm"
             />
             <Select

@@ -24,7 +24,7 @@ export function DynamicBreadcrumb() {
           const isLast = index === pathSegments.length - 1;
 
           const title = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
-          const NON_CLICKABLE_SEGMENTS = ["update", "edit", "view", "lease", "permission"];
+          const NON_CLICKABLE_SEGMENTS = ["update", "edit", "view", "lease", "permission", "progress"];
           const isClickable = !NON_CLICKABLE_SEGMENTS.includes(segment) && !isLast;
 
           return (

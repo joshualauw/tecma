@@ -23,11 +23,9 @@ export function useWhatsapp(
   }
   const key = `/api/whatsapp?${params.toString()}`;
 
-  const swr = useSWR<WhatsappApiData>(key, fetcher, {
+  return useSWR<WhatsappApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

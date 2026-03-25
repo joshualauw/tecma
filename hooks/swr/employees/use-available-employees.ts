@@ -3,12 +3,12 @@ import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
-type UseLeanEmployeesParams = {
+type UseAvailableEmployeesParams = {
   propertyId: string;
 };
 
 export function useAvailableEmployees(
-  { propertyId }: UseLeanEmployeesParams,
+  { propertyId }: UseAvailableEmployeesParams,
   options?: SWRConfiguration<AvailableEmployeesApiData>,
 ) {
   const propertyIdNum = Number(propertyId);
@@ -21,15 +21,9 @@ export function useAvailableEmployees(
 
   const key = isEnabled ? `/api/employees/available?${params.toString()}` : null;
 
-  const swr = useSWR<AvailableEmployeesApiData>(key, fetcher, {
+  return useSWR<AvailableEmployeesApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return {
-    ...swr,
-    employees: swr.data?.employees ?? [],
-    isLoading: isEnabled && swr.isLoading,
-  };
 }

@@ -141,7 +141,7 @@ export default function InboxInfo() {
                         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                           <p>Category: {ticket.category?.name ?? "-"}</p>
                           <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
-                          <p>Employee: {ticket.employee?.user.name ?? "-"}</p>
+                          <p>Employee: {ticket.ticketAssignments.map((a) => a.employee.user.name).join(", ") ?? "-"}</p>
                         </div>
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <Badge variant={ticketStatusBadgeVariant(ticket.status)}>
@@ -156,7 +156,7 @@ export default function InboxInfo() {
                         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                           <p>Category: {ticket.category?.name ?? "-"}</p>
                           <p>Priority: {formatTicketPriorityLabel(ticket.priority)}</p>
-                          <p>Employee: {ticket.employee?.user.name ?? "-"}</p>
+                          <p>Employee: {ticket.ticketAssignments.map((a) => a.employee.user.name).join(", ") ?? "-"}</p>
                         </div>
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <Badge variant={ticketStatusBadgeVariant(ticket.status)}>

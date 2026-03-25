@@ -52,10 +52,13 @@ export default async function TicketUpdatePage({ params }: TicketUpdatePageProps
         },
       },
       categoryId: true,
-      employeeId: true,
+      ticketAssignments: {
+        select: {
+          employeeId: true,
+        },
+      },
       title: true,
       description: true,
-      status: true,
       priority: true,
     },
   });

@@ -21,15 +21,9 @@ export function useLeanTenants(
 
   const key = isEnabled ? `/api/tenants/lean?${params.toString()}` : null;
 
-  const swr = useSWR<LeanTenantsApiData>(key, fetcher, {
+  return useSWR<LeanTenantsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return {
-    ...swr,
-    tenants: swr.data?.tenants ?? [],
-    isLoading: isEnabled && swr.isLoading,
-  };
 }

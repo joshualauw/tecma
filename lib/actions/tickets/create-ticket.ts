@@ -12,10 +12,9 @@ const createTicketSchema = z.object({
   propertyId: z.coerce.number().int().positive(),
   leaseId: z.coerce.number().int().positive(),
   categoryId: z.coerce.number().int().positive().nullable(),
-  employeeId: z.coerce.number().int().positive().nullable(),
+  employeeIds: z.array(z.coerce.number().int().positive()).default([]),
   title: z.string().trim().min(1),
   description: z.string().trim().nullable(),
-  status: z.enum(TicketStatus),
   priority: z.enum(TicketPriority),
 });
 
@@ -33,10 +32,9 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
     propertyId: formData.get("propertyId"),
     leaseId: formData.get("leaseId"),
     categoryId: formData.get("categoryId"),
-    employeeId: formData.get("employeeId"),
+    employeeIds: formData.getAll("employeeIds"),
     title: formData.get("title"),
     description: formData.get("description"),
-    status: formData.get("status"),
     priority: formData.get("priority"),
   });
 
@@ -45,7 +43,7 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
     return { success: false, message: "Invalid input" };
   }
 
-  const { propertyId, leaseId, categoryId, employeeId, title, description, status, priority } = parsed.data;
+  const { propertyId, leaseId, categoryId, employeeIds, title, description, priority } = parsed.data;
 
   if (!userCanAccessProperty(user, propertyId)) {
     return { success: false, message: "You are not authorized to access this resource" };
@@ -65,11 +63,15 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
         propertyId,
         leaseId,
         categoryId,
-        employeeId,
         title,
         description,
-        status,
+        status: TicketStatus.open,
         priority,
+        ticketAssignments: {
+          createMany: {
+            data: employeeIds.map((employeeId) => ({ employeeId })),
+          },
+        },
       },
     });
 

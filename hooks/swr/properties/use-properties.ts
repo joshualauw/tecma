@@ -23,11 +23,9 @@ export function useProperties(
   }
   const key = `/api/properties?${params.toString()}`;
 
-  const swr = useSWR<PropertiesApiData>(key, fetcher, {
+  return useSWR<PropertiesApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

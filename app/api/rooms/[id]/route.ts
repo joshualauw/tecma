@@ -16,13 +16,14 @@ type RoomDetailTicket = {
     id: number;
     name: string;
   } | null;
-  employee: {
-    id: number;
-    user: {
+  ticketAssignments: {
+    employee: {
       id: number;
-      name: string;
+      user: {
+        name: string;
+      };
     };
-  } | null;
+  }[];
   createdAt: Date;
 };
 
@@ -190,13 +191,16 @@ export async function GET(
               name: true,
             },
           },
-          employee: {
+          ticketAssignments: {
             select: {
-              id: true,
-              user: {
+              employee: {
                 select: {
                   id: true,
-                  name: true,
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
             },

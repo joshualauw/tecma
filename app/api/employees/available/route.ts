@@ -8,7 +8,12 @@ import { getAuthenticatedUser } from "@/lib/user";
 
 export type AvailableEmployeeApiItem = {
   id: number;
-  name: string;
+  user: {
+    name: string;
+    role: {
+      name: string;
+    };
+  };
 };
 
 export type AvailableEmployeesApiData = {
@@ -67,42 +72,39 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableE
       );
     }
 
-    const rows = await prisma.users.findMany({
+    const employees = await prisma.employees.findMany({
       select: {
         id: true,
-        name: true,
-        employee: {
+        user: {
           select: {
-            id: true,
+            name: true,
+            role: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
       where: {
-        employee: {
-          employeePermissions: {
-            some: {
-              propertyId,
-            },
+        employeePermissions: {
+          some: {
+            propertyId,
           },
         },
-        role: {
-          rolePermissions: {
-            some: {
-              permission: {
-                name: "tickets:assigned",
+        user: {
+          role: {
+            rolePermissions: {
+              some: {
+                permission: {
+                  name: "tickets:view",
+                },
               },
             },
           },
         },
       },
     });
-
-    const employees = rows
-      .filter((row) => row.employee !== null)
-      .map((row) => ({
-        id: row.employee!.id,
-        name: row.name,
-      }));
 
     return NextResponse.json({
       data: {

@@ -27,11 +27,9 @@ export function useTenants(
   }
   const key = `/api/tenants?${params.toString()}`;
 
-  const swr = useSWR<TenantsApiData>(key, fetcher, {
+  return useSWR<TenantsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

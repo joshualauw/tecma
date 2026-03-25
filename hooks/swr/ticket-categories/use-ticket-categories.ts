@@ -23,11 +23,9 @@ export function useTicketCategories(
   }
   const key = `/api/tickets/categories?${params.toString()}`;
 
-  const swr = useSWR<TicketCategoriesApiData>(key, fetcher, {
+  return useSWR<TicketCategoriesApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

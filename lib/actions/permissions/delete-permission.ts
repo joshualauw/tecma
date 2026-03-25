@@ -18,16 +18,18 @@ export async function deletePermissionAction(id: number): Promise<DeletePermissi
     }
 
     await prisma.$transaction(async (tx) => {
-      const { employeeId } = await tx.employeePermissions.delete({
+      const permission = await tx.employeePermissions.delete({
         where: { id },
-        select: { employeeId: true },
+        select: { employeeId: true, propertyId: true },
       });
 
-      await tx.tickets.updateMany({
+      await tx.ticketAssignments.deleteMany({
         where: {
-          employeeId,
+          employeeId: permission.employeeId,
+          ticket: {
+            propertyId: permission.propertyId,
+          },
         },
-        data: { employeeId: null },
       });
     });
 

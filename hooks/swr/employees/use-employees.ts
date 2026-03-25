@@ -27,11 +27,9 @@ export function useEmployees(
   }
   const key = `/api/employees?${params.toString()}`;
 
-  const swr = useSWR<EmployeesApiData>(key, fetcher, {
+  return useSWR<EmployeesApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return swr;
 }

@@ -21,15 +21,9 @@ export function useAvailableUnits(
 
   const key = isEnabled ? `/api/units/available?${params.toString()}` : null;
 
-  const swr = useSWR<AvailableUnitsApiData>(key, fetcher, {
+  return useSWR<AvailableUnitsApiData>(key, fetcher, {
     keepPreviousData: true,
     errorRetryCount: SWR_FETCH_RETRY_COUNT,
     ...options,
   });
-
-  return {
-    ...swr,
-    units: swr.data?.units ?? [],
-    isLoading: isEnabled && swr.isLoading,
-  };
 }
