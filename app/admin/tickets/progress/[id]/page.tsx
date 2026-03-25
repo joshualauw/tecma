@@ -53,7 +53,7 @@ export default async function TicketsProgressPage({ params }: TicketsProgressPag
         </div>
         {canCreateProgress && <TicketProgressCreateForm ticketId={ticketId} status={ticket.status} />}
       </div>
-      <TicketProgressDataList ticketId={ticketId} currentUserId={user.id} canEditProgress={canEditProgress} />
+      <TicketProgressDataList ticketId={ticketId} canEditProgress={canEditProgress} />
     </div>
   );
 }

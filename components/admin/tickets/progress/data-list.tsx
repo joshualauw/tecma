@@ -22,7 +22,6 @@ import { toast } from "sonner";
 
 export interface TicketProgressDataListProps {
   ticketId: number;
-  currentUserId: number;
   canEditProgress: boolean;
 }
 
@@ -57,19 +56,7 @@ function ProgressDataListSkeleton() {
   );
 }
 
-function canEditThisItem(
-  item: TicketProgressApiItem,
-  currentUserId: number,
-  canEditProgress: boolean,
-): boolean {
-  return canEditProgress && item.createdBy !== null && item.createdBy.id === currentUserId;
-}
-
-export default function TicketProgressDataList({
-  ticketId,
-  currentUserId,
-  canEditProgress,
-}: TicketProgressDataListProps) {
+export default function TicketProgressDataList({ ticketId, canEditProgress }: TicketProgressDataListProps) {
   const { data, error, isLoading } = useTicketProgress({ ticketId });
   const [editingItem, setEditingItem] = useState<TicketProgressApiItem | null>(null);
 
@@ -117,10 +104,15 @@ export default function TicketProgressDataList({
               <time className="text-muted-foreground text-sm tabular-nums" dateTime={String(item.createdAt)}>
                 {dayjs(item.createdAt).format("DD MMM YYYY HH:mm")}
               </time>
-              {canEditThisItem(item, currentUserId, canEditProgress) && (
+              {canEditProgress && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground h-8 w-8 shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground h-8 w-8 shrink-0"
+                    >
                       <Ellipsis className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>
