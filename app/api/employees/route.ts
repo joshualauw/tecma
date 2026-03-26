@@ -1,13 +1,13 @@
 import { EmployeesWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { getAuthenticatedUser } from "@/lib/user";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type EmployeeApiItem = {
-  id: number;
+export type EmployeeApiItem = BaseApiData & {
   phoneNumber: string;
   user: {
     name: string;
@@ -17,8 +17,6 @@ export type EmployeeApiItem = {
       name: string;
     };
   };
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type EmployeesApiData = {
@@ -88,12 +86,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       where.user = { role: { id: roleId } };
     }
 
-    const employees = await prisma.employees.findMany({
+    const rows = await prisma.employees.findMany({
       select: {
         id: true,
         phoneNumber: true,
         createdAt: true,
         updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
         user: {
           select: {
             name: true,
@@ -111,6 +111,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
     });
 
     const employeesCount = await prisma.employees.count({ where });
+    const employees: EmployeeApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

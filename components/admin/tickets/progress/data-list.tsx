@@ -99,11 +99,15 @@ export default function TicketProgressDataList({ ticketId, canEditProgress }: Ti
       )}
       {items.map((item) => (
         <Card key={item.id} className="overflow-hidden">
-          <CardHeader className="gap-2 pb-2">
+          <CardHeader className="gap-2">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <time className="text-muted-foreground text-sm tabular-nums" dateTime={String(item.createdAt)}>
-                {dayjs(item.createdAt).format("DD MMM YYYY HH:mm")}
-              </time>
+              <CardDescription className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <Badge variant={statusBadgeVariant(item.beforeStatus)}>{formatLabel(item.beforeStatus)}</Badge>
+                  <span className="text-muted-foreground">→</span>
+                  <Badge variant={statusBadgeVariant(item.afterStatus)}>{formatLabel(item.afterStatus)}</Badge>
+                </span>
+              </CardDescription>
               {canEditProgress && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -130,14 +134,16 @@ export default function TicketProgressDataList({ ticketId, canEditProgress }: Ti
                 </DropdownMenu>
               )}
             </div>
-            <CardDescription className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex flex-wrap items-center gap-1.5">
-                <Badge variant={statusBadgeVariant(item.beforeStatus)}>{formatLabel(item.beforeStatus)}</Badge>
-                <span className="text-muted-foreground">→</span>
-                <Badge variant={statusBadgeVariant(item.afterStatus)}>{formatLabel(item.afterStatus)}</Badge>
-              </span>
-              {item.createdBy && <span className="text-muted-foreground">by {item.createdBy.name}</span>}
-            </CardDescription>
+            <div className="text-muted-foreground space-y-1 text-xs">
+              <p>
+                Created: <span className="tabular-nums">{dayjs(item.createdAt).format("DD/MM/YYYY HH:mm")}</span> by{" "}
+                {item.createdBy?.name ?? "-"}
+              </p>
+              <p>
+                Updated: <span className="tabular-nums">{dayjs(item.updatedAt).format("DD/MM/YYYY HH:mm")}</span> by{" "}
+                {item.updatedBy?.name ?? "-"}
+              </p>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-0">
             {item.comment ? (

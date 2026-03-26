@@ -61,7 +61,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
       where: { tenantId: lease.tenantId, unitId: lease.unitId, status: LeaseStatus.active },
       select: { id: true },
     });
-    if (existingActive && status === LeaseStatus.active) {
+    if (existingActive && status === LeaseStatus.active && existingActive.id !== id) {
       return { success: false, message: "This tenant already has an active lease for the selected unit." };
     }
 

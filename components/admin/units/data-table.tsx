@@ -114,7 +114,12 @@ export default function UnitsDataTable({ properties, permissions }: UnitsDataTab
         header: "Created At",
         cell: ({ row }) => {
           const value = row.original.createdAt;
-          return dayjs(value).format("DD/MM/YYYY HH:mm");
+          return (
+            <div className="leading-tight">
+              <p>{dayjs(value).format("DD/MM/YYYY HH:mm")}</p>
+              <p className="text-xs text-muted-foreground">{row.original.createdBy?.name ?? "-"}</p>
+            </div>
+          );
         },
       },
       {
@@ -122,7 +127,12 @@ export default function UnitsDataTable({ properties, permissions }: UnitsDataTab
         header: "Updated At",
         cell: ({ row }) => {
           const value = row.original.updatedAt;
-          return dayjs(value).format("DD/MM/YYYY HH:mm");
+          return (
+            <div className="leading-tight">
+              <p>{dayjs(value).format("DD/MM/YYYY HH:mm")}</p>
+              <p className="text-xs text-muted-foreground">{row.original.updatedBy?.name ?? "-"}</p>
+            </div>
+          );
         },
       },
     ];

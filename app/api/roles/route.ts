@@ -2,16 +2,14 @@ import { RoleWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/user";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type RoleApiItem = {
-  id: number;
+export type RoleApiItem = BaseApiData & {
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type RolesApiData = {
@@ -73,12 +71,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<RolesApiRe
       where.OR = [{ name: { contains: search, mode: "insensitive" } }];
     }
 
-    const roles = await prisma.role.findMany({
+    const rows = await prisma.role.findMany({
       select: {
         id: true,
         name: true,
         createdAt: true,
         updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
       },
       where,
       skip: page * size,
@@ -89,6 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<RolesApiRe
     });
 
     const rolesCount = await prisma.role.count({ where });
+    const roles: RoleApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

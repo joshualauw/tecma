@@ -3,19 +3,17 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type UnitApiItem = {
-  id: number;
+export type UnitApiItem = BaseApiData & {
   code: string;
   property: {
     id: number;
     name: string;
   };
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type UnitsApiData = {
@@ -93,12 +91,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnitsApiRe
       where.propertyId = scope.filter;
     }
 
-    const units = await prisma.units.findMany({
+    const rows = await prisma.units.findMany({
       select: {
         id: true,
         code: true,
         createdAt: true,
         updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
         property: {
           select: {
             id: true,
@@ -115,6 +115,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnitsApiRe
     });
 
     const unitsCount = await prisma.units.count({ where });
+    const units: UnitApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

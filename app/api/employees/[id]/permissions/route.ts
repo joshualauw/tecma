@@ -1,17 +1,16 @@
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 import z from "zod";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type EmployeePermissionApiItem = {
-  id: number;
+export type EmployeePermissionApiItem = BaseApiData & {
   property: {
     id: number;
     name: string;
   };
-  createdAt: Date;
 };
 
 export type EmployeePermissionsApiData = {
@@ -60,11 +59,14 @@ export async function GET(
 
     const { id: employeeId } = parsed.data;
 
-    const permissions = await prisma.employeePermissions.findMany({
+    const rows = await prisma.employeePermissions.findMany({
       where: { employeeId },
       select: {
         id: true,
         createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
         property: {
           select: {
             id: true,
@@ -74,6 +76,7 @@ export async function GET(
       },
       orderBy: { createdAt: "desc" },
     });
+    const permissions: EmployeePermissionApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: { permissions },

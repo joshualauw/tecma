@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
@@ -7,9 +7,9 @@ import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import z from "zod";
 import { Prisma } from "@/generated/prisma/client";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type TenantLeaseApiItem = {
-  id: number;
+export type TenantLeaseApiItem = BaseApiData & {
   startDate: Date;
   endDate: Date;
   status: LeaseStatus;
@@ -89,10 +89,14 @@ export async function GET(
       );
     }
 
-    const leases = await prisma.leases.findMany({
+    const rows = await prisma.leases.findMany({
       where: { tenantId: id },
       select: {
         id: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
         startDate: true,
         endDate: true,
         status: true,
@@ -117,6 +121,7 @@ export async function GET(
       },
       orderBy: { startDate: "desc" },
     });
+    const leases: TenantLeaseApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: { leases },

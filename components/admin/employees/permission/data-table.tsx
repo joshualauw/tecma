@@ -58,7 +58,22 @@ export default function EmployeePermissionsDataTable({ employeeId }: EmployeePer
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => dayjs(row.original.createdAt).format("DD/MM/YYYY HH:mm"),
+      cell: ({ row }) => (
+        <div className="leading-tight">
+          <p>{dayjs(row.original.createdAt).format("DD/MM/YYYY HH:mm")}</p>
+          <p className="text-xs text-muted-foreground">{row.original.createdBy?.name ?? "-"}</p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      cell: ({ row }) => (
+        <div className="leading-tight">
+          <p>{dayjs(row.original.updatedAt).format("DD/MM/YYYY HH:mm")}</p>
+          <p className="text-xs text-muted-foreground">{row.original.updatedBy?.name ?? "-"}</p>
+        </div>
+      ),
     },
     {
       id: "action",

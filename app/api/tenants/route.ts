@@ -4,12 +4,12 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type TenantApiItem = {
-  id: number;
+export type TenantApiItem = BaseApiData & {
   name: string;
   phoneNumber: string;
   property: {
@@ -23,8 +23,6 @@ export type TenantApiItem = {
       code: string;
     };
   }[];
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type TenantsApiData = {
@@ -105,13 +103,15 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
       where.propertyId = scope.filter;
     }
 
-    const tenants = await prisma.tenants.findMany({
+    const rows = await prisma.tenants.findMany({
       select: {
         id: true,
         name: true,
         phoneNumber: true,
         createdAt: true,
         updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
         property: {
           select: {
             id: true,
@@ -142,6 +142,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
     });
 
     const tenantsCount = await prisma.tenants.count({ where });
+    const tenants: TenantApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

@@ -2,19 +2,17 @@ import { WhatsappWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type WhatsappApiItem = {
-  id: number;
+export type WhatsappApiItem = BaseApiData & {
   displayName: string;
   wabaId: string;
   phoneId: string;
   phoneNumber: string;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type WhatsappApiData = {
@@ -35,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return NextResponse.json(
         {
           data: null,
@@ -77,7 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
       ];
     }
 
-    const whatsapps = await prisma.whatsapp.findMany({
+    const rows = await prisma.whatsapp.findMany({
       select: {
         id: true,
         displayName: true,
@@ -86,6 +84,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
         phoneNumber: true,
         createdAt: true,
         updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
       },
       where,
       skip: page * size,
@@ -96,6 +96,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
     });
 
     const whatsappCount = await prisma.whatsapp.count({ where });
+    const whatsapps: WhatsappApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

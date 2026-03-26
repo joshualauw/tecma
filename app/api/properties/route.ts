@@ -2,17 +2,15 @@ import { PropertiesWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type PropertyApiItem = {
-  id: number;
+export type PropertyApiItem = BaseApiData & {
   name: string;
   address: string | null;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type PropertiesApiData = {
@@ -33,7 +31,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Properties
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return NextResponse.json(
         {
           data: null,
@@ -75,8 +73,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<Properties
       ];
     }
 
-    const properties = await prisma.properties.findMany({
-      select: { id: true, name: true, address: true, createdAt: true, updatedAt: true },
+    const rows = await prisma.properties.findMany({
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
+      },
       where,
       skip: page * size,
       take: size,
@@ -86,6 +92,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Properties
     });
 
     const propertiesCount = await prisma.properties.count({ where });
+    const properties: PropertyApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

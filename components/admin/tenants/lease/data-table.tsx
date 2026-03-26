@@ -81,6 +81,26 @@ export default function TenantLeasesDataTable({ tenantId, permissions }: TenantL
         header: "Status",
         cell: ({ row }) => <LeaseStatusBadge status={row.original.status} />,
       },
+      {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => (
+          <div className="leading-tight">
+            <p>{dayjs(row.original.createdAt).format("DD/MM/YYYY HH:mm")}</p>
+            <p className="text-xs text-muted-foreground">{row.original.createdBy?.name ?? "-"}</p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated At",
+        cell: ({ row }) => (
+          <div className="leading-tight">
+            <p>{dayjs(row.original.updatedAt).format("DD/MM/YYYY HH:mm")}</p>
+            <p className="text-xs text-muted-foreground">{row.original.updatedBy?.name ?? "-"}</p>
+          </div>
+        ),
+      },
     ];
 
     if (!permissions.canEditLease) {
