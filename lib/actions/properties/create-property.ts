@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { isSuperAdmin } from "@/lib/utils";
 
 const createPropertySchema = z.object({
   name: z.string().trim().min(1),
@@ -18,7 +19,7 @@ export async function createPropertyAction(formData: FormData): Promise<CreatePr
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
+    if (!isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 

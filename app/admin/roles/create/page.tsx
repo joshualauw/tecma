@@ -2,6 +2,7 @@ import RoleCreateForm from "@/components/admin/roles/create-form";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
+import { isSuperAdmin } from "@/lib/utils";
 
 export default async function RoleCreatePage() {
   const session = await auth();
@@ -11,7 +12,7 @@ export default async function RoleCreatePage() {
     unauthorized();
   }
 
-  if (user.role !== "super-admin") {
+  if (!isSuperAdmin(user)) {
     forbidden();
   }
 
@@ -24,4 +25,3 @@ export default async function RoleCreatePage() {
     </div>
   );
 }
-

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { forbidden, notFound, unauthorized } from "next/navigation";
+import { isSuperAdmin } from "@/lib/utils";
 
 interface PropertyUpdatePageProps {
   params: Promise<{ id: string }>;
@@ -16,7 +17,7 @@ export default async function PropertyUpdatePage({ params }: PropertyUpdatePageP
     unauthorized();
   }
 
-  if (user.role !== "super-admin") {
+  if (!isSuperAdmin(user)) {
     forbidden();
   }
 

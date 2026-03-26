@@ -1,3 +1,4 @@
+import { AvailablePermission } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { AuthenticatedUser } from "@/types/AuthenticatedUser";
 
@@ -50,7 +51,7 @@ export async function getAuthenticatedUser(userId?: number): Promise<Authenticat
     name: user.name,
     email: user.email,
     role: user.role.name,
-    permissions: user.role.rolePermissions.map((p) => p.permission.name),
+    permissions: user.role.rolePermissions.map((p) => p.permission.name as AvailablePermission),
     allowedProperties: user.employee?.employeePermissions.map((p) => p.propertyId) ?? [],
   };
 }

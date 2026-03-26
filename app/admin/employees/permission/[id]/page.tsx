@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { propertiesWhereForUser } from "@/lib/utils";
 import { forbidden, notFound, unauthorized } from "next/navigation";
+import { isSuperAdmin } from "@/lib/utils";
 
 interface EmployeePermissionPageProps {
   params: Promise<{ id: string }>;
@@ -18,7 +19,7 @@ export default async function EmployeePermissionPage({ params }: EmployeePermiss
     unauthorized();
   }
 
-  if (user.role !== "super-admin") {
+  if (!isSuperAdmin(user)) {
     forbidden();
   }
 

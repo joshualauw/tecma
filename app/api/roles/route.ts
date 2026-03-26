@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { isSuperAdmin } from "@/lib/utils";
 
 export type RoleApiItem = {
   id: number;
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<RolesApiRe
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
+    if (!isSuperAdmin(user)) {
       return NextResponse.json(
         {
           data: null,

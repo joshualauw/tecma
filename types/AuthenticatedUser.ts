@@ -1,8 +1,10 @@
+import { AvailablePermission } from "@/lib/constants";
+
 export interface AuthenticatedUser {
   id: number;
   name: string;
   email: string;
   role: string;
-  permissions: string[];
+  permissions: AvailablePermission[];
   allowedProperties: number[];
 }

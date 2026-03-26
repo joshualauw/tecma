@@ -7,6 +7,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { isSuperAdmin } from "@/lib/utils";
 
 const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -24,7 +25,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
+    if (!isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -44,11 +45,11 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
 
     const { id, name, email, roleId, phoneNumber, address } = parsed.data;
 
-    const thisEmployee = await prisma.employees.findFirstOrThrow({
-      where: { userId: user.id },
+    const employeeUser = await prisma.users.findFirstOrThrow({
+      where: { id },
     });
 
-    if (thisEmployee.id === id) {
+    if (employeeUser.id === user!.id) {
       return { success: false, message: "You cannot update your own employee details" };
     }
 

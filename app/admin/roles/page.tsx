@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import Link from "next/link";
 import { forbidden, unauthorized } from "next/navigation";
+import { isSuperAdmin } from "@/lib/utils";
 
 export default async function RolesPage() {
   const session = await auth();
@@ -14,7 +15,7 @@ export default async function RolesPage() {
     unauthorized();
   }
 
-  if (user.role !== "super-admin") {
+  if (!isSuperAdmin(user)) {
     forbidden();
   }
 

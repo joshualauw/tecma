@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, notFound, unauthorized } from "next/navigation";
+import { isSuperAdmin } from "@/lib/utils";
 
 interface RoleUpdatePageProps {
   params: Promise<{ id: string }>;
@@ -16,7 +17,7 @@ export default async function RoleUpdatePage({ params }: RoleUpdatePageProps) {
     unauthorized();
   }
 
-  if (user.role !== "super-admin") {
+  if (!isSuperAdmin(user)) {
     forbidden();
   }
 
@@ -65,4 +66,3 @@ export default async function RoleUpdatePage({ params }: RoleUpdatePageProps) {
     </div>
   );
 }
-

@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import bcrypt from "bcryptjs";
 import z from "zod";
+import { isSuperAdmin } from "@/lib/utils";
 
 const createEmployeeSchema = z.object({
   name: z.string().trim().min(1),
@@ -25,7 +26,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
+    if (!isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 

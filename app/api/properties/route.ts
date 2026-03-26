@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { isSuperAdmin } from "@/lib/utils";
 
 export type PropertyApiItem = {
   id: number;
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Properties
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
+    if (!isSuperAdmin(user)) {
       return NextResponse.json(
         {
           data: null,

@@ -2,6 +2,7 @@ import PropertyCreateForm from "@/components/admin/properties/create-form";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { forbidden, unauthorized } from "next/navigation";
+import { isSuperAdmin } from "@/lib/utils";
 
 export default async function PropertyCreatePage() {
   const session = await auth();
@@ -11,7 +12,7 @@ export default async function PropertyCreatePage() {
     unauthorized();
   }
 
-  if (user.role !== "super-admin") {
+  if (!isSuperAdmin(user)) {
     forbidden();
   }
 
