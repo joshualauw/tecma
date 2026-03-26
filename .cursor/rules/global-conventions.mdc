@@ -1,7 +1,0 @@
----
-alwaysApply: true
----
-
-- Assume simplest approach first for every implementation, do not add extra checks that isn't there.
-- Follow other modules code conventions closely. The naming, the pattern, etc.
-- Never invent "nice to have" features unless prompted
