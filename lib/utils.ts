@@ -23,13 +23,11 @@ export function formatLabel(text: string): string {
     .join(" ");
 }
 
-export function isSuperAdmin(user: AuthenticatedUser | null): boolean {
-  if (!user) return false;
+export function isSuperAdmin(user: AuthenticatedUser): boolean {
   return user.role === "super-admin";
 }
 
-export function hasPermissions(user: AuthenticatedUser | null, ...permissions: AvailablePermission[]) {
-  if (!user) return false;
+export function hasPermissions(user: AuthenticatedUser, ...permissions: AvailablePermission[]) {
   if (isSuperAdmin(user)) return true;
 
   return user.permissions.some((permission) => permissions.includes(permission));

@@ -40,7 +40,7 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
     }
 
     await prisma.units.create({
-      data: { code, propertyId },
+      data: { code, propertyId, createdBy: user.id },
     });
 
     return { success: true, message: "Unit created successfully" };

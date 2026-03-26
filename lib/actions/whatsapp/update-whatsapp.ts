@@ -24,7 +24,7 @@ export async function updateWhatsappAction(formData: FormData): Promise<UpdateWh
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -45,7 +45,7 @@ export async function updateWhatsappAction(formData: FormData): Promise<UpdateWh
 
     await prisma.whatsapp.update({
       where: { id },
-      data: { displayName, wabaId, phoneId, phoneNumber },
+      data: { displayName, wabaId, phoneId, phoneNumber, updatedBy: user.id },
     });
 
     return { success: true, message: "WhatsApp updated successfully" };

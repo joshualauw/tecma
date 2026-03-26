@@ -21,7 +21,7 @@ export async function updateTicketCategoryAction(formData: FormData): Promise<Up
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "tickets-categories:edit")) {
+    if (!user || !hasPermissions(user, "tickets-categories:edit")) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -40,7 +40,7 @@ export async function updateTicketCategoryAction(formData: FormData): Promise<Up
 
     await prisma.ticketCategories.update({
       where: { id },
-      data: { name, description },
+      data: { name, description, updatedBy: user.id },
     });
 
     return { success: true, message: "Ticket category updated successfully" };

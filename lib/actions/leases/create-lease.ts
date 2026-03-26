@@ -52,14 +52,6 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
-    const [tenant, unit] = await Promise.all([
-      prisma.tenants.findFirst({ where: { id: tenantId, propertyId }, select: { id: true } }),
-      prisma.units.findFirst({ where: { id: unitId, propertyId }, select: { id: true } }),
-    ]);
-    if (!tenant || !unit) {
-      return { success: false, message: "Tenant or unit does not belong to the selected property" };
-    }
-
     const existingActive = await prisma.leases.findFirst({
       where: { tenantId, unitId, status: LeaseStatus.active },
       select: { id: true },
@@ -75,6 +67,7 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
         endDate,
         tenantId,
         propertyId,
+        createdBy: user.id,
       },
     });
 

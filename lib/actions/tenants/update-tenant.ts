@@ -54,7 +54,7 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
 
     await prisma.tenants.update({
       where: { id },
-      data: { name, phoneNumber, address },
+      data: { name, phoneNumber, address, updatedBy: user.id },
     });
 
     return { success: true, message: "Tenant updated successfully" };

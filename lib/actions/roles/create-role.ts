@@ -19,7 +19,7 @@ export async function createRoleAction(formData: FormData): Promise<CreateRoleAc
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -45,6 +45,7 @@ export async function createRoleAction(formData: FormData): Promise<CreateRoleAc
         rolePermissions: {
           create: permissions.map((permission) => ({ permission: { connect: { name: permission } } })),
         },
+        createdBy: user.id,
       },
     });
 

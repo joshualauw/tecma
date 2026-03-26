@@ -23,7 +23,7 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -47,6 +47,7 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
         wabaId,
         phoneId,
         phoneNumber,
+        createdBy: user.id,
       },
     });
 

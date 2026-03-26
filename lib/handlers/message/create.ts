@@ -14,6 +14,7 @@ type MessageToCreate = {
   replyWaId: string | null;
   file: File | null;
   filename: string | null;
+  createdBy: number;
 };
 
 async function resolveMediaUrl(message: MessageToCreate): Promise<string> {
@@ -44,6 +45,7 @@ async function enrichMessageToDatabase(message: MessageToCreate): Promise<Messag
     senderType: SenderType.user,
     content: message.content,
     messageType: message.messageType,
+    createdBy: message.createdBy,
   };
 
   if (message.replyWaId) {
@@ -146,6 +148,7 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
       data: {
         lastMessage: message.content !== "" ? message.content : `[${message.messageType}]`,
         lastMessageAt: now.toDate(),
+        updatedBy: message.createdBy,
       },
     });
 

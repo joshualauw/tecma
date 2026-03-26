@@ -76,6 +76,7 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       replyWaId,
       file,
       filename,
+      createdBy: user.id,
     });
 
     await handleWhatsappMessageSend({

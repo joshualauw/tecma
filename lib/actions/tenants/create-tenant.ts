@@ -51,6 +51,7 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
         phoneNumber,
         address: address,
         propertyId,
+        createdBy: user.id,
       },
     });
 

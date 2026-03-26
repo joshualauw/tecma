@@ -20,7 +20,7 @@ export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActi
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "inbox:send")) {
+    if (!user || !hasPermissions(user, "inbox:send")) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -44,7 +44,7 @@ export async function resolveRoomAction(roomId: number): Promise<ResolveRoomActi
 
     await prisma.rooms.update({
       where: { id },
-      data: { status: RoomStatus.closed, closedAt: new Date() },
+      data: { status: RoomStatus.closed, closedAt: new Date(), updatedBy: user.id },
     });
 
     return { success: true, message: "Room resolved successfully" };

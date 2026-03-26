@@ -83,6 +83,7 @@ export async function updateTicketAction(formData: FormData): Promise<UpdateTick
             data: employeeIds.map((employeeId) => ({ employeeId })),
           },
         },
+        updatedBy: user.id,
       },
     });
 

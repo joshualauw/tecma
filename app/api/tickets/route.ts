@@ -4,12 +4,12 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 
-export type TicketApiItem = {
-  id: number;
+export type TicketApiItem = BaseApiData & {
   title: string;
   description: string | null;
   status: TicketStatus;
@@ -32,8 +32,6 @@ export type TicketApiItem = {
     id: number;
     name: string;
   } | null;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type TicketsApiData = {
@@ -136,7 +134,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       where.priority = priority;
     }
 
-    const tickets = await prisma.tickets.findMany({
+    const rows = await prisma.tickets.findMany({
       select: {
         id: true,
         title: true,
@@ -173,6 +171,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
             name: true,
           },
         },
+        createdBy: true,
+        updatedBy: true,
       },
       where,
       skip: page * size,
@@ -183,6 +183,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
     });
 
     const count = await prisma.tickets.count({ where });
+
+    const tickets: TicketApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

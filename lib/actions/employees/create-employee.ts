@@ -26,7 +26,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -49,7 +49,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await prisma.$transaction(async (tx) => {
-      const user = await tx.users.create({
+      const createdUser = await tx.users.create({
         data: {
           name,
           email,
@@ -59,9 +59,10 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
       });
       await tx.employees.create({
         data: {
-          userId: user.id,
+          userId: createdUser.id,
           phoneNumber,
           address,
+          createdBy: user.id,
         },
       });
     });

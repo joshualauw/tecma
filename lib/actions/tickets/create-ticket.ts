@@ -72,6 +72,7 @@ export async function createTicketAction(formData: FormData): Promise<CreateTick
             data: employeeIds.map((employeeId) => ({ employeeId })),
           },
         },
+        createdBy: user.id,
       },
     });
 

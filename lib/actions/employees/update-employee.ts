@@ -25,7 +25,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
+    if (!user || !isSuperAdmin(user)) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -49,7 +49,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
       where: { id },
     });
 
-    if (employeeUser.id === user!.id) {
+    if (employeeUser.id === user.id) {
       return { success: false, message: "You cannot update your own employee details" };
     }
 
@@ -59,12 +59,13 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
         data: {
           phoneNumber,
           address,
+          updatedBy: user.id,
         },
       });
 
       await tx.users.update({
         where: { id: employee.userId },
-        data: { name, email, roleId },
+        data: { name, email, roleId, updatedBy: user.id },
       });
     });
 

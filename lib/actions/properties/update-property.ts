@@ -40,7 +40,7 @@ export async function updatePropertyAction(formData: FormData): Promise<UpdatePr
 
     await prisma.properties.update({
       where: { id },
-      data: { name, address },
+      data: { name, address, updatedBy: user.id },
     });
 
     return { success: true, message: "Property updated successfully" };

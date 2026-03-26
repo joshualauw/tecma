@@ -84,7 +84,7 @@ export async function createTicketProgressAction(formData: FormData): Promise<Cr
 
       await tx.tickets.update({
         where: { id: ticketId },
-        data: { status },
+        data: { status, updatedBy: user.id },
       });
     });
 

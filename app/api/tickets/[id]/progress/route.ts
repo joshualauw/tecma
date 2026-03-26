@@ -1,26 +1,20 @@
 import { Prisma } from "@/generated/prisma/client";
 import { TicketStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
+import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 import z from "zod";
 
-export type TicketProgressApiItem = {
-  id: number;
+export type TicketProgressApiItem = BaseApiData & {
   ticketId: number;
   beforeStatus: TicketStatus;
   afterStatus: TicketStatus;
   comment: string | null;
   imageUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy: {
-    id: number;
-    name: string;
-  } | null;
 };
 
 export type TicketProgressApiData = {
@@ -112,20 +106,13 @@ export async function GET(
         imageUrl: true,
         createdAt: true,
         updatedAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        createdBy: true,
+        updatedBy: true,
       },
       orderBy: { createdAt: "desc" },
     });
 
-    const progress: TicketProgressApiItem[] = rows.map((row) => ({
-      ...row,
-      createdBy: row.user,
-    }));
+    const progress: TicketProgressApiItem[] = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: { progress },

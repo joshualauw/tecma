@@ -83,7 +83,7 @@ export async function updateTicketProgressAction(formData: FormData): Promise<Up
 
     await prisma.ticketProgress.update({
       where: { id },
-      data: { comment, imageUrl },
+      data: { comment, imageUrl, updatedBy: user.id },
     });
 
     return { success: true, message: "Ticket progress updated successfully" };

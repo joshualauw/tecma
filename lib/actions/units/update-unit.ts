@@ -49,7 +49,7 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
 
     await prisma.units.update({
       where: { id },
-      data: { code },
+      data: { code, updatedBy: user.id },
     });
 
     return { success: true, message: "Unit updated successfully" };

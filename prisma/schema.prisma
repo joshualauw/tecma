@@ -15,20 +15,24 @@ model Users {
   password String @db.VarChar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
-  employee         Employees?
-  role             Role             @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "users_role_id_roles_id_fk")
-  ticketProgresses TicketProgress[]
+  employee Employees?
+  role     Role       @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "users_role_id_roles_id_fk")
 
   @@map("users")
 }
 
 model Role {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique(map: "roles_name_unique") @db.VarChar(255)
+  id   Int    @id @default(autoincrement())
+  name String @unique(map: "roles_name_unique") @db.VarChar(255)
+
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   rolePermissions RolePermissions[]
   users           Users[]
@@ -37,10 +41,13 @@ model Role {
 }
 
 model Permission {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique(map: "permissions_name_unique") @db.VarChar(255)
+  id   Int    @id @default(autoincrement())
+  name String @unique(map: "permissions_name_unique") @db.VarChar(255)
+
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   rolePermissions RolePermissions[]
 
@@ -48,11 +55,14 @@ model Permission {
 }
 
 model RolePermissions {
-  id           Int      @id @default(autoincrement())
-  roleId       Int      @map("role_id")
-  permissionId Int      @map("permission_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  id           Int @id @default(autoincrement())
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions_role_id_roles_id_fk")
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions_permission_id_permissions_id_fk")
@@ -68,7 +78,9 @@ model Employees {
   phoneNumber String  @unique(map: "employees_phone_number_unique") @map("phone_number") @db.VarChar(20)
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   user                Users                 @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employees_user_id_users_id_fk")
   employeePermissions EmployeePermissions[]
@@ -86,7 +98,9 @@ model Whatsapp {
   qualityRating String @default("high") @map("quality_rating")
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   rooms Rooms[]
 
@@ -99,7 +113,9 @@ model Properties {
   address String?
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   bots                Bots[]
   messages            Messages[]
@@ -120,7 +136,9 @@ model EmployeePermissions {
   propertyId Int @map("property_id")
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   employee Employees  @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_permissions_employee_id_employees_id_fk")
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_permissions_property_id_properties_id_fk")
@@ -135,7 +153,9 @@ model Units {
   code       String @db.VarChar(25)
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "units_property_id_properties_id_fk")
   leases   Leases[]
@@ -153,7 +173,9 @@ model Leases {
   status     LeaseStatus @default(active)
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "leases_property_id_properties_id_fk")
   unit     Units      @relation(fields: [unitId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "leases_unit_id_units_id_fk")
@@ -171,7 +193,9 @@ model Tenants {
   phoneNumber String  @unique(map: "tenants_phone_number_unique") @map("phone_number") @db.VarChar(20)
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tenants_property_id_properties_id_fk")
   rooms    Rooms[]
@@ -192,6 +216,9 @@ model Rooms {
   expiredAt     DateTime   @map("expired_at")
 
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy Int?     @map("created_by")
+  updatedBy Int?     @map("updated_by")
 
   messages Messages[]
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rooms_property_id_properties_id_fk")
@@ -214,6 +241,9 @@ model Messages {
   replyWaId   String?       @map("reply_wa_id")
 
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy Int?     @map("created_by")
+  updatedBy Int?     @map("updated_by")
 
   replyTo Messages?  @relation("replyTo", fields: [replyWaId], references: [waId], onDelete: Cascade, onUpdate: NoAction, map: "messages_reply_wa_id_messages_wa_id_fk")
   replies Messages[] @relation("replyTo")
@@ -236,7 +266,9 @@ model Tickets {
   priority    TicketPriority @default(low)
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   property          Properties          @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tickets_property_id_properties_id_fk")
   category          TicketCategories?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "tickets_category_id_ticket_category_id_fk")
@@ -253,7 +285,9 @@ model TicketAssignments {
   employeeId Int @map("employee_id")
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   ticket   Tickets   @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ticket_assignments_ticket_id_tickets_id_fk")
   employee Employees @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ticket_assignments_employee_id_employees_id_fk")
@@ -271,11 +305,11 @@ model TicketProgress {
   imageUrl     String?      @map("image_url")
 
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
   createdBy Int?     @map("created_by")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ticket_progress_ticket_id_tickets_id_fk")
-  user   Users?  @relation(fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "ticket_progress_created_by_users_id_fk")
 
   @@map("ticket_progress")
 }
@@ -286,7 +320,9 @@ model TicketCategories {
   description String?
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   tickets Tickets[]
 
@@ -303,7 +339,9 @@ model Bots {
   topP         Float  @default(1) @map("top_p")
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "bots_property_id_properties_id_fk")
   sources  Sources[]
@@ -320,7 +358,9 @@ model Sources {
   content    String
 
   createdAt DateTime @default(now()) @map("created_at")
+  createdBy Int?     @map("created_by")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy Int?     @map("updated_by")
 
   property Properties @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_property_id_properties_id_fk")
   bot      Bots       @relation(fields: [botId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sources_bot_id_bots_id_fk")

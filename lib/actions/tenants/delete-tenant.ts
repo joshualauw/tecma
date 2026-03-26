@@ -27,7 +27,7 @@ export async function deleteTenantAction(tenantId: number): Promise<DeleteTenant
 
     if (!parsed.success) {
       console.error("Delete Tenant validation failed:", parsed.error);
-      return { success: false, message: "Invalid tenant ID" };
+      return { success: false, message: "Invalid input" };
     }
 
     const { id } = parsed.data;

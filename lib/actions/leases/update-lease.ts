@@ -67,7 +67,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
 
     await prisma.leases.update({
       where: { id },
-      data: { startDate, endDate, status },
+      data: { startDate, endDate, status, updatedBy: user.id },
     });
 
     return { success: true, message: "Lease updated successfully" };

@@ -19,7 +19,7 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!hasPermissions(user, "tickets-categories:create")) {
+    if (!user || !hasPermissions(user, "tickets-categories:create")) {
       return { success: false, message: "You are not authorized to access this resource" };
     }
 
@@ -36,7 +36,7 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
     const { name, description } = parsed.data;
 
     await prisma.ticketCategories.create({
-      data: { name, description },
+      data: { name, description, createdBy: user.id },
     });
 
     return { success: true, message: "Ticket category created successfully" };
