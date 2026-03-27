@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
+import { mapAuditUsers } from "@/lib/mappers/audit";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type TicketApiItem = BaseApiData & {
   title: string;
@@ -56,20 +57,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tickets:view")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !hasPermissions(user, "tickets:view")) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = ticketQuery.safeParse({
+    const parsed = ticketQuery.parse({
       page: searchParams.get("page"),
       size: searchParams.get("size"),
       search: searchParams.get("search"),
@@ -79,31 +71,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       priority: searchParams.get("priority"),
     });
 
-    if (!parsed.success) {
-      console.error("Ticket query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { page, size, search, propertyId, categoryId, status, priority } = parsed.data;
+    const { page, size, search, propertyId, categoryId, status, priority } = parsed;
 
     const scope = resolvePropertyIdScope(user, propertyId);
-    if (!scope.ok) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!scope.ok) throw new AuthorizationError();
 
     const where: TicketsWhereInput = {};
 
@@ -195,14 +166,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching tickets:", error);
+    const response = handleError("GET /api/tickets", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching tickets",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

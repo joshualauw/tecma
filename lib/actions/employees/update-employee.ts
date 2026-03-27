@@ -1,13 +1,13 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
-import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { auth } from "@/lib/auth";
+import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -23,13 +23,12 @@ type UpdateEmployeeActionResponse = ApiResponse<null>;
 export async function updateEmployeeAction(formData: FormData): Promise<UpdateEmployeeActionResponse> {
   try {
     const session = await auth();
+
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = updateEmployeeSchema.safeParse({
+    const parsed = updateEmployeeSchema.parse({
       id: formData.get("id"),
       name: formData.get("name"),
       email: formData.get("email"),
@@ -38,19 +37,14 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
       address: formData.get("address"),
     });
 
-    if (!parsed.success) {
-      console.error("Update Employee validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { id, name, email, roleId, phoneNumber, address } = parsed.data;
+    const { id, name, email, roleId, phoneNumber, address } = parsed;
 
     const employeeUser = await prisma.users.findFirstOrThrow({
       where: { id },
     });
 
     if (employeeUser.id === user.id) {
-      return { success: false, message: "You cannot update your own employee details" };
+      throw new Error("You cannot update your own employee details");
     }
 
     await prisma.$transaction(async (tx) => {
@@ -71,17 +65,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
 
     return { success: true, message: "Employee updated successfully" };
   } catch (error) {
-    console.error("Error updating employee:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return { success: false, message: "Employee not found" };
-      }
-      if (error.code === "P2002") {
-        const match = error.message.match(/fields: \((.*?)\)/);
-        const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
-        return { success: false, message: `Employee with this ${fieldName} already exists` };
-      }
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("updateEmployeeAction", error);
+    return { success: false, message: response.message };
   }
 }

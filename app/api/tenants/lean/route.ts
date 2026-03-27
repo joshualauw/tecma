@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type LeanTenantApiItem = {
   id: number;
@@ -36,47 +37,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanTenant
     const user = await getAuthenticatedUser(session?.user?.id);
 
     if (!user || !hasPermissions(user, "tickets:view", "tickets:create", "tickets:edit")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
+      throw new AuthorizationError();
     }
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = leanTenantQuery.safeParse({
+    const parsed = leanTenantQuery.parse({
       propertyId: searchParams.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Lean tenant query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { propertyId } = parsed.data;
+    const { propertyId } = parsed;
 
     const scope = resolvePropertyIdScope(user, propertyId);
-    if (!scope.ok) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!scope.ok) throw new AuthorizationError();
 
     const where: TenantsWhereInput = {};
 
@@ -117,14 +90,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanTenant
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching lean tenants:", error);
+    const response = handleError("GET /api/tenants/lean", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching tenants",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

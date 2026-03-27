@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
+import { mapAuditUsers } from "@/lib/mappers/audit";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type TenantApiItem = BaseApiData & {
   name: string;
@@ -44,51 +45,21 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tenants:view")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !hasPermissions(user, "tenants:view")) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = tenantQuery.safeParse({
+    const parsed = tenantQuery.parse({
       page: searchParams.get("page"),
       size: searchParams.get("size"),
       search: searchParams.get("search"),
       propertyId: searchParams.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Tenant query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { page, size, search, propertyId } = parsed.data;
+    const { page, size, search, propertyId } = parsed;
 
     const scope = resolvePropertyIdScope(user, propertyId);
-    if (!scope.ok) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!scope.ok) throw new AuthorizationError();
 
     const where: TenantsWhereInput = {};
 
@@ -153,14 +124,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching tenants:", error);
+    const response = handleError("GET /api/tenants", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching tenants",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

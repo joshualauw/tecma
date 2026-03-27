@@ -1,13 +1,13 @@
 "use server";
 
 import { LeaseStatus } from "@/generated/prisma/enums";
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const updateLeaseSchema = z
   .object({
@@ -28,41 +28,32 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tenants-leases:edit")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "tenants-leases:edit")) throw new AuthorizationError();
 
-    const parsed = updateLeaseSchema.safeParse({
+    const parsed = updateLeaseSchema.parse({
       id: formData.get("id"),
       startDate: formData.get("startDate"),
       endDate: formData.get("endDate"),
       status: formData.get("status"),
     });
 
-    if (!parsed.success) {
-      console.error("Update Lease validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { id, startDate, endDate, status } = parsed.data;
+    const { id, startDate, endDate, status } = parsed;
 
     const lease = await prisma.leases.findUnique({
       where: { id },
       select: { tenantId: true, unitId: true, status: true, propertyId: true },
     });
     if (!lease) {
-      return { success: false, message: "Lease not found" };
+      throw new Error("Lease not found");
     }
-    if (!userCanAccessProperty(user, lease.propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, lease.propertyId)) throw new AuthorizationError();
 
     const existingActive = await prisma.leases.findFirst({
       where: { tenantId: lease.tenantId, unitId: lease.unitId, status: LeaseStatus.active },
       select: { id: true },
     });
     if (existingActive && status === LeaseStatus.active && existingActive.id !== id) {
-      return { success: false, message: "This tenant already has an active lease for the selected unit." };
+      throw new Error("This tenant already has an active lease for the selected unit.");
     }
 
     await prisma.leases.update({
@@ -72,10 +63,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
 
     return { success: true, message: "Lease updated successfully" };
   } catch (error) {
-    console.error("Error updating lease:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return { success: false, message: "Lease not found" };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("updateLeaseAction", error);
+    return { success: false, message: response.message };
   }
 }

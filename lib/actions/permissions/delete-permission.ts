@@ -1,11 +1,11 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 type DeletePermissionActionResponse = ApiResponse<null>;
 
@@ -14,9 +14,7 @@ export async function deletePermissionAction(id: number): Promise<DeletePermissi
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
     await prisma.$transaction(async (tx) => {
       const permission = await tx.employeePermissions.delete({
@@ -36,10 +34,7 @@ export async function deletePermissionAction(id: number): Promise<DeletePermissi
 
     return { success: true, message: "Permission deleted successfully" };
   } catch (error) {
-    console.error("Error deleting permission:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return { success: false, message: "Permission not found" };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("deletePermissionAction", error);
+    return { success: false, message: response.message };
   }
 }

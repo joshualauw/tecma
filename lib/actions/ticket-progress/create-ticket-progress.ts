@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { TicketStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
@@ -9,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { uploadFileToR2 } from "@/lib/upload";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createTicketProgressSchema = z.object({
   ticketId: z.coerce.number().int().positive(),
@@ -23,24 +23,17 @@ export async function createTicketProgressAction(formData: FormData): Promise<Cr
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tickets-progress:create")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "tickets-progress:create")) throw new AuthorizationError();
 
     const file = formData.get("file") as File | null;
 
-    const parsed = createTicketProgressSchema.safeParse({
+    const parsed = createTicketProgressSchema.parse({
       ticketId: formData.get("ticketId"),
       status: formData.get("status"),
       comment: formData.get("comment"),
     });
 
-    if (!parsed.success) {
-      console.error("Create ticket progress validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { ticketId, status, comment } = parsed.data;
+    const { ticketId, status, comment } = parsed;
 
     const ticket = await prisma.tickets.findFirst({
       where: { id: ticketId },
@@ -48,19 +41,17 @@ export async function createTicketProgressAction(formData: FormData): Promise<Cr
     });
 
     if (!ticket) {
-      return { success: false, message: "Ticket not found" };
+      throw new Error("Ticket not found");
     }
 
-    if (!userCanAccessProperty(user, ticket.propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, ticket.propertyId)) throw new AuthorizationError();
 
     if (user.role !== "super-admin") {
       const ticketAssignment = await prisma.ticketAssignments.findFirst({
         where: { ticketId, employee: { userId: user.id } },
       });
       if (!ticketAssignment) {
-        return { success: false, message: "You are not authorized to access this resource" };
+        throw new AuthorizationError();
       }
     }
 
@@ -90,10 +81,7 @@ export async function createTicketProgressAction(formData: FormData): Promise<Cr
 
     return { success: true, message: "Ticket progress created successfully" };
   } catch (error) {
-    console.error("Error creating ticket progress:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return { success: false, message: "Ticket not found" };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createTicketProgressAction", error);
+    return { success: false, message: response.message };
   }
 }

@@ -6,6 +6,7 @@ import { getAuthenticatedUser } from "@/lib/user";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createRoleSchema = z.object({
   name: z.string().trim().min(1),
@@ -19,24 +20,17 @@ export async function createRoleAction(formData: FormData): Promise<CreateRoleAc
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = createRoleSchema.safeParse({
+    const parsed = createRoleSchema.parse({
       name: formData.get("name"),
       permissions: formData.getAll("permissions"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Role validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { name, permissions } = parsed.data;
+    const { name, permissions } = parsed;
 
     if (name == "super-admin") {
-      return { success: false, message: "Role name is reserved" };
+      throw new Error("Role name is reserved");
     }
 
     await prisma.role.create({
@@ -51,7 +45,7 @@ export async function createRoleAction(formData: FormData): Promise<CreateRoleAc
 
     return { success: true, message: "Role created successfully" };
   } catch (error) {
-    console.error("Error creating role:", error);
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createRoleAction", error);
+    return { success: false, message: response.message };
   }
 }

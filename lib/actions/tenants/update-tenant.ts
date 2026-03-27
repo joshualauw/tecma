@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { getAuthenticatedUser } from "@/lib/user";
@@ -8,6 +7,7 @@ import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const updateTenantSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -23,34 +23,25 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tenants:edit")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "tenants:edit")) throw new AuthorizationError();
 
-    const parsed = updateTenantSchema.safeParse({
+    const parsed = updateTenantSchema.parse({
       id: formData.get("id"),
       name: formData.get("name"),
       phoneNumber: formData.get("phoneNumber"),
       address: formData.get("address"),
     });
 
-    if (!parsed.success) {
-      console.error("Update Tenant validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { id, name, phoneNumber, address } = parsed.data;
+    const { id, name, phoneNumber, address } = parsed;
 
     const tenant = await prisma.tenants.findUnique({
       where: { id },
       select: { propertyId: true },
     });
     if (!tenant) {
-      return { success: false, message: "Tenant not found" };
+      throw new Error("Tenant not found");
     }
-    if (!userCanAccessProperty(user, tenant.propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, tenant.propertyId)) throw new AuthorizationError();
 
     await prisma.tenants.update({
       where: { id },
@@ -59,16 +50,7 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
 
     return { success: true, message: "Tenant updated successfully" };
   } catch (error) {
-    console.error("Error updating tenant:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return { success: false, message: "Tenant not found" };
-      } else if (error.code === "P2002") {
-        const match = error.message.match(/fields: \((.*?)\)/);
-        const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
-        return { success: false, message: `Tenant with this ${fieldName} already exists` };
-      }
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("updateTenantAction", error);
+    return { success: false, message: response.message };
   }
 }

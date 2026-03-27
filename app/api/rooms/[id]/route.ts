@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { TicketsWhereInput } from "@/generated/prisma/models";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 type RoomDetailTicket = {
   id: number;
@@ -72,35 +73,14 @@ export async function GET(
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "inbox:view")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !hasPermissions(user, "inbox:view")) throw new AuthorizationError();
 
     const contextParams = await context.params;
-    const parsed = roomDetailQuery.safeParse({
+    const parsed = roomDetailQuery.parse({
       id: contextParams.id,
     });
 
-    if (!parsed.success) {
-      console.error("Room detail query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { id } = parsed.data;
+    const { id } = parsed;
 
     const room = await prisma.rooms.findUnique({
       where: {
@@ -150,26 +130,10 @@ export async function GET(
     });
 
     if (!room) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Room not found",
-          success: false,
-        },
-        { status: 404 },
-      );
+      throw new Error("Room not found");
     }
 
-    if (!userCanAccessProperty(user, room.tenant.property.id)) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!userCanAccessProperty(user, room.tenant.property.id)) throw new AuthorizationError();
 
     let tickets: RoomDetailTicket[] = [];
 
@@ -233,15 +197,14 @@ export async function GET(
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching room detail:", error);
-
+    const response = handleError("GET /api/rooms/[id]", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching room detail",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

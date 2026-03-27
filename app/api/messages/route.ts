@@ -4,6 +4,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import type { MessageExtras } from "@/types/MessageExtras";
 import z from "zod";
+import { handleError } from "@/lib/error";
 
 export type MessageApiItem = {
   id: number;
@@ -37,23 +38,11 @@ export type MessagesApiResponse = ApiResponse<MessagesApiData>;
 export async function GET(request: NextRequest): Promise<NextResponse<MessagesApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const parsed = messagesQuery.safeParse({
+    const parsed = messagesQuery.parse({
       roomId: searchParams.get("roomId"),
     });
 
-    if (!parsed.success) {
-      console.error("Messages query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { roomId } = parsed.data;
+    const { roomId } = parsed;
 
     const messages = await prisma.messages.findMany({
       select: {
@@ -95,15 +84,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching messages:", error);
-
+    const response = handleError("GET /api/messages", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching messages",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

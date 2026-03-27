@@ -1,12 +1,12 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createPermissionSchema = z.object({
   employeeId: z.coerce.number().int().positive(),
@@ -20,27 +20,20 @@ export async function createPermissionAction(formData: FormData): Promise<Create
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = createPermissionSchema.safeParse({
+    const parsed = createPermissionSchema.parse({
       employeeId: formData.get("employeeId"),
       propertyId: formData.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Permission validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { employeeId, propertyId } = parsed.data;
+    const { employeeId, propertyId } = parsed;
 
     const existingPermission = await prisma.employeePermissions.findFirst({
       where: { employeeId, propertyId },
     });
     if (existingPermission) {
-      return { success: false, message: "This employee already has permission for this property" };
+      throw new Error("This employee already has permission for this property");
     }
 
     await prisma.employeePermissions.create({
@@ -53,12 +46,7 @@ export async function createPermissionAction(formData: FormData): Promise<Create
 
     return { success: true, message: "Permission created successfully" };
   } catch (error) {
-    console.error("Error creating permission:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const match = error.message.match(/fields: \((.*?)\)/);
-      const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
-      return { success: false, message: `Permission with this ${fieldName} already exists` };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createPermissionAction", error);
+    return { success: false, message: response.message };
   }
 }

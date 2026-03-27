@@ -7,6 +7,7 @@ import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type RoomApiItem = {
   id: number;
@@ -40,49 +41,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "inbox:view")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !hasPermissions(user, "inbox:view")) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = roomQuery.safeParse({
+    const parsed = roomQuery.parse({
       propertyId: searchParams.get("propertyId"),
       status: searchParams.get("status"),
     });
 
-    if (!parsed.success) {
-      console.error("Room query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { propertyId, status } = parsed.data;
+    const { propertyId, status } = parsed;
 
     const scope = resolvePropertyIdScope(user, propertyId);
-    if (!scope.ok) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!scope.ok) throw new AuthorizationError();
 
     const where: RoomsWhereInput = {};
 
@@ -126,15 +97,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching rooms:", error);
-
+    const response = handleError("GET /api/rooms", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching rooms",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

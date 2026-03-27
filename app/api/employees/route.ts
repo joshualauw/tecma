@@ -5,7 +5,8 @@ import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { getAuthenticatedUser } from "@/lib/user";
-import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
+import { mapAuditUsers } from "@/lib/mappers/audit";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type EmployeeApiItem = BaseApiData & {
   phoneNumber: string;
@@ -38,39 +39,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || user.role !== "super-admin") throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = employeeQuery.safeParse({
+    const parsed = employeeQuery.parse({
       page: searchParams.get("page"),
       size: searchParams.get("size"),
       search: searchParams.get("search"),
       roleId: searchParams.get("roleId"),
     });
 
-    if (!parsed.success) {
-      console.error("Employee query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { page, size, search, roleId } = parsed.data;
+    const { page, size, search, roleId } = parsed;
 
     const where: EmployeesWhereInput = {};
 
@@ -122,14 +102,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching employees:", error);
+    const response = handleError("GET /api/employees", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching employees",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type AvailableEmployeeApiItem = {
   id: number;
@@ -31,46 +32,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableE
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tickets:create", "tickets:edit")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !hasPermissions(user, "tickets:create", "tickets:edit")) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
-    const parsed = availableEmployeesQuery.safeParse({
+    const parsed = availableEmployeesQuery.parse({
       propertyId: searchParams.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Available employees query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
+    const { propertyId } = parsed;
 
-    const { propertyId } = parsed.data;
-
-    if (!userCanAccessProperty(user, propertyId)) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!userCanAccessProperty(user, propertyId)) throw new AuthorizationError();
 
     const employees = await prisma.employees.findMany({
       select: {
@@ -114,14 +85,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableE
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching lean employees:", error);
+    const response = handleError("GET /api/employees/available", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching employees",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

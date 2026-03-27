@@ -6,6 +6,7 @@ import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createUnitSchema = z.object({
   code: z.string().trim().min(1),
@@ -19,25 +20,16 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "units:create")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "units:create")) throw new AuthorizationError();
 
-    const parsed = createUnitSchema.safeParse({
+    const parsed = createUnitSchema.parse({
       code: formData.get("code"),
       propertyId: formData.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Unit validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
+    const { code, propertyId } = parsed;
 
-    const { code, propertyId } = parsed.data;
-
-    if (!userCanAccessProperty(user, propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, propertyId)) throw new AuthorizationError();
 
     await prisma.units.create({
       data: { code, propertyId, createdBy: user.id },
@@ -45,7 +37,7 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
 
     return { success: true, message: "Unit created successfully" };
   } catch (error) {
-    console.error("Error creating unit:", error);
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createUnitAction", error);
+    return { success: false, message: response.message };
   }
 }

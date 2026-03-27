@@ -1,17 +1,16 @@
 "use server";
 
 import { MessageType } from "@/generated/prisma/enums";
-import { Prisma } from "@/generated/prisma/client";
 import { handleWhatsappMessageCreate } from "@/lib/handlers/message/create";
 import { handleWhatsappMessageSend } from "@/lib/handlers/message/send";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
-import { AxiosError } from "axios";
 import z from "zod";
 import pusher from "@/lib/pusher";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),
@@ -30,11 +29,9 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "inbox:send")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "inbox:send")) throw new AuthorizationError();
 
-    const parsed = sendMessageSchema.safeParse({
+    const parsed = sendMessageSchema.parse({
       roomId: formData.get("roomId"),
       replyWaId: formData.get("replyWaId"),
       propertyId: formData.get("propertyId"),
@@ -44,16 +41,9 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       filename: formData.get("filename"),
     });
 
-    if (!parsed.success) {
-      console.error("Send message schema validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
+    const { roomId, propertyId, content, messageType, file, filename, replyWaId } = parsed;
 
-    const { roomId, propertyId, content, messageType, file, filename, replyWaId } = parsed.data;
-
-    if (!userCanAccessProperty(user, propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, propertyId)) throw new AuthorizationError();
 
     const room = await prisma.rooms.findUnique({
       where: { id: roomId },
@@ -65,7 +55,7 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
     });
 
     if (!room || room.propertyId !== propertyId) {
-      return { success: false, message: "Room not found or property mismatch" };
+      throw new Error("Room not found or property mismatch");
     }
 
     const createdMessage = await handleWhatsappMessageCreate({
@@ -123,21 +113,7 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       message: "Message sent successfully",
     };
   } catch (error) {
-    if (error instanceof AxiosError) {
-      console.error("Error sending message to cloud API:", error.response?.data);
-      return {
-        success: false,
-        message: "An error occurred while sending message to cloud API",
-      };
-    }
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      console.error("Room not found:", error);
-      return { success: false, message: "Room not found" };
-    }
-    console.error("Error sending message:", error);
-    return {
-      success: false,
-      message: "An error occurred while sending message",
-    };
+    const response = handleError("sendMessageAction", error);
+    return { success: false, message: response.message };
   }
 }

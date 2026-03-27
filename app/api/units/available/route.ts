@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type AvailableUnitsApiItem = {
   id: number;
@@ -31,46 +32,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
       !user ||
       !hasPermissions(user, "tenants:view", "tenants-leases:view", "tenants-leases:create", "tenants-leases:edit")
     ) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
+      throw new AuthorizationError();
     }
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = availableUnitsQuery.safeParse({
+    const parsed = availableUnitsQuery.parse({
       propertyId: searchParams.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Available units query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
+    const { propertyId } = parsed;
 
-    const { propertyId } = parsed.data;
-
-    if (!userCanAccessProperty(user, propertyId)) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!userCanAccessProperty(user, propertyId)) throw new AuthorizationError();
 
     const units = await prisma.units.findMany({
       select: {
@@ -94,14 +67,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching available units:", error);
+    const response = handleError("GET /api/units/available", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching available units",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

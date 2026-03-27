@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { getAuthenticatedUser } from "@/lib/user";
@@ -8,6 +7,7 @@ import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createTenantSchema = z.object({
   name: z.string().trim().min(1),
@@ -23,27 +23,18 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tenants:create")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "tenants:create")) throw new AuthorizationError();
 
-    const parsed = createTenantSchema.safeParse({
+    const parsed = createTenantSchema.parse({
       name: formData.get("name"),
       phoneNumber: formData.get("phoneNumber"),
       address: formData.get("address"),
       propertyId: formData.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Tenant validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
+    const { name, phoneNumber, address, propertyId } = parsed;
 
-    const { name, phoneNumber, address, propertyId } = parsed.data;
-
-    if (!userCanAccessProperty(user, propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, propertyId)) throw new AuthorizationError();
 
     await prisma.tenants.create({
       data: {
@@ -57,12 +48,7 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
 
     return { success: true, message: "Tenant created successfully" };
   } catch (error) {
-    console.error("Error creating tenant:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const match = error.message.match(/fields: \((.*?)\)/);
-      const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
-      return { success: false, message: `Tenant with this ${fieldName} already exists` };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createTenantAction", error);
+    return { success: false, message: response.message };
   }
 }

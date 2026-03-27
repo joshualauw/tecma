@@ -1,12 +1,12 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const updateUnitSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -20,32 +20,23 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "units:edit")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "units:edit")) throw new AuthorizationError();
 
-    const parsed = updateUnitSchema.safeParse({
+    const parsed = updateUnitSchema.parse({
       id: formData.get("id"),
       code: formData.get("code"),
     });
 
-    if (!parsed.success) {
-      console.error("Update Unit validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { id, code } = parsed.data;
+    const { id, code } = parsed;
 
     const unit = await prisma.units.findUnique({
       where: { id },
       select: { propertyId: true },
     });
     if (!unit) {
-      return { success: false, message: "Unit not found" };
+      throw new Error("Unit not found");
     }
-    if (!userCanAccessProperty(user, unit.propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, unit.propertyId)) throw new AuthorizationError();
 
     await prisma.units.update({
       where: { id },
@@ -54,10 +45,7 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
 
     return { success: true, message: "Unit updated successfully" };
   } catch (error) {
-    console.error("Error updating unit:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return { success: false, message: "Unit not found" };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("updateUnitAction", error);
+    return { success: false, message: response.message };
   }
 }

@@ -1,13 +1,13 @@
 "use server";
 
 import { LeaseStatus } from "@/generated/prisma/enums";
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createLeaseSchema = z
   .object({
@@ -29,11 +29,9 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tenants-leases:create")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "tenants-leases:create")) throw new AuthorizationError();
 
-    const parsed = createLeaseSchema.safeParse({
+    const parsed = createLeaseSchema.parse({
       unitId: formData.get("unitId"),
       startDate: formData.get("startDate"),
       endDate: formData.get("endDate"),
@@ -41,23 +39,16 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
       propertyId: formData.get("propertyId"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Lease validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
+    const { unitId, startDate, endDate, tenantId, propertyId } = parsed;
 
-    const { unitId, startDate, endDate, tenantId, propertyId } = parsed.data;
-
-    if (!userCanAccessProperty(user, propertyId)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!userCanAccessProperty(user, propertyId)) throw new AuthorizationError();
 
     const existingActive = await prisma.leases.findFirst({
       where: { tenantId, unitId, status: LeaseStatus.active },
       select: { id: true },
     });
     if (existingActive) {
-      return { success: false, message: "This tenant already has an active lease for the selected unit." };
+      throw new Error("This tenant already has an active lease for the selected unit.");
     }
 
     await prisma.leases.create({
@@ -73,12 +64,7 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
 
     return { success: true, message: "Lease created successfully" };
   } catch (error) {
-    console.error("Error creating lease:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const match = error.message.match(/fields: \((.*?)\)/);
-      const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
-      return { success: false, message: `Lease with this ${fieldName} already exists` };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createLeaseAction", error);
+    return { success: false, message: response.message };
   }
 }

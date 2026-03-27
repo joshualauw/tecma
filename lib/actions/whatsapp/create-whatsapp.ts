@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { getAuthenticatedUser } from "@/lib/user";
@@ -8,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createWhatsappSchema = z.object({
   displayName: z.string().trim().min(1),
@@ -23,23 +23,16 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = createWhatsappSchema.safeParse({
+    const parsed = createWhatsappSchema.parse({
       displayName: formData.get("displayName"),
       wabaId: formData.get("wabaId"),
       phoneId: formData.get("phoneId"),
       phoneNumber: formData.get("phoneNumber"),
     });
 
-    if (!parsed.success) {
-      console.error("Create WhatsApp validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { displayName, wabaId, phoneId, phoneNumber } = parsed.data;
+    const { displayName, wabaId, phoneId, phoneNumber } = parsed;
 
     await prisma.whatsapp.create({
       data: {
@@ -53,12 +46,7 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
 
     return { success: true, message: "WhatsApp created successfully" };
   } catch (error) {
-    console.error("Error creating WhatsApp:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const match = error.message.match(/fields: \((.*?)\)/);
-      const fieldName = match ? match[1].replace(/[`"]/g, "").replace("_", " ") : "field";
-      return { success: false, message: `WhatsApp with this ${fieldName} already exists` };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createWhatsappAction", error);
+    return { success: false, message: response.message };
   }
 }

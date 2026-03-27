@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
+import { mapAuditUsers } from "@/lib/mappers/audit";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type TicketCategoryApiItem = BaseApiData & {
   name: string;
@@ -31,38 +32,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketCate
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tickets-categories:view")) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !hasPermissions(user, "tickets-categories:view")) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = ticketCategoryQuery.safeParse({
+    const parsed = ticketCategoryQuery.parse({
       page: searchParams.get("page"),
       size: searchParams.get("size"),
       search: searchParams.get("search"),
     });
 
-    if (!parsed.success) {
-      console.error("Ticket category query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { page, size, search } = parsed.data;
+    const { page, size, search } = parsed;
 
     const where: TicketCategoriesWhereInput = {};
 
@@ -104,14 +84,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketCate
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching ticket categories:", error);
+    const response = handleError("GET /api/tickets/categories", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching ticket categories",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
 import { getAuthenticatedUser } from "@/lib/user";
@@ -9,6 +8,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import bcrypt from "bcryptjs";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createEmployeeSchema = z.object({
   name: z.string().trim().min(1),
@@ -26,11 +26,9 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = createEmployeeSchema.safeParse({
+    const parsed = createEmployeeSchema.parse({
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
@@ -39,12 +37,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
       address: formData.get("address"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Employee validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { name, email, password, roleId, phoneNumber, address } = parsed.data;
+    const { name, email, password, roleId, phoneNumber, address } = parsed;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -69,12 +62,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
 
     return { success: true, message: "Employee created successfully" };
   } catch (error) {
-    console.error("Error creating employee:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const match = error.message.match(/fields: \((.*?)\)/);
-      const fieldName = match ? match[1].replace(/[`"]/g, "") : "field";
-      return { success: false, message: `Employee with this ${fieldName} already exists` };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createEmployeeAction", error);
+    return { success: false, message: response.message };
   }
 }

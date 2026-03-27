@@ -6,6 +6,7 @@ import { hasPermissions } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createTicketCategorySchema = z.object({
   name: z.string().trim().min(1),
@@ -19,21 +20,14 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !hasPermissions(user, "tickets-categories:create")) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !hasPermissions(user, "tickets-categories:create")) throw new AuthorizationError();
 
-    const parsed = createTicketCategorySchema.safeParse({
+    const parsed = createTicketCategorySchema.parse({
       name: formData.get("name"),
       description: formData.get("description"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Ticket Category validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { name, description } = parsed.data;
+    const { name, description } = parsed;
 
     await prisma.ticketCategories.create({
       data: { name, description, createdBy: user.id },
@@ -41,7 +35,7 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
 
     return { success: true, message: "Ticket category created successfully" };
   } catch (error) {
-    console.error("Error creating ticket category:", error);
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createTicketCategoryAction", error);
+    return { success: false, message: response.message };
   }
 }

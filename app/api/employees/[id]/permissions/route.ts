@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 import z from "zod";
-import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
+import { mapAuditUsers } from "@/lib/mappers/audit";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type EmployeePermissionApiItem = BaseApiData & {
   property: {
@@ -31,33 +32,11 @@ export async function GET(
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || user.role !== "super-admin") throw new AuthorizationError();
 
     const contextParams = await context.params;
-    const parsed = employeePermissionsQuery.safeParse({ id: contextParams.id });
-
-    if (!parsed.success) {
-      console.error("Employee permissions query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { id: employeeId } = parsed.data;
+    const parsed = employeePermissionsQuery.parse({ id: contextParams.id });
+    const { id: employeeId } = parsed;
 
     const rows = await prisma.employeePermissions.findMany({
       where: { employeeId },
@@ -84,14 +63,14 @@ export async function GET(
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching employee permissions:", error);
+    const response = handleError("GET /api/employees/[id]/permissions", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching employee permissions",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

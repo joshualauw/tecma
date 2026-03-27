@@ -1,12 +1,12 @@
 "use server";
 
-import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const updatePropertySchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -21,22 +21,15 @@ export async function updatePropertyAction(formData: FormData): Promise<UpdatePr
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = updatePropertySchema.safeParse({
+    const parsed = updatePropertySchema.parse({
       id: formData.get("id"),
       name: formData.get("name"),
       address: formData.get("address"),
     });
 
-    if (!parsed.success) {
-      console.error("Update Property validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { id, name, address } = parsed.data;
+    const { id, name, address } = parsed;
 
     await prisma.properties.update({
       where: { id },
@@ -45,10 +38,7 @@ export async function updatePropertyAction(formData: FormData): Promise<UpdatePr
 
     return { success: true, message: "Property updated successfully" };
   } catch (error) {
-    console.error("Error updating property:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return { success: false, message: "Property not found" };
-    }
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("updatePropertyAction", error);
+    return { success: false, message: response.message };
   }
 }

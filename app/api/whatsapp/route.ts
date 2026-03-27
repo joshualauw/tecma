@@ -6,7 +6,8 @@ import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
-import { mapAuditUsers } from "@/lib/mappers/audit-mapper";
+import { mapAuditUsers } from "@/lib/mappers/audit";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 export type WhatsappApiItem = BaseApiData & {
   displayName: string;
@@ -33,38 +34,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || !isSuperAdmin(user)) {
-      return NextResponse.json(
-        {
-          data: null,
-          message: "You are not authorized to access this resource",
-          success: false,
-        },
-        { status: 403 },
-      );
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 
-    const parsed = whatsappQuery.safeParse({
+    const parsed = whatsappQuery.parse({
       page: searchParams.get("page"),
       size: searchParams.get("size"),
       search: searchParams.get("search"),
     });
 
-    if (!parsed.success) {
-      console.error("WhatsApp query validation failed:", parsed.error);
-      return NextResponse.json(
-        {
-          data: null,
-          message: "Invalid query parameters",
-          success: false,
-        },
-        { status: 400 },
-      );
-    }
-
-    const { page, size, search } = parsed.data;
+    const { page, size, search } = parsed;
 
     const where: WhatsappWhereInput = {};
 
@@ -107,14 +87,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<WhatsappAp
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching WhatsApp:", error);
+    const response = handleError("GET /api/whatsapp", error);
     return NextResponse.json(
       {
         data: null,
-        message: "An error occurred while fetching WhatsApp",
+        message: response.message,
         success: false,
       },
-      { status: 500 },
+      { status: response.code },
     );
   }
 }

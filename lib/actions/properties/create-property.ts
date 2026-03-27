@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
+import { AuthorizationError, handleError } from "@/lib/error";
 
 const createPropertySchema = z.object({
   name: z.string().trim().min(1),
@@ -19,21 +20,14 @@ export async function createPropertyAction(formData: FormData): Promise<CreatePr
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!isSuperAdmin(user)) {
-      return { success: false, message: "You are not authorized to access this resource" };
-    }
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
-    const parsed = createPropertySchema.safeParse({
+    const parsed = createPropertySchema.parse({
       name: formData.get("name"),
       address: formData.get("address"),
     });
 
-    if (!parsed.success) {
-      console.error("Create Property validation failed:", parsed.error);
-      return { success: false, message: "Invalid input" };
-    }
-
-    const { name, address } = parsed.data;
+    const { name, address } = parsed;
 
     await prisma.properties.create({
       data: { name, address, createdBy: user.id },
@@ -41,7 +35,7 @@ export async function createPropertyAction(formData: FormData): Promise<CreatePr
 
     return { success: true, message: "Property created successfully" };
   } catch (error) {
-    console.error("Error creating property:", error);
-    return { success: false, message: "An unexpected error occurred" };
+    const response = handleError("createPropertyAction", error);
+    return { success: false, message: response.message };
   }
 }
