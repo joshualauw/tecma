@@ -6,9 +6,12 @@ import type { MessageApiItem } from "@/app/api/messages/route";
 import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
 import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import {
-  CheckIcon,
+  BanIcon,
   CheckCheckIcon,
+  CheckIcon,
   ChevronDownIcon,
   CopyIcon,
   FileTextIcon,
@@ -17,9 +20,9 @@ import {
   MapPinIcon,
   MusicIcon,
   ReplyIcon,
+  UserIcon,
   VideoIcon,
   XIcon,
-  BanIcon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -38,6 +41,66 @@ function formatLastMessageAt(value: Date | string | null) {
     return "-";
   }
   return dayjs(value).format("DD/MM/YYYY HH:mm");
+}
+
+function initialsFromName(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return "?";
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return `${parts[0].charAt(0)}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase();
+}
+
+interface MessageSenderAvatarProps {
+  senderType: SenderType;
+  senderName: string | null;
+}
+
+function MessageSenderAvatar({ senderType, senderName }: MessageSenderAvatarProps) {
+  if (senderName) {
+    return (
+      <Avatar size="sm" className={cn("shrink-0", senderType === SenderType.user && "border border-primary/20")}>
+        <AvatarFallback
+          className={
+            senderType === SenderType.user
+              ? "bg-secondary text-[10px] font-medium text-secondary-foreground"
+              : "bg-muted text-[10px] font-medium text-muted-foreground"
+          }
+        >
+          {initialsFromName(senderName)}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  return (
+    <Avatar size="sm" className="shrink-0">
+      <AvatarFallback className="bg-muted text-muted-foreground">
+        <UserIcon className="size-3.5" />
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+interface MessageSenderProfileRowProps {
+  show: boolean;
+  senderName: string | null;
+}
+
+function MessageSenderProfileRow({ show, senderName }: MessageSenderProfileRowProps) {
+  if (!show) return null;
+
+  const name = senderName?.trim();
+  const label = name ? <span className="max-w-48 truncate text-xs text-muted-foreground">{name}</span> : null;
+
+  return (
+    <div className="mb-1 flex w-full items-center justify-end gap-2">
+      {label}
+      <MessageSenderAvatar senderType={SenderType.user} senderName={senderName} />
+    </div>
+  );
 }
 
 function messageBubbleClasses(senderType: SenderType) {
@@ -70,14 +133,14 @@ function MessageStatusIcon({ status }: { status: MessageStatus | null }) {
   return null;
 }
 
-type MessageBubbleProps = {
+interface MessageBubbleProps {
   content: string;
   messageType: MessageType;
   extras: MessageExtras | null;
   senderType: SenderType;
   status: MessageStatus;
   createdAt: Date;
-};
+}
 
 function TextBubble({ content, senderType, status, createdAt }: MessageBubbleProps) {
   return (
@@ -311,6 +374,44 @@ function AttachmentPreview() {
   );
 }
 
+interface MessageActionsDropdownProps {
+  message: MessageApiItem;
+  setReplyToMessage: (_waId: string | null, _content: string) => void;
+  onCopy: (_content: string) => void;
+}
+
+function MessageActionsDropdown({ message, setReplyToMessage, onCopy }: MessageActionsDropdownProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+          aria-label="Message actions"
+        >
+          <ChevronDownIcon size={16} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="center">
+        <DropdownMenuItem
+          onClick={() =>
+            setReplyToMessage(message.waId, message.content === "" ? `[${message.messageType}]` : message.content)
+          }
+        >
+          <ReplyIcon size={14} />
+          Reply
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onCopy(message.content)}>
+          <CopyIcon size={14} />
+          Copy
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function MessagesList() {
   const { messages, isLoadingRoomData, attachmentFile, setReplyToMessage } = useInbox();
 
@@ -337,72 +438,57 @@ function MessagesList() {
 
   return (
     <div className="space-y-3">
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          ref={(el) => {
-            if (el) messageRefsMap.current.set(message.id, el);
-            else messageRefsMap.current.delete(message.id);
-          }}
-          className={`flex ${message.senderType === SenderType.tenant ? "justify-start" : "justify-end"}`}
-        >
+      {messages.map((message, index) => {
+        const showProfile = index === 0 || messages[index - 1].senderType !== message.senderType;
+
+        return (
           <div
-            className={`flex flex-col group ${message.senderType === SenderType.tenant ? "items-start" : "items-end"}`}
+            key={message.id}
+            ref={(el) => {
+              if (el) messageRefsMap.current.set(message.id, el);
+              else messageRefsMap.current.delete(message.id);
+            }}
+            className={cn("flex", message.senderType === SenderType.tenant ? "justify-start" : "justify-end")}
           >
             <div
-              className={`flex items-center gap-1 ${message.senderType === SenderType.tenant ? "flex-row" : "flex-row-reverse"}`}
+              className={cn(
+                "group flex max-w-md flex-col",
+                message.senderType === SenderType.tenant ? "items-start" : "items-end",
+              )}
             >
-              <div className={`${messageBubbleClasses(message.senderType)}}`}>
-                {message.replyTo && (
-                  <ReplyReference
-                    replyTo={message.replyTo}
-                    senderType={message.senderType}
-                    onScrollToMessage={scrollToMessage}
-                  />
+              <MessageSenderProfileRow
+                show={showProfile && message.senderType === SenderType.user}
+                senderName={message.createdBy?.name ?? null}
+              />
+              <div className="flex flex-row items-center gap-1">
+                {message.senderType === SenderType.user && (
+                  <MessageActionsDropdown message={message} onCopy={handleCopy} setReplyToMessage={setReplyToMessage} />
                 )}
-                {getMessageBubble({
-                  content: message.content,
-                  messageType: message.messageType,
-                  extras: message.extras,
-                  senderType: message.senderType,
-                  status: message.status,
-                  createdAt: message.createdAt,
-                })}
+                <div className={messageBubbleClasses(message.senderType)}>
+                  {message.replyTo && (
+                    <ReplyReference
+                      replyTo={message.replyTo}
+                      senderType={message.senderType}
+                      onScrollToMessage={scrollToMessage}
+                    />
+                  )}
+                  {getMessageBubble({
+                    content: message.content,
+                    messageType: message.messageType,
+                    extras: message.extras,
+                    senderType: message.senderType,
+                    status: message.status,
+                    createdAt: message.createdAt,
+                  })}
+                </div>
+                {message.senderType === SenderType.tenant && (
+                  <MessageActionsDropdown message={message} onCopy={handleCopy} setReplyToMessage={setReplyToMessage} />
+                )}
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    aria-label="Message actions"
-                  >
-                    <ChevronDownIcon size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align={message.senderType === SenderType.tenant ? "start" : "end"}>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      setReplyToMessage(
-                        message.waId,
-                        message.content === "" ? `[${message.messageType}]` : message.content,
-                      )
-                    }
-                  >
-                    <ReplyIcon size={14} />
-                    Reply
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCopy(message.content)}>
-                    <CopyIcon size={14} />
-                    Copy
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <div ref={messagesEndRef} aria-hidden />
     </div>
   );

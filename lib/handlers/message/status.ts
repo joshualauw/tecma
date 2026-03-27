@@ -5,6 +5,7 @@ import { WebhookStatus, WebhookValue } from "@whatsapp-cloudapi/types/webhook";
 
 export type MessageStatusUpdate = {
   messageId: number;
+  waId: string;
   messageStatus: MessageStatus;
 };
 
@@ -43,6 +44,7 @@ export async function handleWhatsappMessageStatus(body: WebhookValue): Promise<v
 
   await pusher.trigger(`room-${updatedMessage.roomId}`, "new-message-status", {
     messageId: updatedMessage.id,
+    waId: status.id,
     messageStatus,
   } as MessageStatusUpdate);
 }

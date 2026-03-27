@@ -1,13 +1,13 @@
 import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import type { MessageExtras } from "@/types/MessageExtras";
 import z from "zod";
 import { handleError } from "@/lib/error";
+import { mapAuditUsers } from "@/lib/mappers/audit";
 
-export type MessageApiItem = {
-  id: number;
+export type MessageApiItem = BaseApiData & {
   waId: string | null;
   replyTo: {
     id: number;
@@ -21,7 +21,6 @@ export type MessageApiItem = {
   content: string;
   messageType: MessageType;
   extras: MessageExtras | null;
-  createdAt: Date;
 };
 
 export type MessagesApiData = {
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
 
     const { roomId } = parsed;
 
-    const messages = await prisma.messages.findMany({
+    const rows = await prisma.messages.findMany({
       select: {
         id: true,
         waId: true,
@@ -62,6 +61,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
         status: true,
         messageType: true,
         createdAt: true,
+        createdBy: true,
+        updatedAt: true,
+        updatedBy: true,
         extras: true,
       },
       where: {
@@ -72,12 +74,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
       },
     });
 
+    const messages = await mapAuditUsers(
+      rows.map((row) => ({
+        ...row,
+        extras: row.extras as MessageExtras | null,
+      })),
+    );
+
     return NextResponse.json({
       data: {
-        messages: messages.map((message) => ({
-          ...message,
-          extras: message.extras as MessageExtras | null,
-        })),
+        messages,
         count: messages.length,
       },
       message: "Messages fetched successfully",

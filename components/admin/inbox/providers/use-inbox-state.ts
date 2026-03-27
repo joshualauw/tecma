@@ -249,7 +249,9 @@ export function useInboxState({ properties, permissions }: UseInboxStateProps) {
         return {
           ...current,
           messages: current.messages.map((message) =>
-            message.id === messageStatus.messageId ? { ...message, status: messageStatus.messageStatus } : message,
+            message.id === messageStatus.messageId
+              ? { ...message, status: messageStatus.messageStatus, waId: messageStatus.waId }
+              : message,
           ),
         };
       },
