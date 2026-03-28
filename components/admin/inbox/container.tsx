@@ -11,15 +11,25 @@ import { getPusherClient } from "@/lib/integrations/pusher-client";
 import { useEffect } from "react";
 import { RoomStatus } from "@/generated/prisma/enums";
 import { useAuth } from "@/components/admin/providers/auth-context";
+import { cn } from "@/lib/utils";
 
 export default function InboxContainer() {
+  const { selectedRoomId } = useInbox();
+
   return (
     <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
         <InboxPusherSubscription />
         <div className="grid h-[calc(100vh-6rem)] min-h-[520px] md:grid-cols-[320px_1fr]">
-          <InboxRooms />
-          <div className="flex min-h-0 flex-col">
+          <div
+            className={cn(
+              "flex h-full min-h-0 flex-col md:border-r",
+              selectedRoomId !== null ? "hidden md:flex" : "flex",
+            )}
+          >
+            <InboxRooms />
+          </div>
+          <div className={cn("min-h-0 min-w-0 flex-col", selectedRoomId === null ? "hidden md:flex" : "flex")}>
             <InboxRightColumn />
           </div>
         </div>
@@ -87,10 +97,16 @@ function InboxRightColumn() {
     <>
       <InboxHeader />
       <Separator />
-      <div className="min-h-0 flex flex-1">
+      <div className="relative flex min-h-0 flex-1">
         <InboxChat />
         {isRoomDataOpen && (
-          <div className="min-h-0 basis-0 grow border-l">
+          <div
+            className={cn(
+              "min-h-0 bg-background",
+              "max-md:absolute max-md:inset-0 max-md:z-10",
+              "md:relative md:basis-0 md:grow md:border-l",
+            )}
+          >
             <InboxInfo />
           </div>
         )}

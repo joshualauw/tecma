@@ -498,7 +498,12 @@ export default function InboxChat() {
   const { isRoomDataOpen, isLoadingRoomData, messages, attachmentFile, permissions } = useInbox();
 
   return (
-    <div className={`flex min-h-0 flex-col ${isRoomDataOpen ? "basis-0 grow-[2]" : "flex-1"}`}>
+    <div
+      className={cn(
+        "flex min-h-0 flex-col",
+        isRoomDataOpen ? "max-md:flex-1 md:basis-0 md:grow-[2]" : "flex-1",
+      )}
+    >
       <div className="relative min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {isLoadingRoomData ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading chat...</div>

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import dayjs from "@/lib/integrations/dayjs";
-import { AlertTriangleIcon, PanelRightOpenIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowLeftIcon, PanelRightOpenIcon } from "lucide-react";
 
 function formatExpiresIn(value: Date | string) {
   const diff = dayjs(value).diff(dayjs());
@@ -37,6 +37,7 @@ export default function InboxHeader() {
   const {
     roomDetail,
     setIsRoomDataOpen,
+    setSelectedRoomId,
     isResolveDialogOpen,
     setIsResolveDialogOpen,
     onConfirmResolveRoom,
@@ -57,6 +58,19 @@ export default function InboxHeader() {
           <p className="text-xs text-muted-foreground">Expires in: {formatExpiresIn(roomDetail?.expiredAt ?? "")}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            className="md:hidden"
+            aria-label="Back to rooms"
+            onClick={() => {
+              setSelectedRoomId(null);
+              setIsRoomDataOpen(false);
+            }}
+          >
+            <ArrowLeftIcon />
+          </Button>
           {permissions.canResolve && (
             <Button
               type="button"

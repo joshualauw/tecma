@@ -50,7 +50,7 @@ export default function InboxRooms() {
   } = useInbox();
 
   return (
-    <div className="flex min-h-0 flex-col border-r">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="border-b p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-bold">Rooms</p>
