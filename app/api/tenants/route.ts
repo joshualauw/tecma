@@ -108,7 +108,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TenantsApi
       skip: page * size,
       take: size,
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 

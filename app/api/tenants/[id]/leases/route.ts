@@ -88,7 +88,7 @@ export async function GET(
           },
         },
       },
-      orderBy: { startDate: "desc" },
+      orderBy: { createdAt: "desc" },
     });
     const leases: TenantLeaseApiItem[] = await mapAuditUsers(rows);
 

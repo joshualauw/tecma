@@ -70,7 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<MessagesAp
         roomId,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 

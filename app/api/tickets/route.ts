@@ -149,7 +149,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<TicketsApi
       skip: page * size,
       take: size,
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 

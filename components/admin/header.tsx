@@ -17,7 +17,7 @@ import { signOut } from "next-auth/react";
 import { useAuth } from "@/components/admin/providers/auth-context";
 import { formatLabel } from "@/lib/utils";
 import { getPusherClient } from "@/lib/integrations/pusher-client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNotifications } from "@/hooks/swr/notifications/use-notifications";
 import dayjs from "@/lib/integrations/dayjs";
@@ -38,29 +38,26 @@ export function AdminHeader() {
     await signOut({ redirectTo: "/" });
   }
 
-  const handleNotification = useCallback(
-    (incoming: NotificationApiItem) => {
-      setUnreadCount((prev) => prev + 1);
+  function handleNotification(incoming: NotificationApiItem) {
+    setUnreadCount((prev) => prev + 1);
 
-      void mutate(
-        (current) => {
-          if (!current) {
-            return {
-              notifications: [incoming],
-              count: 1,
-            };
-          }
+    void mutate(
+      (current) => {
+        if (!current) {
           return {
-            ...current,
-            notifications: [incoming, ...current.notifications],
-            count: current.count + 1,
+            notifications: [incoming],
+            count: 1,
           };
-        },
-        { revalidate: false },
-      );
-    },
-    [mutate],
-  );
+        }
+        return {
+          ...current,
+          notifications: [incoming, ...current.notifications],
+          count: current.count + 1,
+        };
+      },
+      { revalidate: false },
+    );
+  }
 
   useEffect(() => {
     const pusher = getPusherClient();

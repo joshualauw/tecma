@@ -78,7 +78,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LeanTenant
       },
       where,
       orderBy: {
-        name: "asc",
+        name: "desc",
       },
     });
 

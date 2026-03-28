@@ -55,7 +55,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvailableU
         leases: { none: { status: LeaseStatus.active } },
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 
