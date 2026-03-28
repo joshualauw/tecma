@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 import { mapAuditUsers } from "@/lib/mappers/audit";
-import { prisma } from "@/lib/prisma";
-import { isSuperAdmin } from "@/lib/utils";
-import { getAuthenticatedUser } from "@/lib/user";
+import { prisma } from "@/lib/db/prisma";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";

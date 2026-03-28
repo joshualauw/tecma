@@ -1,8 +1,8 @@
 import TenantCreateForm from "@/components/admin/tenants/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
-import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/helpers/permission";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function TenantCreatePage() {

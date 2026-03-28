@@ -1,13 +1,13 @@
 import { TicketCategoriesWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { mapAuditUsers } from "@/lib/mappers/audit";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 export type TicketCategoryApiItem = BaseApiData & {
   name: string;

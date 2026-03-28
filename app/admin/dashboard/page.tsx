@@ -1,12 +1,12 @@
 import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
-import dayjs from "@/lib/dayjs";
-import { prisma } from "@/lib/prisma";
+import dayjs from "@/lib/integrations/dayjs";
+import { prisma } from "@/lib/db/prisma";
 import DashboardStats from "@/components/admin/dashboard/stats";
 import DashboardTicketChart from "@/components/admin/dashboard/ticket-chart";
 import DashboardMessageChart from "@/components/admin/dashboard/message-chart";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions } from "@/lib/helpers/permission";
 import { unauthorized } from "next/navigation";
 
 export default async function DashboardPage() {

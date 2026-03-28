@@ -26,7 +26,7 @@ import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack
 import { Ellipsis } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import { deletePermissionAction } from "@/lib/actions/permissions/delete-permission";
 import { useSWRConfig } from "swr";
 

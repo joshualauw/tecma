@@ -1,11 +1,11 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TicketsDataTable from "@/components/admin/tickets/data-table";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/helpers/permission";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function TicketsPage() {

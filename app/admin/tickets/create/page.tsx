@@ -1,8 +1,8 @@
 import TicketCreateForm from "@/components/admin/tickets/create-form";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/helpers/permission";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function TicketCreatePage() {

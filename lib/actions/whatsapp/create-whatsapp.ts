@@ -2,13 +2,13 @@
 
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { isSuperAdmin } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const createWhatsappSchema = z.object({
   displayName: z.string().trim().min(1),
@@ -45,7 +45,7 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
       },
     });
 
-    await createAndSendNotification(user.id, `WhatsApp ${displayName} created`);
+    await notifySystemAction(user.id, `WhatsApp ${displayName} created`);
 
     return { success: true, message: "WhatsApp created successfully" };
   } catch (error) {

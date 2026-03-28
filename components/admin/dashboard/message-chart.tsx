@@ -10,7 +10,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { SenderType } from "@/generated/prisma/enums";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 

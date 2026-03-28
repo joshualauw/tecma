@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NOTIFICATIONS_PAGE_SIZE } from "@/lib/constants";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import { formatLabel } from "@/lib/utils";
 import { useNotifications } from "@/hooks/swr/notifications/use-notifications";
 import { PaginationState } from "@tanstack/react-table";

@@ -1,6 +1,6 @@
 import type { TenantLeasesApiData } from "@/app/api/tenants/[id]/leases/route";
 import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/hooks/swr/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
 export function useTenantLeases(tenantId: number | null, options?: SWRConfiguration<TenantLeasesApiData>) {

@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { prisma } from "@/lib/db/prisma";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 export type AvailableEmployeeApiItem = {
   id: number;

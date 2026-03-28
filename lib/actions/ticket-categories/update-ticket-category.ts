@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const updateTicketCategorySchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -37,7 +37,7 @@ export async function updateTicketCategoryAction(formData: FormData): Promise<Up
       data: { name, description, updatedBy: user.id },
     });
 
-    await createAndSendNotification(user.id, `Ticket category ${name} updated`, null, "tickets-categories:view");
+    await notifySystemAction(user.id, `Ticket category ${name} updated`, null, "tickets-categories:view");
 
     return { success: true, message: "Ticket category updated successfully" };
   } catch (error) {

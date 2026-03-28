@@ -1,8 +1,8 @@
 import TenantUpdateForm from "@/components/admin/tenants/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface TenantUpdatePageProps {

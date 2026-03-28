@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { RoomStatus, TicketStatus } from "@/generated/prisma/enums";
 import { Ellipsis, HouseHeartIcon, MapPinIcon, PhoneIcon, PlusIcon } from "lucide-react";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 
 function formatStatusLabel(status: RoomStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);

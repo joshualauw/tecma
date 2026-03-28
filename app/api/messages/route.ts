@@ -1,10 +1,10 @@
 import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import type { MessageExtras } from "@/types/MessageExtras";
 import z from "zod";
-import { handleError } from "@/lib/error";
+import { handleError } from "@/lib/errors";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 
 export type MessageApiItem = BaseApiData & {

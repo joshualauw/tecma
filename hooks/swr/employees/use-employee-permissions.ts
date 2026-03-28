@@ -1,6 +1,6 @@
 import type { EmployeePermissionsApiData } from "@/app/api/employees/[id]/permissions/route";
 import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/hooks/swr/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
 export function useEmployeePermissions(
@@ -15,4 +15,3 @@ export function useEmployeePermissions(
     ...options,
   });
 }
-

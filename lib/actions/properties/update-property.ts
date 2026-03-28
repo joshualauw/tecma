@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { isSuperAdmin } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const updatePropertySchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -37,7 +37,7 @@ export async function updatePropertyAction(formData: FormData): Promise<UpdatePr
       data: { name, address, updatedBy: user.id },
     });
 
-    await createAndSendNotification(user.id, `Property ${name} updated`, null);
+    await notifySystemAction(user.id, `Property ${name} updated`, null);
 
     return { success: true, message: "Property updated successfully" };
   } catch (error) {

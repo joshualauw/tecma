@@ -6,7 +6,7 @@ import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoomStatus } from "@/generated/prisma/enums";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import { FilterIcon, PhoneIcon } from "lucide-react";
 import { limitText } from "@/lib/utils";
 

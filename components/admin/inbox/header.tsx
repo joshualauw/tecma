@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import { AlertTriangleIcon, PanelRightOpenIcon } from "lucide-react";
 
 function formatExpiresIn(value: Date | string) {

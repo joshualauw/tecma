@@ -1,13 +1,13 @@
 import { TicketStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { mapAuditUsers } from "@/lib/mappers/audit";
-import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { prisma } from "@/lib/db/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 export type TicketProgressApiItem = BaseApiData & {
   ticketId: number;

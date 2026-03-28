@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import PropertiesDataTable from "@/components/admin/properties/data-table";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 export default async function PropertyPage() {
   const session = await auth();

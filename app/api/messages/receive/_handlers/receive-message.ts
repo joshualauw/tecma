@@ -9,12 +9,12 @@ import type {
   WebhookMessageBase,
 } from "@whatsapp-cloudapi/types/webhook";
 import { MessageStatus, MessageType, RoomStatus, SenderType } from "@/generated/prisma/enums";
-import { prisma } from "@/lib/prisma";
-import dayjs from "@/lib/dayjs";
+import { prisma } from "@/lib/db/prisma";
+import dayjs from "@/lib/integrations/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import { InputJsonValue } from "@prisma/client/runtime/client";
-import { uploadFileToR2 } from "@/lib/upload";
-import { notifyNewReceivedMessage } from "@/lib/handlers/message/notify";
+import { uploadFileToR2 } from "@/lib/helpers/upload";
+import { notifyNewReceivedMessage } from "@/lib/helpers/notification";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 
 type WebhookMessage = NonNullable<WebhookValue["messages"]>[number];

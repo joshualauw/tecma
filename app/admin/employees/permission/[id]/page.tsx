@@ -1,11 +1,11 @@
 import CreatePermissionForm from "@/components/admin/employees/permission/create-form";
 import EmployeePermissionsDataTable from "@/components/admin/employees/permission/data-table";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
-import { propertiesWhereForUser } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
+import { propertiesWhereForUser } from "@/lib/helpers/permission";
 import { forbidden, notFound, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 interface EmployeePermissionPageProps {
   params: Promise<{ id: string }>;

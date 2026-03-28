@@ -2,14 +2,14 @@
 
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import bcrypt from "bcryptjs";
 import z from "zod";
-import { isSuperAdmin } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const createEmployeeSchema = z.object({
   name: z.string().trim().min(1),
@@ -61,7 +61,7 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
       });
     });
 
-    await createAndSendNotification(user.id, `Employee ${name} created`);
+    await notifySystemAction(user.id, `Employee ${name} created`);
 
     return { success: true, message: "Employee created successfully" };
   } catch (error) {

@@ -1,6 +1,6 @@
 import type { MessagesApiData } from "@/app/api/messages/route";
 import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/hooks/swr/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
 export function useMessages(roomId: number | null, options?: SWRConfiguration<MessagesApiData>) {

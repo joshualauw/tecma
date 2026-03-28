@@ -1,13 +1,13 @@
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { TenantsWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, resolvePropertyIdScope } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 export type LeanTenantApiItem = {
   id: number;

@@ -1,7 +1,7 @@
 import { MessageStatus } from "@/generated/prisma/enums";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { WebhookStatus, WebhookValue } from "@whatsapp-cloudapi/types/webhook";
-import { notifyNewMessageStatus } from "@/lib/handlers/message/notify";
+import { notifyNewMessageStatus } from "@/lib/helpers/notification";
 
 function mapStatusToMessageStatus(status: WebhookStatus["status"] | "failed"): MessageStatus {
   switch (status) {

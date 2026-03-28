@@ -1,9 +1,9 @@
 import UnitCreateForm from "@/components/admin/units/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 
 export default async function UnitCreatePage() {
   const session = await auth();

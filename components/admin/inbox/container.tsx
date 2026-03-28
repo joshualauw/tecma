@@ -7,7 +7,7 @@ import InboxHeader from "@/components/admin/inbox/header";
 import InboxInfo from "@/components/admin/inbox/info";
 import InboxRooms from "@/components/admin/inbox/rooms";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
-import { getPusherClient } from "@/lib/pusher-client";
+import { getPusherClient } from "@/lib/integrations/pusher-client";
 import { useEffect } from "react";
 import { RoomStatus } from "@/generated/prisma/enums";
 import { useAuth } from "@/components/admin/providers/auth-context";

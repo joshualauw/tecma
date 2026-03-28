@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/integrations/winston";
 import { AxiosError } from "axios";
 import { ZodError } from "zod";
 

@@ -13,7 +13,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { hasPermissions } from "@/lib/utils";
+import { hasPermissions } from "@/lib/helpers/permission";
 import {
   ChevronRightIcon,
   Contact2Icon,

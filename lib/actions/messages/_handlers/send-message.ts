@@ -8,10 +8,10 @@ import type {
   CloudAPISendAudioMessageRequest,
 } from "@whatsapp-cloudapi/types/cloudapi";
 import { MessageStatus, MessageType } from "@/generated/prisma/enums";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import axios from "axios";
 import { MessageExtras } from "@/types/MessageExtras";
-import { notifyNewSentMessage } from "@/lib/handlers/message/notify";
+import { notifyNewSentMessage } from "@/lib/helpers/notification";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 
 type MessageToSend = {

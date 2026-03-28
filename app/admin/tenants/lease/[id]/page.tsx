@@ -1,10 +1,10 @@
 import TenantLeasesDataTable from "@/components/admin/tenants/lease/data-table";
 import CreateLeaseForm from "@/components/admin/tenants/lease/create-form";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
 
 interface TenantLeasePageProps {
   params: Promise<{ id: string }>;

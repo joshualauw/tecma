@@ -1,9 +1,9 @@
 import EmployeeCreateForm from "@/components/admin/employees/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import { forbidden, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 export default async function EmployeeCreatePage() {
   const session = await auth();

@@ -1,6 +1,6 @@
 import NotificationsDataList from "@/components/admin/notifications/data-list";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { unauthorized } from "next/navigation";
 
 export default async function NotificationsPage() {

@@ -2,13 +2,13 @@
 
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { isSuperAdmin } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -67,7 +67,7 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
       });
     });
 
-    await createAndSendNotification(user.id, `Employee ${name} updated`);
+    await notifySystemAction(user.id, `Employee ${name} updated`);
 
     return { success: true, message: "Employee updated successfully" };
   } catch (error) {

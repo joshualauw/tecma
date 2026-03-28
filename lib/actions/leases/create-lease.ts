@@ -2,13 +2,13 @@
 
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const createLeaseSchema = z
   .object({
@@ -66,7 +66,7 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
       },
     });
 
-    await createAndSendNotification(user.id, `Lease for ${lease.tenant.name} created`, propertyId, "tenants-leases:view");
+    await notifySystemAction(user.id, `Lease for ${lease.tenant.name} created`, propertyId, "tenants-leases:view");
 
     return { success: true, message: "Lease created successfully" };
   } catch (error) {

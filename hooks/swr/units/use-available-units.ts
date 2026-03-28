@@ -1,6 +1,6 @@
 import type { AvailableUnitsApiData } from "@/app/api/units/available/route";
 import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/hooks/swr/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
 type UseAvailableUnitsParams = {

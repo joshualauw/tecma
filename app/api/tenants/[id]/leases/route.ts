@@ -1,13 +1,13 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
 import { NextResponse } from "next/server";
 import z from "zod";
 import { mapAuditUsers } from "@/lib/mappers/audit";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 export type TenantLeaseApiItem = BaseApiData & {
   startDate: Date;

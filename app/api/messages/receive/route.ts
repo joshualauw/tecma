@@ -1,8 +1,8 @@
 import { WebhookPayload, WebhookValue } from "@whatsapp-cloudapi/types/webhook";
-import { handleWhatsappMessageReceive } from "@/lib/handlers/message/receive";
+import { handleWhatsappMessageReceive } from "./_handlers/receive-message";
+import { handleWhatsappMessageStatus } from "./_handlers/receive-status";
 import { ApiResponse } from "@/types/ApiResponse";
 import { NextResponse, NextRequest } from "next/server";
-import { handleWhatsappMessageStatus } from "@/lib/handlers/message/status";
 
 export async function GET(request: NextRequest): Promise<NextResponse<string | null>> {
   try {

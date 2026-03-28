@@ -1,5 +1,5 @@
 import { AVAILABLE_PERMISSIONS } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import bcrypt from "bcryptjs";
 
 async function main() {

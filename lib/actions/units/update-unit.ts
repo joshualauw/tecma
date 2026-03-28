@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const updateUnitSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -44,7 +44,7 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
       data: { code, updatedBy: user.id },
     });
 
-    await createAndSendNotification(user.id, `Unit ${code} updated`, unit.propertyId, "units:view");
+    await notifySystemAction(user.id, `Unit ${code} updated`, unit.propertyId, "units:view");
 
     return { success: true, message: "Unit updated successfully" };
   } catch (error) {

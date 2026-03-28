@@ -1,5 +1,5 @@
 import { AvailablePermission } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { AuthenticatedUser } from "@/types/AuthenticatedUser";
 
 export async function getAuthenticatedUser(userId?: number): Promise<AuthenticatedUser | null> {

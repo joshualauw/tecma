@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import UnitsDataTable from "@/components/admin/units/data-table";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 
 export default async function UnitsPage() {
   const session = await auth();

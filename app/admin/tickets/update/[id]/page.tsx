@@ -1,9 +1,9 @@
 import TicketUpdateForm from "@/components/admin/tickets/update-form";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { notFound, forbidden, unauthorized } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, propertiesWhereForUser, userCanAccessProperty } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, propertiesWhereForUser, userCanAccessProperty } from "@/lib/helpers/permission";
 
 interface TicketUpdatePageProps {
   params: Promise<{ id: string }>;

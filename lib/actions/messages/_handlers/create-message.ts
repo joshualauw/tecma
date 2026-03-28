@@ -1,10 +1,10 @@
 import { MessageApiItem } from "@/app/api/messages/route";
 import { MessageType, SenderType } from "@/generated/prisma/enums";
 import { MessagesCreateInput } from "@/generated/prisma/models";
-import { prisma } from "@/lib/prisma";
-import dayjs from "@/lib/dayjs";
+import { prisma } from "@/lib/db/prisma";
+import dayjs from "@/lib/integrations/dayjs";
 import { MessageExtras } from "@/types/MessageExtras";
-import { uploadFileToR2 } from "@/lib/upload";
+import { uploadFileToR2 } from "@/lib/helpers/upload";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 
 type MessageToCreate = {

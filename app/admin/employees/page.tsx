@@ -2,11 +2,11 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import EmployeesDataTable from "@/components/admin/employees/data-table";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { forbidden, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 export default async function EmployeesPage() {
   const session = await auth();

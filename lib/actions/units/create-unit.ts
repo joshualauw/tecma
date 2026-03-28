@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const createUnitSchema = z.object({
   code: z.string().trim().min(1),
@@ -36,7 +36,7 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
       data: { code, propertyId, createdBy: user.id },
     });
 
-    await createAndSendNotification(user.id, `Unit ${code} created`, propertyId, "units:view");
+    await notifySystemAction(user.id, `Unit ${code} created`, propertyId, "units:view");
 
     return { success: true, message: "Unit created successfully" };
   } catch (error) {

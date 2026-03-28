@@ -29,7 +29,7 @@ import { Ellipsis } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
 
 export default function WhatsappDataTable() {

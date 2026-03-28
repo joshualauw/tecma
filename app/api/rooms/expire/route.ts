@@ -1,8 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { notifyRoomClosed } from "@/lib/handlers/message/notify";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifyRoomClosed } from "@/lib/helpers/notification";
 import { RoomStatus } from "@/generated/prisma/enums";
 
 export type ExpireRoomApiResponse = ApiResponse<null>;

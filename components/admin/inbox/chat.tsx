@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import type { MessageApiItem } from "@/app/api/messages/route";
 import { MessageStatus, MessageType, SenderType } from "@/generated/prisma/enums";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";

@@ -1,15 +1,15 @@
 "use server";
 
 import { MessageType } from "@/generated/prisma/enums";
-import { handleWhatsappMessageCreate } from "@/lib/handlers/message/create";
-import { handleWhatsappMessageSend } from "@/lib/handlers/message/send";
-import { prisma } from "@/lib/prisma";
+import { handleWhatsappMessageCreate } from "./_handlers/create-message";
+import { handleWhatsappMessageSend } from "./_handlers/send-message";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 const sendMessageSchema = z.object({
   roomId: z.coerce.number().int().positive(),

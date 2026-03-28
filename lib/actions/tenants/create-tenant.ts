@@ -2,13 +2,13 @@
 
 import { auth } from "@/lib/auth";
 import { PHONE_NUMBER_REGEX } from "@/lib/constants";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const createTenantSchema = z.object({
   name: z.string().trim().min(1),
@@ -47,7 +47,7 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
       },
     });
 
-    await createAndSendNotification(user.id, `Tenant ${name} created`, propertyId, "tenants:view");
+    await notifySystemAction(user.id, `Tenant ${name} created`, propertyId, "tenants:view");
 
     return { success: true, message: "Tenant created successfully" };
   } catch (error) {

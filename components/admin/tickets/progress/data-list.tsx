@@ -14,7 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketStatus } from "@/generated/prisma/enums";
 import { useTicketProgress } from "@/hooks/swr/ticket-progress/use-ticket-progress";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import { formatLabel } from "@/lib/utils";
 import { Ellipsis, ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";

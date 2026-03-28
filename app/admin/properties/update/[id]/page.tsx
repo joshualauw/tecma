@@ -1,9 +1,9 @@
 import PropertyUpdateForm from "@/components/admin/properties/update-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import { forbidden, notFound, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 interface PropertyUpdatePageProps {
   params: Promise<{ id: string }>;

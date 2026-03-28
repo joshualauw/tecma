@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const deleteTicketSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -52,7 +52,7 @@ export async function deleteTicketAction(ticketId: number): Promise<DeleteTicket
       },
     });
 
-    await createAndSendNotification(user.id, `Ticket ${ticket.title} deleted`, ticket.propertyId, "tickets:view");
+    await notifySystemAction(user.id, `Ticket ${ticket.title} deleted`, ticket.propertyId, "tickets:view");
 
     return { success: true, message: "Ticket deleted successfully" };
   } catch (error) {

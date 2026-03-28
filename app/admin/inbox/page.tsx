@@ -1,8 +1,8 @@
 import InboxContainer from "@/components/admin/inbox/container";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
-import { hasPermissions, propertiesWhereForUser } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
+import { hasPermissions, propertiesWhereForUser } from "@/lib/helpers/permission";
 import { forbidden, unauthorized } from "next/navigation";
 import { InboxProvider } from "@/components/admin/inbox/providers/inbox-context";
 

@@ -1,9 +1,9 @@
 import TicketProgressCreateForm from "@/components/admin/tickets/progress/create-form";
 import TicketProgressDataList from "@/components/admin/tickets/progress/data-list";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
+import { prisma } from "@/lib/db/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 
 interface TicketsProgressPageProps {

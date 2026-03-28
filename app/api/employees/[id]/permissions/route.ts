@@ -1,11 +1,11 @@
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 import z from "zod";
 import { mapAuditUsers } from "@/lib/mappers/audit";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 
 export type EmployeePermissionApiItem = BaseApiData & {
   property: {

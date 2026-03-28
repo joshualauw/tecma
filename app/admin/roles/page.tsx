@@ -2,10 +2,10 @@ import { Plus } from "lucide-react";
 import RolesDataTable from "@/components/admin/roles/data-table";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import Link from "next/link";
 import { forbidden, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 export default async function RolesPage() {
   const session = await auth();

@@ -1,7 +1,7 @@
 import TicketCategoryCreateForm from "@/components/admin/tickets/categories/create-form";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions } from "@/lib/helpers/permission";
 import { forbidden, unauthorized } from "next/navigation";
 
 export default async function TicketCategoryCreatePage() {

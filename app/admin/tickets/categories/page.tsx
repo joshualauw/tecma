@@ -1,8 +1,8 @@
 import TicketCategoriesDataTable from "@/components/admin/tickets/categories/data-table";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions } from "@/lib/helpers/permission";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { forbidden, unauthorized } from "next/navigation";

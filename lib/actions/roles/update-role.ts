@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/user";
+import { prisma } from "@/lib/db/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { isSuperAdmin } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const updateRoleSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -50,7 +50,7 @@ export async function updateRoleAction(formData: FormData): Promise<UpdateRoleAc
       },
     });
 
-    await createAndSendNotification(user.id, `Role ${name} updated`, null);
+    await notifySystemAction(user.id, `Role ${name} updated`, null);
 
     return { success: true, message: "Role updated successfully" };
   } catch (error) {

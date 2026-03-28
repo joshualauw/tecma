@@ -2,13 +2,13 @@
 
 import { LeaseStatus } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { hasPermissions, userCanAccessProperty } from "@/lib/helpers/permission";
+import { prisma } from "@/lib/db/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const updateLeaseSchema = z
   .object({
@@ -62,7 +62,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
       data: { startDate, endDate, status, updatedBy: user.id },
     });
 
-    await createAndSendNotification(
+    await notifySystemAction(
       user.id,
       `Lease for ${lease.tenant.name} updated`,
       lease.propertyId,

@@ -18,7 +18,7 @@ import { LeaseStatus } from "@/generated/prisma/enums";
 import { Ellipsis } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import UpdateLeaseForm from "@/components/admin/tenants/lease/update-form";
 
 interface TenantLeasesDataTableProps {

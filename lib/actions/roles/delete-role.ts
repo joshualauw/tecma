@@ -1,13 +1,13 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/user";
+import { prisma } from "@/lib/db/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import { isSuperAdmin } from "@/lib/utils";
-import { AuthorizationError, handleError } from "@/lib/error";
-import { createAndSendNotification } from "@/lib/notification";
+import { isSuperAdmin } from "@/lib/helpers/permission";
+import { AuthorizationError, handleError } from "@/lib/errors";
+import { notifySystemAction } from "@/lib/helpers/notification";
 
 const deleteRoleSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -38,7 +38,7 @@ export async function deleteRoleAction(roleId: number): Promise<DeleteRoleAction
       where: { id },
     });
 
-    await createAndSendNotification(user.id, `Role ${role.name} deleted`, null);
+    await notifySystemAction(user.id, `Role ${role.name} deleted`, null);
 
     return { success: true, message: "Role deleted successfully" };
   } catch (error) {

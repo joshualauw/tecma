@@ -1,13 +1,13 @@
 import { RoomStatus } from "@/generated/prisma/enums";
 import { RoomsWhereInput } from "@/generated/prisma/models";
 import { auth } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/user";
-import { prisma } from "@/lib/prisma";
-import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
+import { prisma } from "@/lib/db/prisma";
+import { hasPermissions, resolvePropertyIdScope } from "@/lib/helpers/permission";
 import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { AuthorizationError, handleError } from "@/lib/error";
+import { AuthorizationError, handleError } from "@/lib/errors";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 
 export type RoomApiItem = BaseApiData & {

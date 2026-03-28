@@ -13,7 +13,7 @@ import { useSWRConfig } from "swr";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 
 const formSchema = z
   .object({

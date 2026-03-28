@@ -1,6 +1,6 @@
 import type { TicketCategoriesApiData } from "@/app/api/tickets/categories/route";
 import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/hooks/swr/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
 type UseTicketCategoriesParams = {

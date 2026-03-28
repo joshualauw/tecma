@@ -1,6 +1,6 @@
 import type { RolesApiData } from "@/app/api/roles/route";
 import { SWR_FETCH_RETRY_COUNT } from "@/lib/constants";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/hooks/swr/fetcher";
 import useSWR, { type SWRConfiguration } from "swr";
 
 type UseRolesParams = {
@@ -26,4 +26,3 @@ export function useRoles({ pageIndex, pageSize, search }: UseRolesParams, option
     ...options,
   });
 }
-

@@ -1,9 +1,9 @@
 import RoleUpdateForm from "@/components/admin/roles/update-form";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/user";
+import { prisma } from "@/lib/db/prisma";
+import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { forbidden, notFound, unauthorized } from "next/navigation";
-import { isSuperAdmin } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 interface RoleUpdatePageProps {
   params: Promise<{ id: string }>;

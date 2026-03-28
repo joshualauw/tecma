@@ -24,7 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useRoles } from "@/hooks/swr/roles/use-roles";
 import { deleteRoleAction } from "@/lib/actions/roles/delete-role";
 import { DATA_TABLE_PAGE_SIZE } from "@/lib/constants";
-import dayjs from "@/lib/dayjs";
+import dayjs from "@/lib/integrations/dayjs";
 import type { RoleApiItem } from "@/app/api/roles/route";
 import { ColumnDef, PaginationState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ellipsis } from "lucide-react";
@@ -141,9 +141,7 @@ export default function RolesDataTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => router.push(`/admin/roles/update/${row.original.id}`)}
-            >
+            <DropdownMenuItem onSelect={() => router.push(`/admin/roles/update/${row.original.id}`)}>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
