@@ -8,6 +8,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateWhatsappSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -40,6 +41,8 @@ export async function updateWhatsappAction(formData: FormData): Promise<UpdateWh
       where: { id },
       data: { displayName, wabaId, phoneId, phoneNumber, updatedBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `WhatsApp ${displayName} updated`);
 
     return { success: true, message: "WhatsApp updated successfully" };
   } catch (error) {

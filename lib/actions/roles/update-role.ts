@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateRoleSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -48,6 +49,8 @@ export async function updateRoleAction(formData: FormData): Promise<UpdateRoleAc
         updatedBy: user.id,
       },
     });
+
+    await createAndSendNotification(user.id, `Role ${name} updated`, null);
 
     return { success: true, message: "Role updated successfully" };
   } catch (error) {

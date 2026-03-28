@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deleteWhatsappSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -27,9 +28,19 @@ export async function deleteWhatsappAction(whatsappId: number): Promise<DeleteWh
 
     const { id } = parsed;
 
+    const whatsapp = await prisma.whatsapp.findUnique({
+      where: { id },
+      select: { displayName: true },
+    });
+    if (!whatsapp) {
+      throw new Error("WhatsApp not found");
+    }
+
     await prisma.whatsapp.delete({
       where: { id },
     });
+
+    await createAndSendNotification(user.id, `WhatsApp ${whatsapp.displayName} deleted`);
 
     return { success: true, message: "WhatsApp deleted successfully" };
   } catch (error) {

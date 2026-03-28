@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deleteTenantSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -27,7 +28,7 @@ export async function deleteTenantAction(tenantId: number): Promise<DeleteTenant
 
     const tenant = await prisma.tenants.findUnique({
       where: { id },
-      select: { propertyId: true },
+      select: { propertyId: true, name: true },
     });
     if (!tenant) {
       throw new Error("Tenant not found");
@@ -39,6 +40,8 @@ export async function deleteTenantAction(tenantId: number): Promise<DeleteTenant
         id,
       },
     });
+
+    await createAndSendNotification(user.id, `Tenant ${tenant.name} deleted`, tenant.propertyId, "tenants:view");
 
     return { success: true, message: "Tenant deleted successfully" };
   } catch (error) {

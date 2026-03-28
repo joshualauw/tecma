@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateTicketCategorySchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -35,6 +36,8 @@ export async function updateTicketCategoryAction(formData: FormData): Promise<Up
       where: { id },
       data: { name, description, updatedBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `Ticket category ${name} updated`, null, "tickets-categories:view");
 
     return { success: true, message: "Ticket category updated successfully" };
   } catch (error) {

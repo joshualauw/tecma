@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateUnitSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -42,6 +43,8 @@ export async function updateUnitAction(formData: FormData): Promise<UpdateUnitAc
       where: { id },
       data: { code, updatedBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `Unit ${code} updated`, unit.propertyId, "units:view");
 
     return { success: true, message: "Unit updated successfully" };
   } catch (error) {

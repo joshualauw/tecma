@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deleteTicketSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -27,7 +28,7 @@ export async function deleteTicketAction(ticketId: number): Promise<DeleteTicket
 
     const ticket = await prisma.tickets.findFirst({
       where: { id },
-      select: { propertyId: true },
+      select: { propertyId: true, title: true },
     });
 
     if (!ticket) {
@@ -50,6 +51,8 @@ export async function deleteTicketAction(ticketId: number): Promise<DeleteTicket
         id,
       },
     });
+
+    await createAndSendNotification(user.id, `Ticket ${ticket.title} deleted`, ticket.propertyId, "tickets:view");
 
     return { success: true, message: "Ticket deleted successfully" };
   } catch (error) {

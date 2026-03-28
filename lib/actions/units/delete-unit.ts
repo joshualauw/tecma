@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deleteUnitSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -27,7 +28,7 @@ export async function deleteUnitAction(unitId: number): Promise<DeleteUnitAction
 
     const unit = await prisma.units.findUnique({
       where: { id },
-      select: { propertyId: true },
+      select: { propertyId: true, code: true },
     });
     if (!unit) {
       throw new Error("Unit not found");
@@ -37,6 +38,8 @@ export async function deleteUnitAction(unitId: number): Promise<DeleteUnitAction
     await prisma.units.delete({
       where: { id },
     });
+
+    await createAndSendNotification(user.id, `Unit ${unit.code} deleted`, unit.propertyId, "units:view");
 
     return { success: true, message: "Unit deleted successfully" };
   } catch (error) {

@@ -4,14 +4,14 @@ import { AdminHeader } from "@/components/admin/header";
 import { AuthProvider } from "@/components/admin/providers/auth-context";
 import { getAuthenticatedUser } from "@/lib/user";
 import { auth } from "@/lib/auth";
-import { forbidden } from "next/navigation";
+import { unauthorized } from "next/navigation";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const user = await getAuthenticatedUser(session?.user?.id);
 
   if (!user) {
-    forbidden();
+    unauthorized();
   }
 
   return (

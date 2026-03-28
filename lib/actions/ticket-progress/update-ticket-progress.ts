@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateTicketProgressSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -36,11 +37,10 @@ export async function updateTicketProgressAction(formData: FormData): Promise<Up
       where: { id },
       select: {
         id: true,
-        ticketId: true,
         imageUrl: true,
         createdBy: true,
         ticket: {
-          select: { propertyId: true },
+          select: { propertyId: true, title: true, id: true },
         },
       },
     });
@@ -53,7 +53,7 @@ export async function updateTicketProgressAction(formData: FormData): Promise<Up
 
     if (user.role !== "super-admin") {
       const ticketAssignment = await prisma.ticketAssignments.findFirst({
-        where: { ticketId: ticketProgress.ticketId, employee: { userId: user.id } },
+        where: { ticketId: ticketProgress.ticket.id, employee: { userId: user.id } },
       });
       if (!ticketAssignment) {
         throw new AuthorizationError();
@@ -76,6 +76,13 @@ export async function updateTicketProgressAction(formData: FormData): Promise<Up
       where: { id },
       data: { comment, imageUrl, updatedBy: user.id },
     });
+
+    await createAndSendNotification(
+      user.id,
+      `Ticket progress ${ticketProgress.ticket.title} updated`,
+      ticketProgress.ticket.propertyId,
+      "tickets-progress:view",
+    );
 
     return { success: true, message: "Ticket progress updated successfully" };
   } catch (error) {

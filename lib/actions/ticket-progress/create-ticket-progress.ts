@@ -9,6 +9,7 @@ import { uploadFileToR2 } from "@/lib/upload";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createTicketProgressSchema = z.object({
   ticketId: z.coerce.number().int().positive(),
@@ -35,9 +36,9 @@ export async function createTicketProgressAction(formData: FormData): Promise<Cr
 
     const { ticketId, status, comment } = parsed;
 
-    const ticket = await prisma.tickets.findFirst({
+    const ticket = await prisma.tickets.findUnique({
       where: { id: ticketId },
-      select: { propertyId: true, status: true },
+      select: { propertyId: true, status: true, title: true },
     });
 
     if (!ticket) {
@@ -78,6 +79,13 @@ export async function createTicketProgressAction(formData: FormData): Promise<Cr
         data: { status, updatedBy: user.id },
       });
     });
+
+    await createAndSendNotification(
+      user.id,
+      `Ticket ${ticket.title} progress created`,
+      ticket.propertyId,
+      "tickets-progress:view",
+    );
 
     return { success: true, message: "Ticket progress created successfully" };
   } catch (error) {

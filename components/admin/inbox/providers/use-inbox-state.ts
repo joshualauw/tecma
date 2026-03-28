@@ -11,9 +11,8 @@ import { useRoomDetail } from "@/hooks/swr/rooms/use-room-detail";
 import { useRooms } from "@/hooks/swr/rooms/use-rooms";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MessageApiItem } from "@/app/api/messages/route";
-import { MessageStatusUpdate } from "@/lib/handlers/message/status";
 import type { InboxPermissions } from "@/components/admin/inbox/providers/inbox-context";
+import { NewMessageNotification, UpdateMessageStatusNotification } from "@/types/Notification";
 
 export interface UseInboxStateProps {
   properties: {
@@ -101,12 +100,7 @@ export function useInboxState({ properties, permissions }: UseInboxStateProps) {
 
   const rooms = roomsData?.rooms ?? [];
 
-  const {
-    data: roomDetail,
-    error: roomDetailError,
-    isLoading: isLoadingRoomDetail,
-    mutate: mutateRoomDetail,
-  } = useRoomDetail(selectedRoomId);
+  const { data: roomDetail, error: roomDetailError, isLoading: isLoadingRoomDetail } = useRoomDetail(selectedRoomId);
 
   const {
     data: messagesData,
@@ -159,7 +153,6 @@ export function useInboxState({ properties, permissions }: UseInboxStateProps) {
       if (result.success) {
         toast.success("Room resolved successfully");
         setIsResolveDialogOpen(false);
-        await Promise.all([mutateRooms(), mutateRoomDetail(), mutateMessages()]);
       } else {
         toast.error(result.message || "Failed to resolve room");
       }
@@ -222,53 +215,51 @@ export function useInboxState({ properties, permissions }: UseInboxStateProps) {
     }
   }
 
-  const appendNewMessage = useCallback((message: MessageApiItem) => {
+  function closeRoom() {
+    mutateRooms();
+  }
+
+  function appendNewRoom() {
+    mutateRooms();
+  }
+
+  function appendNewMessage(payload: NewMessageNotification) {
     mutateMessages(
       (current) => {
         if (!current) return current;
-        return { ...current, messages: [...current.messages, message] };
+        return { ...current, messages: [...current.messages, payload] };
       },
       { revalidate: false },
     );
-  }, []);
+  }
 
-  const appendNewRoom = useCallback((room: RoomApiItem) => {
-    mutateRooms(
-      (current) => {
-        if (!current) return current;
-        return { ...current, rooms: [...current.rooms, room] };
-      },
-      { revalidate: false },
-    );
-  }, []);
-
-  const updateMessageStatus = useCallback((messageStatus: MessageStatusUpdate) => {
+  function updateMessageStatus(payload: UpdateMessageStatusNotification) {
     mutateMessages(
       (current) => {
         if (!current) return current;
         return {
           ...current,
           messages: current.messages.map((message) =>
-            message.id === messageStatus.messageId
-              ? { ...message, status: messageStatus.messageStatus, waId: messageStatus.waId }
+            message.id === payload.messageId
+              ? { ...message, status: payload.messageStatus, waId: payload.waId }
               : message,
           ),
         };
       },
       { revalidate: false },
     );
-  }, []);
+  }
 
-  const updateRoomList = useCallback((createdMessage: MessageApiItem) => {
+  function updateRoomList(payload: NewMessageNotification) {
     mutateRooms(
       (current) => {
         if (!current) return current;
         const updatedRooms = current.rooms.map((room) => {
-          if (room.id === createdMessage.roomId) {
+          if (room.id === payload.roomId) {
             return {
               ...room,
-              lastMessage: createdMessage.content,
-              lastMessageAt: createdMessage.createdAt,
+              lastMessage: payload.content,
+              lastMessageAt: payload.createdAt,
             };
           }
           return room;
@@ -280,7 +271,7 @@ export function useInboxState({ properties, permissions }: UseInboxStateProps) {
       },
       { revalidate: false },
     );
-  }, []);
+  }
 
   return {
     permissions,
@@ -324,5 +315,6 @@ export function useInboxState({ properties, permissions }: UseInboxStateProps) {
     appendNewRoom,
     updateRoomList,
     updateMessageStatus,
+    closeRoom,
   };
 }

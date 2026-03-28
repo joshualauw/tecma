@@ -6,7 +6,6 @@ import { handleWhatsappMessageSend } from "@/lib/handlers/message/send";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
-import pusher from "@/lib/pusher";
 import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { hasPermissions, userCanAccessProperty } from "@/lib/utils";
@@ -69,43 +68,11 @@ export async function sendMessageAction(formData: FormData): Promise<SendMessage
       createdBy: user.id,
     });
 
-    await handleWhatsappMessageSend({
+    await handleWhatsappMessageSend(roomId, propertyId, {
       id: createdMessage.id,
       tenantPhoneNumber: room.tenant.phoneNumber,
       whatsappPhoneId: room.whatsapp.phoneId,
     });
-
-    const users = await prisma.users.findMany({
-      where: {
-        OR: [
-          { role: { name: "super-admin" } },
-          {
-            AND: [
-              {
-                role: {
-                  rolePermissions: {
-                    some: { permission: { name: "inbox:view" } },
-                  },
-                },
-              },
-              {
-                employee: {
-                  employeePermissions: {
-                    some: { propertyId: room.propertyId },
-                  },
-                },
-              },
-            ],
-          },
-        ],
-      },
-      select: { id: true },
-    });
-
-    for (const user of users) {
-      await pusher.trigger(`user-${user.id}`, "update-room", createdMessage);
-    }
-    await pusher.trigger(`room-${roomId}`, "new-message", createdMessage);
 
     return {
       data: null,

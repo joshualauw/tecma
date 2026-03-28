@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateTenantSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -47,6 +48,8 @@ export async function updateTenantAction(formData: FormData): Promise<UpdateTena
       where: { id },
       data: { name, phoneNumber, address, updatedBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `Tenant ${name} updated`, tenant.propertyId, "tenants:view");
 
     return { success: true, message: "Tenant updated successfully" };
   } catch (error) {

@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deletePropertySchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -25,9 +26,19 @@ export async function deletePropertyAction(propertyId: number): Promise<DeletePr
 
     const { id } = parsed;
 
+    const property = await prisma.properties.findUnique({
+      where: { id },
+      select: { name: true },
+    });
+    if (!property) {
+      throw new Error("Property not found");
+    }
+
     await prisma.properties.delete({
       where: { id },
     });
+
+    await createAndSendNotification(user.id, `Property ${property.name} deleted`, null);
 
     return { success: true, message: "Property deleted successfully" };
   } catch (error) {

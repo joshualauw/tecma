@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createEmployeeSchema = z.object({
   name: z.string().trim().min(1),
@@ -59,6 +60,8 @@ export async function createEmployeeAction(formData: FormData): Promise<CreateEm
         },
       });
     });
+
+    await createAndSendNotification(user.id, `Employee ${name} created`);
 
     return { success: true, message: "Employee created successfully" };
   } catch (error) {

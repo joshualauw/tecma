@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deleteEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -33,6 +34,14 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
       throw new Error("You cannot delete your own employee account");
     }
 
+    const targetUser = await prisma.employees.findUnique({
+      where: { id },
+      select: { user: { select: { name: true } } },
+    });
+    if (!targetUser) {
+      throw new Error("Employee not found");
+    }
+
     await prisma.$transaction(async (tx) => {
       const employee = await tx.employees.delete({
         where: { id },
@@ -41,6 +50,8 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
         where: { id: employee.userId },
       });
     });
+
+    await createAndSendNotification(user.id, `Employee ${targetUser.user.name} deleted`);
 
     return { success: true, message: "Employee deleted successfully" };
   } catch (error) {

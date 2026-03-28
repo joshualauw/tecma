@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import { NextResponse } from "next/server";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { notifyRoomClosed } from "@/lib/handlers/message/notify";
+import { RoomStatus } from "@/generated/prisma/enums";
 
 export type ExpireRoomApiResponse = ApiResponse<null>;
 
@@ -12,10 +14,19 @@ export async function POST(_request: Request): Promise<NextResponse<ExpireRoomAp
       throw new AuthorizationError("Invalid secret");
     }
 
-    await prisma.rooms.updateMany({
+    const expiredRooms = await prisma.rooms.findMany({
       where: { status: "active", expiredAt: { lt: new Date() } },
+      select: { id: true, propertyId: true },
+    });
+
+    await prisma.rooms.updateMany({
+      where: { id: { in: expiredRooms.map((room) => room.id) } },
       data: { status: "expired" },
     });
+
+    for (const room of expiredRooms) {
+      await notifyRoomClosed(room.propertyId, { roomId: room.id, status: RoomStatus.expired });
+    }
 
     return NextResponse.json({
       data: null,

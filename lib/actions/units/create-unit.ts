@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createUnitSchema = z.object({
   code: z.string().trim().min(1),
@@ -34,6 +35,8 @@ export async function createUnitAction(formData: FormData): Promise<CreateUnitAc
     await prisma.units.create({
       data: { code, propertyId, createdBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `Unit ${code} created`, propertyId, "units:view");
 
     return { success: true, message: "Unit created successfully" };
   } catch (error) {

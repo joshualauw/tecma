@@ -8,9 +8,9 @@ import InboxInfo from "@/components/admin/inbox/info";
 import InboxRooms from "@/components/admin/inbox/rooms";
 import { useInbox } from "@/components/admin/inbox/providers/inbox-context";
 import { getPusherClient } from "@/lib/pusher-client";
-import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { RoomStatus } from "@/generated/prisma/enums";
+import { useAuth } from "@/components/admin/providers/auth-context";
 
 export default function InboxContainer() {
   return (
@@ -29,21 +29,17 @@ export default function InboxContainer() {
 }
 
 function InboxPusherSubscription() {
-  const { data: session } = useSession();
-  const user = session?.user;
-  const userId = user?.id;
-
-  const { updateRoomList, appendNewRoom, appendNewMessage, updateMessageStatus, selectedRoom } = useInbox();
+  const user = useAuth();
+  const { updateRoomList, appendNewRoom, appendNewMessage, updateMessageStatus, selectedRoom, closeRoom } = useInbox();
 
   useEffect(() => {
-    if (userId == null) return;
-
     const pusher = getPusherClient();
     if (!pusher) return;
 
-    const channelName = `user-${userId}`;
+    const channelName = `messages.user-${user.id}`;
     const channel = pusher.subscribe(channelName);
 
+    channel.bind("close-room", closeRoom);
     channel.bind("update-room", updateRoomList);
     channel.bind("new-room", appendNewRoom);
 
@@ -52,7 +48,7 @@ function InboxPusherSubscription() {
       channel.unbind("new-room", appendNewRoom);
       pusher.unsubscribe(channelName);
     };
-  }, [userId, updateRoomList, appendNewRoom]);
+  }, [user.id, updateRoomList, appendNewRoom]);
 
   useEffect(() => {
     if (selectedRoom == null || selectedRoom.status !== RoomStatus.active) return;
@@ -60,7 +56,7 @@ function InboxPusherSubscription() {
     const pusher = getPusherClient();
     if (!pusher) return;
 
-    const channelName = `room-${selectedRoom.id}`;
+    const channelName = `messages.room-${selectedRoom.id}`;
     const channel = pusher.subscribe(channelName);
 
     channel.bind("new-message", appendNewMessage);

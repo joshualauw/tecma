@@ -4,13 +4,13 @@ import { auth } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { hasPermissions, resolvePropertyIdScope } from "@/lib/utils";
-import type { ApiResponse } from "@/types/ApiResponse";
+import type { ApiResponse, BaseApiData } from "@/types/ApiResponse";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { mapAuditUsers } from "@/lib/mappers/audit";
 
-export type RoomApiItem = {
-  id: number;
+export type RoomApiItem = BaseApiData & {
   tenant: {
     id: number;
     name: string;
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
       where.status = status;
     }
 
-    const rooms = await prisma.rooms.findMany({
+    const rows = await prisma.rooms.findMany({
       select: {
         id: true,
         tenant: {
@@ -83,10 +83,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<RoomsApiRe
         status: true,
         lastMessage: true,
         lastMessageAt: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
       },
       where,
       orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
     });
+
+    const rooms = await mapAuditUsers(rows);
 
     return NextResponse.json({
       data: {

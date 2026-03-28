@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateLeaseSchema = z
   .object({
@@ -41,7 +42,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
 
     const lease = await prisma.leases.findUnique({
       where: { id },
-      select: { tenantId: true, unitId: true, status: true, propertyId: true },
+      select: { tenant: { select: { id: true, name: true } }, unitId: true, status: true, propertyId: true },
     });
     if (!lease) {
       throw new Error("Lease not found");
@@ -49,7 +50,7 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
     if (!userCanAccessProperty(user, lease.propertyId)) throw new AuthorizationError();
 
     const existingActive = await prisma.leases.findFirst({
-      where: { tenantId: lease.tenantId, unitId: lease.unitId, status: LeaseStatus.active },
+      where: { tenantId: lease.tenant.id, unitId: lease.unitId, status: LeaseStatus.active },
       select: { id: true },
     });
     if (existingActive && status === LeaseStatus.active && existingActive.id !== id) {
@@ -60,6 +61,13 @@ export async function updateLeaseAction(formData: FormData): Promise<UpdateLease
       where: { id },
       data: { startDate, endDate, status, updatedBy: user.id },
     });
+
+    await createAndSendNotification(
+      user.id,
+      `Lease for ${lease.tenant.name} updated`,
+      lease.propertyId,
+      "tenants-leases:view",
+    );
 
     return { success: true, message: "Lease updated successfully" };
   } catch (error) {

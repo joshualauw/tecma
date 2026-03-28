@@ -11,6 +11,8 @@ import { MessageStatus, MessageType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import axios from "axios";
 import { MessageExtras } from "@/types/MessageExtras";
+import { notifyNewSentMessage } from "@/lib/handlers/message/notify";
+import { mapAuditUsers } from "@/lib/mappers/audit";
 
 type MessageToSend = {
   id: number;
@@ -113,7 +115,11 @@ async function sendMessageToCloudApi(payload: CloudAPIMessageRequestBase, whatsa
   return response.data.messages[0].id;
 }
 
-export async function handleWhatsappMessageSend(message: MessageToSend): Promise<void> {
+export async function handleWhatsappMessageSend(
+  roomId: number,
+  propertyId: number,
+  message: MessageToSend,
+): Promise<void> {
   try {
     const payload = await enrichMessageToCloudApi(message, message.tenantPhoneNumber);
     const messageId = await sendMessageToCloudApi(payload, message.whatsappPhoneId);
@@ -134,4 +140,31 @@ export async function handleWhatsappMessageSend(message: MessageToSend): Promise
 
     throw error;
   }
+
+  const newMessage = await prisma.messages.findUniqueOrThrow({
+    where: { id: message.id },
+    select: {
+      id: true,
+      content: true,
+      messageType: true,
+      extras: true,
+      waId: true,
+      replyTo: true,
+      roomId: true,
+      senderType: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      createdBy: true,
+      updatedBy: true,
+      replyWaId: true,
+    },
+  });
+
+  const [createdMessage] = await mapAuditUsers([newMessage]);
+
+  await notifyNewSentMessage(propertyId, roomId, {
+    ...createdMessage,
+    extras: createdMessage.extras as MessageExtras | null,
+  });
 }

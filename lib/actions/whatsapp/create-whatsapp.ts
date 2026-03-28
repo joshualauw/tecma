@@ -8,6 +8,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createWhatsappSchema = z.object({
   displayName: z.string().trim().min(1),
@@ -43,6 +44,8 @@ export async function createWhatsappAction(formData: FormData): Promise<CreateWh
         createdBy: user.id,
       },
     });
+
+    await createAndSendNotification(user.id, `WhatsApp ${displayName} created`);
 
     return { success: true, message: "WhatsApp created successfully" };
   } catch (error) {

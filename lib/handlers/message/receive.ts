@@ -14,7 +14,8 @@ import dayjs from "@/lib/dayjs";
 import type { MessageExtras } from "@/types/MessageExtras";
 import { InputJsonValue } from "@prisma/client/runtime/client";
 import { uploadFileToR2 } from "@/lib/upload";
-import pusher from "@/lib/pusher";
+import { notifyNewReceivedMessage } from "@/lib/handlers/message/notify";
+import { mapAuditUsers } from "@/lib/mappers/audit";
 
 type WebhookMessage = NonNullable<WebhookValue["messages"]>[number];
 type ExtendedWebhookMessageType = WebhookMessage["type"] | "location";
@@ -194,16 +195,38 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
 
   const flattenedMessage = await flattenWebhookMessage(message);
   const lastMessage = flattenedMessage.content !== "" ? flattenedMessage.content : `[${flattenedMessage.messageType}]`;
+
   let isNewRoom = false;
 
-  const { createdRoom, createdMessage } = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     let room = await tx.rooms.findFirst({
       where: {
         tenantId: tenant.id,
         whatsappId: whatsapp.id,
         status: RoomStatus.active,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        whatsapp: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
+        status: true,
+        lastMessage: true,
+        lastMessageAt: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
+      },
     });
 
     if (!room) {
@@ -234,6 +257,10 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
           status: true,
           lastMessage: true,
           lastMessageAt: true,
+          createdAt: true,
+          updatedAt: true,
+          createdBy: true,
+          updatedBy: true,
         },
       });
       isNewRoom = true;
@@ -262,11 +289,15 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
           status: true,
           lastMessage: true,
           lastMessageAt: true,
+          createdAt: true,
+          updatedAt: true,
+          createdBy: true,
+          updatedBy: true,
         },
       });
     }
 
-    const createdMessage = await tx.messages.create({
+    const newMessage = await tx.messages.create({
       data: {
         propertyId: tenant.propertyId,
         roomId: room.id,
@@ -297,45 +328,20 @@ export async function handleWhatsappMessageReceive(body: WebhookValue): Promise<
         extras: true,
         status: true,
         createdAt: true,
+        createdBy: true,
+        updatedAt: true,
+        updatedBy: true,
       },
     });
 
-    return { createdRoom: room, createdMessage };
+    return { room, message: newMessage };
   });
 
-  const users = await prisma.users.findMany({
-    where: {
-      OR: [
-        { role: { name: "super-admin" } },
-        {
-          AND: [
-            {
-              role: {
-                rolePermissions: {
-                  some: { permission: { name: "inbox:view" } },
-                },
-              },
-            },
-            {
-              employee: {
-                employeePermissions: {
-                  some: { propertyId: tenant.propertyId },
-                },
-              },
-            },
-          ],
-        },
-      ],
-    },
-    select: { id: true },
-  });
+  const [createdMessage] = await mapAuditUsers([result.message]);
+  const [createdRoom] = await mapAuditUsers([result.room]);
 
-  for (const user of users) {
-    if (isNewRoom) {
-      await pusher.trigger(`user-${user.id}`, "new-room", createdRoom);
-    } else {
-      await pusher.trigger(`user-${user.id}`, "update-room", createdMessage);
-    }
-  }
-  await pusher.trigger(`room-${createdRoom.id}`, "new-message", createdMessage);
+  await notifyNewReceivedMessage(tenant.propertyId, isNewRoom, createdRoom, {
+    ...createdMessage,
+    extras: createdMessage.extras as MessageExtras | null,
+  });
 }

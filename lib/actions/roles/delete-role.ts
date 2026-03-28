@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const deleteRoleSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -25,9 +26,19 @@ export async function deleteRoleAction(roleId: number): Promise<DeleteRoleAction
 
     const { id } = parsed;
 
+    const role = await prisma.role.findUnique({
+      where: { id },
+      select: { name: true },
+    });
+    if (!role) {
+      throw new Error("Role not found");
+    }
+
     await prisma.role.delete({
       where: { id },
     });
+
+    await createAndSendNotification(user.id, `Role ${role.name} deleted`, null);
 
     return { success: true, message: "Role deleted successfully" };
   } catch (error) {

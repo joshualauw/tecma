@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createTenantSchema = z.object({
   name: z.string().trim().min(1),
@@ -45,6 +46,8 @@ export async function createTenantAction(formData: FormData): Promise<CreateTena
         createdBy: user.id,
       },
     });
+
+    await createAndSendNotification(user.id, `Tenant ${name} created`, propertyId, "tenants:view");
 
     return { success: true, message: "Tenant created successfully" };
   } catch (error) {

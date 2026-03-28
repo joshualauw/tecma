@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createPermissionSchema = z.object({
   employeeId: z.coerce.number().int().positive(),
@@ -36,13 +37,16 @@ export async function createPermissionAction(formData: FormData): Promise<Create
       throw new Error("This employee already has permission for this property");
     }
 
-    await prisma.employeePermissions.create({
+    const permission = await prisma.employeePermissions.create({
       data: {
         employeeId,
         propertyId,
         createdBy: user.id,
       },
+      include: { employee: { include: { user: true } } },
     });
+
+    await createAndSendNotification(user.id, `Permission for ${permission.employee.user.name} created`, null);
 
     return { success: true, message: "Permission created successfully" };
   } catch (error) {

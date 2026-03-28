@@ -8,6 +8,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updateEmployeeSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -39,11 +40,14 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
 
     const { id, name, email, roleId, phoneNumber, address } = parsed;
 
-    const employeeUser = await prisma.users.findFirstOrThrow({
+    const employeeUser = await prisma.employees.findFirstOrThrow({
       where: { id },
+      select: {
+        userId: true,
+      },
     });
 
-    if (employeeUser.id === user.id) {
+    if (employeeUser.userId === user.id) {
       throw new Error("You cannot update your own employee details");
     }
 
@@ -62,6 +66,8 @@ export async function updateEmployeeAction(formData: FormData): Promise<UpdateEm
         data: { name, email, roleId, updatedBy: user.id },
       });
     });
+
+    await createAndSendNotification(user.id, `Employee ${name} updated`);
 
     return { success: true, message: "Employee updated successfully" };
   } catch (error) {

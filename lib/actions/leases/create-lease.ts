@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createLeaseSchema = z
   .object({
@@ -51,7 +52,7 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
       throw new Error("This tenant already has an active lease for the selected unit.");
     }
 
-    await prisma.leases.create({
+    const lease = await prisma.leases.create({
       data: {
         unitId,
         startDate,
@@ -60,7 +61,12 @@ export async function createLeaseAction(formData: FormData): Promise<CreateLease
         propertyId,
         createdBy: user.id,
       },
+      include: {
+        tenant: true,
+      },
     });
+
+    await createAndSendNotification(user.id, `Lease for ${lease.tenant.name} created`, propertyId, "tenants-leases:view");
 
     return { success: true, message: "Lease created successfully" };
   } catch (error) {

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const createTicketCategorySchema = z.object({
   name: z.string().trim().min(1),
@@ -32,6 +33,8 @@ export async function createTicketCategoryAction(formData: FormData): Promise<Cr
     await prisma.ticketCategories.create({
       data: { name, description, createdBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `Ticket category ${name} created`, null, "tickets-categories:view");
 
     return { success: true, message: "Ticket category created successfully" };
   } catch (error) {

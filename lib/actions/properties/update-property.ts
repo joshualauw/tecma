@@ -7,6 +7,7 @@ import type { ApiResponse } from "@/types/ApiResponse";
 import z from "zod";
 import { isSuperAdmin } from "@/lib/utils";
 import { AuthorizationError, handleError } from "@/lib/error";
+import { createAndSendNotification } from "@/lib/notification";
 
 const updatePropertySchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -35,6 +36,8 @@ export async function updatePropertyAction(formData: FormData): Promise<UpdatePr
       where: { id },
       data: { name, address, updatedBy: user.id },
     });
+
+    await createAndSendNotification(user.id, `Property ${name} updated`, null);
 
     return { success: true, message: "Property updated successfully" };
   } catch (error) {

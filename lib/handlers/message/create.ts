@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import dayjs from "@/lib/dayjs";
 import { MessageExtras } from "@/types/MessageExtras";
 import { uploadFileToR2 } from "@/lib/upload";
+import { mapAuditUsers } from "@/lib/mappers/audit";
 
 type MessageToCreate = {
   roomId: number;
@@ -119,8 +120,8 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
   const databaseMessage = await enrichMessageToDatabase(message);
   const now = dayjs();
 
-  return await prisma.$transaction(async (tx) => {
-    const createdMessage = await tx.messages.create({
+  const newMessage = await prisma.$transaction(async (tx) => {
+    const newMessage = await tx.messages.create({
       data: databaseMessage,
       select: {
         id: true,
@@ -139,6 +140,9 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
         status: true,
         messageType: true,
         createdAt: true,
+        createdBy: true,
+        updatedAt: true,
+        updatedBy: true,
         extras: true,
       },
     });
@@ -153,8 +157,11 @@ export async function handleWhatsappMessageCreate(message: MessageToCreate): Pro
     });
 
     return {
-      ...createdMessage,
-      extras: createdMessage.extras as MessageExtras | null,
+      ...newMessage,
+      extras: newMessage.extras as MessageExtras | null,
     };
   });
+
+  const [createdMessage] = await mapAuditUsers([newMessage]);
+  return createdMessage;
 }
