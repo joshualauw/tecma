@@ -43,8 +43,6 @@ Modern residential and commercial operators need more than spreadsheets: they ne
 
 ## Technical highlights
 
-These are the kinds of details that matter in a **full-stack** interview: clear boundaries, typed APIs, and integrations that mirror real B2B products.
-
 
 | Area                      | Choices                                                                                                                                                                         |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -52,7 +50,7 @@ These are the kinds of details that matter in a **full-stack** interview: clear 
 | **Auth**                  | [NextAuth.js](https://next-auth.js.org/) v5 (Credentials provider, JWT/session callbacks, protected `/admin` routes)                                                            |
 | **Data layer**            | [Prisma](https://www.prisma.io/) 7 + [PostgreSQL](https://www.postgresql.org/) via `@prisma/adapter-pg` and the `pg` driver                                                     |
 | **Validation & forms**    | [Zod](https://zod.dev/) + [React Hook Form](https://react-hook-form.com/) with `@hookform/resolvers`                                                                            |
-| **API surface**           | Route Handlers (`app/api/`**) for webhooks and JSON APIs; server actions under `lib/actions/**` for mutations                                                                   |
+| **API surface**           | Route Handlers (`app/api/`**) for webhooks and JSON APIs; server actions under `lib/actions/`** for mutations                                                                   |
 | **Client data**           | [SWR](https://swr.vercel.app/) for cached, revalidated fetches in the admin UI                                                                                                  |
 | **Real-time**             | [Pusher](https://pusher.com/) (server + browser client) for inbox and live updates                                                                                              |
 | **Messaging integration** | Meta **WhatsApp Cloud API** (Graph API, verify token, webhook receivers)                                                                                                        |
