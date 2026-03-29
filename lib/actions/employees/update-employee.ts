@@ -24,7 +24,6 @@ type UpdateEmployeeActionResponse = ApiResponse<null>;
 export async function updateEmployeeAction(formData: FormData): Promise<UpdateEmployeeActionResponse> {
   try {
     const session = await auth();
-
     const user = await getAuthenticatedUser(session?.user?.id);
 
     if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
