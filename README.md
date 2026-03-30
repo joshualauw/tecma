@@ -41,6 +41,34 @@ Modern residential and commercial operators need more than spreadsheets: they ne
 
 ---
 
+## Demo
+
+The `[demo/](demo/)` folder at the repo root contains a **screen recording** and **UI screenshots** of the admin experience (inbox and related flows).
+
+**Video**
+
+`[demo/inbox_demo.mp4](demo/inbox_demo.mp4)` — inbox walkthrough. Inline player (e.g. on GitHub); otherwise open the file from the repo.
+
+
+
+**Screenshots** (click to open the file)
+
+[Screenshot 2026-03-18 201100](demo/Screenshot%202026-03-18%20201100.png)
+
+[Screenshot 2026-03-27 120637](demo/Screenshot%202026-03-27%20120637.png)
+
+[Screenshot 2026-03-27 120651](demo/Screenshot%202026-03-27%20120651.png)
+
+[Screenshot 2026-03-27 120710](demo/Screenshot%202026-03-27%20120710.png)
+
+[Screenshot 2026-03-27 120754](demo/Screenshot%202026-03-27%20120754.png)
+
+[Screenshot 2026-03-27 120814](demo/Screenshot%202026-03-27%20120814.png)
+
+[Screenshot 2026-03-27 121107](demo/Screenshot%202026-03-27%20121107.png)
+
+---
+
 ## Technical highlights
 
 
@@ -64,6 +92,60 @@ Modern residential and commercial operators need more than spreadsheets: they ne
 - **Domain-driven schema**: leases anchor tickets; rooms tie tenants, properties, and WhatsApp channels; messages are indexed for room + time for efficient conversation loads.  
 - **Permission model**: global role permissions plus **employee–property** grants for multi-site staff.  
 - **Type safety** end to end: generated Prisma client, Zod at boundaries, typed API handlers.
+
+### Real-time messaging architecture
+
+This diagram focuses on **library integrations** for WhatsApp inbox: Meta’s **WhatsApp Cloud API**, the **webhook** entry point, separate handlers for **new messages** vs **delivery/read statuses**, **outbound send** via the Graph API, **R2** for durable media URLs, **Pusher** for pushing updates to browsers, and the **admin client** subscribing over WebSockets. **PostgreSQL** (via Prisma) is where rooms and messages are persisted after each handler runs.
+
+```mermaid
+flowchart TB
+  WA[WhatsApp Cloud API]
+
+  subgraph webhook [Webhook POST /api/messages/receive]
+    WH[Webhook router]
+    NM[New message handler]
+    SH[Status handler]
+  end
+
+  SM[Send message server action]
+
+  R2[(R2 object storage)]
+
+  PG[(PostgreSQL)]
+
+  PUS[Pusher Channels]
+
+  CLI[Admin client Pusher JS + inbox]
+
+  WA -->|HTTPS webhooks messages & statuses| WH
+  WH --> NM
+  WH --> SH
+
+  NM -->|persist rooms & messages| PG
+  SH -->|update message status| PG
+
+  NM -.->|Graph API fetch media| WA
+  NM -->|upload media| R2
+
+  NM -->|notifyNewReceivedMessage| PUS
+  SH -->|notifyNewMessageStatus| PUS
+
+  CLI -->|send reply| SM
+  SM -->|persist outbound| PG
+  SM -->|Graph API send| WA
+  SM -.->|public media URL when needed| R2
+  SM -->|notifyNewSentMessage| PUS
+
+  PUS <-->|WebSocket subscribe| CLI
+```
+
+
+
+**How to read it**
+
+- **Inbound**: Meta calls the **webhook**; `**messages`** go to the **new message** handler (optional **Graph** fetch + **R2** upload for media, then DB + **Pusher**); `**statuses`** go to the **status** handler (DB + **Pusher** delivery/read updates).  
+- **Outbound**: The **client** invokes **send message**, which writes to the DB, calls the **WhatsApp Cloud API**, and notifies subscribers via **Pusher**.  
+- **Real-time**: **Pusher** is the bridge so the **client** inbox updates without polling for every change.
 
 ---
 
