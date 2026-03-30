@@ -7,6 +7,7 @@ import z from "zod";
 import { getAuthenticatedUser } from "@/lib/helpers/user";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 import { AuthorizationError, handleError } from "@/lib/errors";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 export type EmployeeApiItem = BaseApiData & {
   phoneNumber: string;
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<EmployeesA
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") throw new AuthorizationError();
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
     const { searchParams } = new URL(request.url);
 

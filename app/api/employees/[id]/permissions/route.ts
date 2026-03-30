@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import z from "zod";
 import { mapAuditUsers } from "@/lib/mappers/audit";
 import { AuthorizationError, handleError } from "@/lib/errors";
+import { isSuperAdmin } from "@/lib/helpers/permission";
 
 export type EmployeePermissionApiItem = BaseApiData & {
   property: {
@@ -32,7 +33,7 @@ export async function GET(
     const session = await auth();
     const user = await getAuthenticatedUser(session?.user?.id);
 
-    if (!user || user.role !== "super-admin") throw new AuthorizationError();
+    if (!user || !isSuperAdmin(user)) throw new AuthorizationError();
 
     const contextParams = await context.params;
     const parsed = employeePermissionsQuery.parse({ id: contextParams.id });
