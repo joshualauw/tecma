@@ -43,29 +43,27 @@ Modern residential and commercial operators need more than spreadsheets: they ne
 
 ## Demo
 
-The `[demo/](demo/)` folder at the repo root contains a **screen recording** and **UI screenshots** of the admin experience (inbox and related flows).
+The `/demo` folder at the repo root contains a **screen recording** and **UI screenshots** of the admin experience (inbox and related flows).
 
 **Video**
 
-`[demo/inbox_demo.mp4](demo/inbox_demo.mp4)` — inbox walkthrough. Inline player (e.g. on GitHub); otherwise open the file from the repo.
+![Inbox Demo](demo/inbox_demo.mp4)
 
+**Screenshots**
 
+![Screenshot 1](demo/Screenshot%202026-03-18%20201100.png)
 
-**Screenshots** (click to open the file)
+![Screenshot 2](demo/Screenshot%202026-03-27%20120637.png)
 
-[Screenshot 2026-03-18 201100](demo/Screenshot%202026-03-18%20201100.png)
+![Screenshot 3](demo/Screenshot%202026-03-27%20120651.png)
 
-[Screenshot 2026-03-27 120637](demo/Screenshot%202026-03-27%20120637.png)
+![Screenshot 4](demo/Screenshot%202026-03-27%20120710.png)
 
-[Screenshot 2026-03-27 120651](demo/Screenshot%202026-03-27%20120651.png)
+![Screenshot 5](demo/Screenshot%202026-03-27%20120754.png)
 
-[Screenshot 2026-03-27 120710](demo/Screenshot%202026-03-27%20120710.png)
+![Screenshot 6](demo/Screenshot%202026-03-27%20120814.png)
 
-[Screenshot 2026-03-27 120754](demo/Screenshot%202026-03-27%20120754.png)
-
-[Screenshot 2026-03-27 120814](demo/Screenshot%202026-03-27%20120814.png)
-
-[Screenshot 2026-03-27 121107](demo/Screenshot%202026-03-27%20121107.png)
+![Screenshot 7](demo/Screenshot%202026-03-27%20121107.png)
 
 ---
 
