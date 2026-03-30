@@ -26,11 +26,11 @@ export async function deleteEmployeeAction(employeeId: number): Promise<DeleteEm
 
     const { id } = parsed;
 
-    const thisEmployee = await prisma.employees.findFirstOrThrow({
+    const thisEmployee = await prisma.employees.findUnique({
       where: { userId: user.id },
     });
 
-    if (thisEmployee.id === id) {
+    if (thisEmployee?.id === id) {
       throw new Error("You cannot delete your own employee account");
     }
 
