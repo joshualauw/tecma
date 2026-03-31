@@ -19,7 +19,7 @@ import { formatLabel } from "@/lib/utils";
 
 const formSchema = z.object({
   status: z.enum(TicketStatus),
-  comment: z.string().trim().optional(),
+  comment: z.string().trim(),
   file: z.custom<File | undefined>().optional(),
 });
 
@@ -115,7 +115,7 @@ export default function TicketProgressCreateForm({ ticketId, status }: TicketPro
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Comment</FieldLabel>
-                  <Textarea {...field} placeholder="Optional notes" rows={4} />
+                  <Textarea {...field} placeholder="Progress details" rows={4} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

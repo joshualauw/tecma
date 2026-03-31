@@ -86,7 +86,7 @@ export default function TicketProgressEditForm({ item, ticketId, open, onOpenCha
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Comment</FieldLabel>
-                  <Textarea {...field} placeholder="Optional notes" rows={4} />
+                  <Textarea {...field} placeholder="Progress details" rows={4} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
