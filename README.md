@@ -43,27 +43,25 @@ Modern residential and commercial operators need more than spreadsheets: they ne
 
 ## Demo
 
-The `/demo` folder at the repo root contains a **screen recording** and **UI screenshots** of the admin experience (inbox and related flows).
+### Video
 
-**Video**
+[3-Minutes Tecma Inbox Demo](https://youtu.be/4vvXemjCt2o?si=Dscbz_q0dAt0F_tY)
 
-![Inbox Demo](demo/inbox_demo.mp4)
+### Screenshots
 
-**Screenshots**
+![Screenshot 1](demo/1.png)
 
-![Screenshot 1](demo/Screenshot%202026-03-18%20201100.png)
+![Screenshot 2](demo/2.png)
 
-![Screenshot 2](demo/Screenshot%202026-03-27%20120637.png)
+![Screenshot 3](demo/3.png)
 
-![Screenshot 3](demo/Screenshot%202026-03-27%20120651.png)
+![Screenshot 4](demo/4.png)
 
-![Screenshot 4](demo/Screenshot%202026-03-27%20120710.png)
+![Screenshot 5](demo/5.png)
 
-![Screenshot 5](demo/Screenshot%202026-03-27%20120754.png)
+![Screenshot 6](demo/6.png)
 
-![Screenshot 6](demo/Screenshot%202026-03-27%20120814.png)
-
-![Screenshot 7](demo/Screenshot%202026-03-27%20121107.png)
+![Screenshot 7](demo/7.png)
 
 ---
 
