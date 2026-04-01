@@ -164,7 +164,7 @@ flowchart TB
    cp .env.example .env
   ```
    See `.env.example` for `DATABASE_URL`, `AUTH_SECRET`, admin bootstrap credentials, WhatsApp Graph tokens, Pusher keys, and R2/S3 settings.
-3. **Database** — apply migrations and (optionally) seed:
+3. **Database** — apply migrations and seed (required) for super admin account:
   ```bash
    npx prisma migrate dev
    npx prisma db seed
